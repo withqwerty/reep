@@ -1,0 +1,180 @@
+# Reep
+
+The football entity register. Maps player, team, and coach identities across Transfermarkt, FBref, Sofascore, Opta, and 10+ data providers.
+
+Named after [Charles Reep](https://en.wikipedia.org/wiki/Charles_Reep) (1904--2002), an RAF wing commander who hand-recorded every action in over 2,200 football matches starting in the 1950s. He's considered the grandfather of football analytics -- decades before expected goals or tracking data, Reep was tallying passes, shots, and sequences with pen and paper, pioneering the idea that football could be understood through data.
+
+## What is this?
+
+A canonical identity file for football. Every person and club gets a stable [Wikidata](https://www.wikidata.org/) QID, linked to their IDs on other platforms. If you have a Transfermarkt ID and need the FBref ID for the same player, this register gives you the answer.
+
+Think of it as the football equivalent of the [Chadwick Baseball Bureau Register](https://github.com/chadwickbureau/register).
+
+## Data
+
+| File | Records | Description |
+|------|---------|-------------|
+| [`data/people.csv`](data/people.csv) | ~430K | Players and coaches with provider IDs and bio |
+| [`data/teams.csv`](data/teams.csv) | ~45K | Clubs with provider IDs and metadata |
+| [`data/names.csv`](data/names.csv) | varies | Alternate names and aliases |
+| [`data/meta.json`](data/meta.json) | — | Generation timestamp and counts |
+
+### People schema
+
+| Column | Description | Example |
+|--------|-------------|---------|
+| `key_wikidata` | Wikidata QID (canonical key) | `Q99760796` |
+| `type` | `player` or `coach` | `player` |
+| `name` | Primary English name | `Cole Palmer` |
+| `full_name` | Birth/legal name | `Cole Jermaine Palmer` |
+| `date_of_birth` | ISO date | `2002-05-06` |
+| `nationality` | Country | `United Kingdom` |
+| `position` | Playing position | `attacking midfielder` |
+| `height_cm` | Height in centimetres | `185` |
+| `key_transfermarkt` | [Transfermarkt](https://www.transfermarkt.com/) player ID | `568177` |
+| `key_transfermarkt_manager` | Transfermarkt manager ID (coaches only) | `50100` |
+| `key_fbref` | [FBref](https://fbref.com/) player ID | `dc7f8a28` |
+| `key_soccerway` | [Soccerway](https://www.scorebar.com/) person ID | `525801` |
+| `key_sofascore` | [Sofascore](https://www.sofascore.com/) player ID | `982780` |
+| `key_flashscore` | [Flashscore](https://www.flashscore.com/) player ID | `palmer-cole/h8agbDt7` |
+| `key_opta` | Opta player ID | — |
+| `key_premier_league` | [Premier League](https://www.premierleague.com/) player ID | `49293` |
+| `key_11v11` | [11v11](https://www.11v11.com/) player ID | `265554` |
+| `key_espn` | [ESPN FC](https://www.espn.com/football/) player ID | — |
+| `key_national_football_teams` | [National Football Teams](https://www.national-football-teams.com/) ID | `92970` |
+| `key_worldfootball` | [WorldFootball.net](https://www.worldfootball.net/) ID | `cole-palmer` |
+| `key_soccerbase` | [Soccerbase](https://www.soccerbase.com/) player ID | `125454` |
+| `key_kicker` | [Kicker](https://www.kicker.de/) player ID | `cole-palmer` |
+
+### Teams schema
+
+| Column | Description | Example |
+|--------|-------------|---------|
+| `key_wikidata` | Wikidata QID | `Q9616` |
+| `name` | Primary English name | `Arsenal F.C.` |
+| `country` | Country | `United Kingdom` |
+| `founded` | Founding date | `1886-10-01` |
+| `stadium` | Home ground | `Emirates Stadium` |
+| `key_transfermarkt` | Transfermarkt team ID | `11` |
+| `key_fbref` | FBref squad ID | `18bb7c10` |
+| `key_soccerway` | Soccerway team ID | `660` |
+| `key_opta` | Opta team ID | — |
+| `key_espn` | ESPN team ID | — |
+
+### Names schema
+
+| Column | Description | Example |
+|--------|-------------|---------|
+| `key_wikidata` | Wikidata QID | `Q11893` |
+| `name` | Primary name | `Cristiano Ronaldo` |
+| `alias` | Alternate name | `Cristiano Ronaldo dos Santos Aveiro` |
+
+## Coverage
+
+Not every entity has every ID. Coverage depends on what the Wikidata community has mapped:
+
+| Provider | Player coverage | Notes |
+|----------|----------------|-------|
+| Transfermarkt | Best | Highest coverage across all entities |
+| FBref | Good | Strong for recent players |
+| Soccerway | Good | Broad international coverage |
+| Sofascore | Good | Modern players well covered |
+| Opta | Sparse | Few entries have Opta IDs in Wikidata |
+| Premier League | Decent | PL players only |
+
+**Not in Wikidata:** WhoScored, Wyscout, Understat, and FotMob have no Wikidata properties. If you need those, you'll need to fuzzy-match via name + team using this register as a bridge.
+
+## Usage
+
+### Python
+
+```python
+import csv
+
+# Load people into a dict keyed by Transfermarkt ID
+people = {}
+with open("data/people.csv") as f:
+    for row in csv.DictReader(f):
+        tm_id = row["key_transfermarkt"]
+        if tm_id:
+            people[tm_id] = row
+
+# Look up Cole Palmer's FBref ID from his Transfermarkt ID
+palmer = people["568177"]
+print(palmer["key_fbref"])  # "dc7f8a28"
+```
+
+### R
+
+```r
+library(readr)
+people <- read_csv("data/people.csv")
+
+# All Premier League-registered players
+pl_players <- people |> filter(key_premier_league != "")
+
+# Cross-reference: Transfermarkt -> FBref
+people |>
+  filter(key_transfermarkt == "568177") |>
+  select(name, key_fbref, key_sofascore)
+```
+
+### SQL (load into SQLite)
+
+```bash
+sqlite3 reep.db <<EOF
+.mode csv
+.import data/people.csv people
+.import data/teams.csv teams
+.import data/names.csv names
+EOF
+```
+
+```sql
+-- Find all IDs for a player
+SELECT * FROM people WHERE name LIKE '%Salah%';
+
+-- Reverse lookup: FBref ID -> everything
+SELECT * FROM people WHERE key_fbref = 'e342ad68';
+```
+
+## Source
+
+All data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wikidata is a free, collaborative knowledge base maintained by thousands of volunteers. The cross-provider ID mappings exist because the Wikidata community has systematically added external identifier properties for football data sources.
+
+### Wikidata properties used
+
+| Property | Provider |
+|----------|----------|
+| [P2446](https://www.wikidata.org/wiki/Property:P2446) | Transfermarkt player ID |
+| [P2447](https://www.wikidata.org/wiki/Property:P2447) | Transfermarkt manager ID |
+| [P7223](https://www.wikidata.org/wiki/Property:P7223) | Transfermarkt team ID |
+| [P5750](https://www.wikidata.org/wiki/Property:P5750) | FBref player ID |
+| [P8642](https://www.wikidata.org/wiki/Property:P8642) | FBref squad ID |
+| [P2369](https://www.wikidata.org/wiki/Property:P2369) | Soccerway person ID |
+| [P6131](https://www.wikidata.org/wiki/Property:P6131) | Soccerway team ID |
+| [P12302](https://www.wikidata.org/wiki/Property:P12302) | Sofascore player ID |
+| [P8259](https://www.wikidata.org/wiki/Property:P8259) | Flashscore player ID |
+| [P8736](https://www.wikidata.org/wiki/Property:P8736) | Opta player ID |
+| [P8737](https://www.wikidata.org/wiki/Property:P8737) | Opta team ID |
+| [P12539](https://www.wikidata.org/wiki/Property:P12539) | Premier League player ID |
+| [P12551](https://www.wikidata.org/wiki/Property:P12551) | 11v11 player ID |
+| [P3681](https://www.wikidata.org/wiki/Property:P3681) | ESPN FC player ID |
+| [P2574](https://www.wikidata.org/wiki/Property:P2574) | National Football Teams ID |
+| [P2020](https://www.wikidata.org/wiki/Property:P2020) | WorldFootball.net ID |
+| [P2193](https://www.wikidata.org/wiki/Property:P2193) | Soccerbase player ID |
+
+## Updates
+
+The register is rebuilt weekly from Wikidata. Each release picks up new entities, updated IDs, and corrections made by the Wikidata community.
+
+## Contributing
+
+The best way to improve this register is to **edit Wikidata directly**. If a player is missing a Transfermarkt ID or FBref ID, add it to their Wikidata page. The next weekly build will pick it up automatically.
+
+- [How to edit Wikidata](https://www.wikidata.org/wiki/Wikidata:Introduction)
+- [Add an external identifier](https://www.wikidata.org/wiki/Help:Statements#Adding_statements)
+
+## License
+
+The data is derived from [Wikidata](https://www.wikidata.org/) and is available under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
