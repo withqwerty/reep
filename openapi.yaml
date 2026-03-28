@@ -1,0 +1,240 @@
+openapi: 3.0.3
+info:
+  title: The Reep Register
+  description: |
+    The football entity register. Resolve player, team, and coach IDs across
+    Transfermarkt, FBref, Sofascore, Opta, and 10+ data providers.
+
+    475,000+ entities with cross-provider ID mappings sourced from Wikidata.
+    Updated weekly.
+
+    Free CSV download: https://github.com/withqwerty/reep
+  version: 1.0.0
+  contact:
+    name: withqwerty
+    url: https://github.com/withqwerty/reep
+
+servers:
+  - url: https://reep-api.withqwerty.workers.dev
+
+paths:
+  /search:
+    get:
+      operationId: searchEntities
+      summary: Search entities by name
+      description: Fuzzy search across players, teams, and coaches by name or alias.
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          example: Cole Palmer
+          description: Name to search for (matches name and aliases)
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [player, team, coach]
+          description: Filter by entity type
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 25
+            maximum: 100
+          description: Maximum results to return
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+              example:
+                results:
+                  - qid: Q99760796
+                    type: player
+                    name_en: Cole Palmer
+                    aliases_en: Cole Jermaine Palmer
+                    date_of_birth: "2002-05-06"
+                    nationality: United Kingdom
+                    position: attacking midfielder
+                    external_ids:
+                      transfermarkt: "568177"
+                      fbref: dc7f8a28
+                      sofascore: "982780"
+                      soccerway: "525801"
+                count: 1
+
+  /lookup:
+    get:
+      operationId: lookupByQid
+      summary: Look up entity by Wikidata QID
+      description: Exact lookup by Wikidata QID. Returns full entity with all provider IDs and bio data.
+      parameters:
+        - name: qid
+          in: query
+          required: true
+          schema:
+            type: string
+          example: Q99760796
+          description: Wikidata QID
+      responses:
+        '200':
+          description: Entity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LookupResponse'
+
+  /resolve:
+    get:
+      operationId: resolveProviderId
+      summary: Resolve a provider ID to all other IDs
+      description: |
+        Given a provider name and ID, find the entity and return all cross-provider IDs.
+        This is the core use case: "I have a Transfermarkt ID, what's the FBref ID?"
+      parameters:
+        - name: provider
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - transfermarkt
+              - transfermarkt_manager
+              - fbref
+              - soccerway
+              - sofascore
+              - flashscore
+              - opta
+              - premier_league
+              - 11v11
+              - espn
+              - national_football_teams
+              - worldfootball
+              - soccerbase
+              - kicker
+          example: transfermarkt
+          description: Source provider name
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "568177"
+          description: ID from the source provider
+      responses:
+        '200':
+          description: Resolved entity with all provider IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LookupResponse'
+
+  /stats:
+    get:
+      operationId: getStats
+      summary: Database statistics
+      description: Returns entity counts by type and ID coverage by provider.
+      responses:
+        '200':
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+              example:
+                total_entities: 475017
+                by_type:
+                  player: 386025
+                  team: 45349
+                  coach: 43643
+                by_provider:
+                  transfermarkt: 320000
+                  fbref: 180000
+                  soccerway: 160000
+
+components:
+  schemas:
+    Entity:
+      type: object
+      properties:
+        qid:
+          type: string
+          description: Wikidata QID
+        type:
+          type: string
+          enum: [player, team, coach]
+        name_en:
+          type: string
+        aliases_en:
+          type: string
+          nullable: true
+        full_name:
+          type: string
+          nullable: true
+        date_of_birth:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        position:
+          type: string
+          nullable: true
+        height_cm:
+          type: number
+          nullable: true
+        country:
+          type: string
+          nullable: true
+          description: For teams only
+        founded:
+          type: string
+          nullable: true
+          description: For teams only
+        stadium:
+          type: string
+          nullable: true
+          description: For teams only
+        external_ids:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of provider name to external ID
+
+    SearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entity'
+        count:
+          type: integer
+
+    LookupResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entity'
+
+    StatsResponse:
+      type: object
+      properties:
+        total_entities:
+          type: integer
+        by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        by_provider:
+          type: object
+          additionalProperties:
+            type: integer

@@ -1,0 +1,26 @@
+{
+  "name": "reep",
+  "version": "1.0.0",
+  "description": "The football entity register. Maps player, team, and coach identities across Transfermarkt, FBref, Sofascore, Opta, and 10+ data providers.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/withqwerty/reep.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/withqwerty/reep/issues"
+  },
+  "homepage": "https://github.com/withqwerty/reep#readme",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260317.1",
+    "typescript": "^6.0.2",
+    "wrangler": "^4.78.0"
+  }
+}
