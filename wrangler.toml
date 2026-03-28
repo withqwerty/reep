@@ -1,0 +1,6 @@
+name = "reep"
+
+[[d1_databases]]
+binding = "FOOTBALL_ENTITIES"
+database_name = "football-entities"
+database_id = "52cf53a2-7453-4ae5-a149-f43c360514ad"

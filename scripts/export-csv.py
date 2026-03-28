@@ -17,7 +17,7 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 
-DEFAULT_SOURCE = Path(__file__).parent.parent.parent / "myteam-website" / "data" / "wikidata"
+DEFAULT_SOURCE = Path(__file__).parent.parent / "data" / "json"
 OUTPUT_DIR = Path(__file__).parent.parent / "data"
 
 # Column order for people.csv

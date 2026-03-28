@@ -1,0 +1,75 @@
+name: Update Register
+
+on:
+  schedule:
+    # Weekly on Mondays at 04:00 UTC
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      enrich_bio:
+        description: 'Include bio enrichment (DOB, nationality, position, aliases). Adds ~90min.'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install wrangler
+        run: npm install -g wrangler
+
+      # Step 1: Extract from Wikidata
+      - name: Extract entities from Wikidata
+        env:
+          ENRICH_BIO: ${{ inputs.enrich_bio }}
+        run: |
+          FLAGS="--ids-only"
+          if [ "$ENRICH_BIO" = "true" ]; then
+            FLAGS=""
+          fi
+          python scripts/fetch-wikidata-entities.py $FLAGS
+
+      # Step 2: Seed into D1
+      - name: Seed into D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: python scripts/seed-wikidata-d1.py
+
+      # Step 3: Verify D1
+      - name: Verify D1 counts
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler d1 execute football-entities --remote \
+            --command="SELECT type, COUNT(*) as count FROM entities GROUP BY type;"
+
+      # Step 4: Export to CSV
+      - name: Export CSVs
+        run: python scripts/export-csv.py
+
+      # Step 5: Commit and push
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No data changes"
+          else
+            git commit -m "data: weekly register update"
+            git push
+          fi
