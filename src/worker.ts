@@ -76,6 +76,21 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
+// Fetch all IDs for a QID (Wikidata + custom, merged)
+async function fetchAllIds(db: D1Database, qid: string): Promise<Record<string, string>> {
+  const [wikidata, custom] = await Promise.all([
+    db.prepare("SELECT provider, external_id FROM external_ids WHERE qid = ?").bind(qid).all(),
+    db.prepare("SELECT provider, external_id FROM custom_ids WHERE qid = ?").bind(qid).all(),
+  ]);
+  // Wikidata IDs first, custom IDs fill gaps (don't overwrite)
+  const ids: Record<string, string> = {};
+  for (const r of wikidata.results) ids[r.provider as string] = r.external_id as string;
+  for (const r of custom.results) {
+    if (!(r.provider as string in ids)) ids[r.provider as string] = r.external_id as string;
+  }
+  return ids;
+}
+
 // GET /lookup?qid=Q99760796
 async function handleLookup(
   params: URLSearchParams,
@@ -98,20 +113,10 @@ async function handleLookup(
 
   if (!entity) return json({ results: [] });
 
-  const ids = await db
-    .prepare("SELECT provider, external_id FROM external_ids WHERE qid = ?")
-    .bind(qid)
-    .all();
+  const external_ids = await fetchAllIds(db, qid);
 
   return json({
-    results: [
-      {
-        ...entity,
-        external_ids: Object.fromEntries(
-          ids.results.map((r) => [r.provider, r.external_id]),
-        ),
-      },
-    ],
+    results: [{ ...entity, external_ids }],
   });
 }
 
@@ -150,20 +155,10 @@ async function handleSearch(
     .all();
 
   const results = await Promise.all(
-    entities.results.map(async (e) => {
-      const ids = await db
-        .prepare(
-          "SELECT provider, external_id FROM external_ids WHERE qid = ?",
-        )
-        .bind(e.qid)
-        .all();
-      return {
-        ...e,
-        external_ids: Object.fromEntries(
-          ids.results.map((r) => [r.provider, r.external_id]),
-        ),
-      };
-    }),
+    entities.results.map(async (e) => ({
+      ...e,
+      external_ids: await fetchAllIds(db, e.qid as string),
+    })),
   );
 
   return json({ results, count: results.length });
@@ -202,12 +197,18 @@ async function handleResolve(
     );
   }
 
-  const match = await db
-    .prepare(
-      "SELECT qid FROM external_ids WHERE provider = ? AND external_id = ?",
-    )
+  // Check both tables for the provider+id
+  let match = await db
+    .prepare("SELECT qid FROM external_ids WHERE provider = ? AND external_id = ?")
     .bind(provider, id)
     .first();
+
+  if (!match) {
+    match = await db
+      .prepare("SELECT qid FROM custom_ids WHERE provider = ? AND external_id = ?")
+      .bind(provider, id)
+      .first();
+  }
 
   if (!match) return json({ results: [] });
 
@@ -218,29 +219,29 @@ async function handleResolve(
 
 // GET /stats
 async function handleStats(db: D1Database): Promise<Response> {
-  const counts = await db
-    .prepare(
-      "SELECT type, COUNT(*) as count FROM entities GROUP BY type",
-    )
-    .all();
+  const [counts, idCounts, customCounts, total] = await Promise.all([
+    db.prepare("SELECT type, COUNT(*) as count FROM entities GROUP BY type").all(),
+    db.prepare("SELECT provider, COUNT(*) as count FROM external_ids GROUP BY provider ORDER BY count DESC").all(),
+    db.prepare("SELECT provider, COUNT(*) as count FROM custom_ids GROUP BY provider ORDER BY count DESC").all(),
+    db.prepare("SELECT COUNT(*) as total FROM entities").first(),
+  ]);
 
-  const idCounts = await db
-    .prepare(
-      "SELECT provider, COUNT(*) as count FROM external_ids GROUP BY provider ORDER BY count DESC",
-    )
-    .all();
+  // Merge provider counts from both tables
+  const byProvider: Record<string, number> = {};
+  for (const r of idCounts.results) byProvider[r.provider as string] = r.count as number;
+  for (const r of customCounts.results) {
+    const p = r.provider as string;
+    byProvider[p] = (byProvider[p] ?? 0) + (r.count as number);
+  }
 
-  const total = await db
-    .prepare("SELECT COUNT(*) as total FROM entities")
-    .first();
+  const customTotal = await db.prepare("SELECT COUNT(*) as total FROM custom_ids").first();
 
   return json({
     total_entities: total?.total,
-    by_type: Object.fromEntries(
-      counts.results.map((r) => [r.type, r.count]),
-    ),
+    by_type: Object.fromEntries(counts.results.map((r) => [r.type, r.count])),
     by_provider: Object.fromEntries(
-      idCounts.results.map((r) => [r.provider, r.count]),
+      Object.entries(byProvider).sort(([, a], [, b]) => b - a),
     ),
+    custom_ids_count: customTotal?.total ?? 0,
   });
 }
