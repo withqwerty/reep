@@ -82,7 +82,7 @@ Not every entity has every ID. Coverage depends on what the Wikidata community h
 | Opta | Sparse | Few entries have Opta IDs in Wikidata |
 | Premier League | Decent | PL players only |
 
-**Not in Wikidata:** WhoScored, Wyscout, Understat, and FotMob have no Wikidata properties. If you need those, you'll need to fuzzy-match via name + team using this register as a bridge.
+**Not in Wikidata CSVs:** WhoScored, Understat, FotMob, and Wyscout have no Wikidata properties, so they're not in the CSV downloads. However, the [Reep API](#api) includes proprietary mappings for WhoScored, Understat, Opta Code (FPL), Club Elo, SportMonks, and API-Football.
 
 ## Usage
 
@@ -136,6 +136,43 @@ SELECT * FROM people WHERE name LIKE '%Salah%';
 
 -- Reverse lookup: FBref ID -> everything
 SELECT * FROM people WHERE key_fbref = 'e342ad68';
+```
+
+## API
+
+The Reep API provides the same data as the CSVs, plus proprietary provider mappings not available in the free download.
+
+**Base URL:** `https://reep-api.rahulkeerthi2-95d.workers.dev`
+
+| Endpoint | Description | Example |
+|----------|-------------|---------|
+| `GET /search` | Search by name | `/search?name=Cole Palmer&type=player` |
+| `GET /resolve` | Translate provider ID | `/resolve?provider=transfermarkt&id=568177` |
+| `GET /lookup` | Look up by Wikidata QID | `/lookup?qid=Q99760796` |
+| `GET /stats` | Database statistics | `/stats` |
+
+**API-exclusive providers** (not in CSVs): Understat, WhoScored, Opta Code (FPL), Club Elo, SportMonks, API-Football.
+
+Available on [RapidAPI](https://rapidapi.com/withqwerty-Default/api/the-reep-register) with free and paid tiers.
+
+## CLI
+
+```bash
+# Search by name
+python cli/reep.py search "Cole Palmer"
+
+# Resolve: Transfermarkt -> all IDs
+python cli/reep.py resolve transfermarkt 568177
+
+# Translate: just output the target ID (pipe-friendly)
+python cli/reep.py translate transfermarkt 568177 fbref
+# dc7f8a28
+
+# Download CSVs for offline use
+python cli/reep.py download
+
+# Search offline
+python cli/reep.py local "Salah"
 ```
 
 ## Source
