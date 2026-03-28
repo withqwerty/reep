@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reep"
+version = "0.1.0"
+description = "The Football Entity Register — cross-provider ID lookup for players, teams, and coaches"
+readme = "../README.md"
+license = "CC0-1.0"
+requires-python = ">=3.9"
+authors = [{ name = "withqwerty" }]
+keywords = ["football", "soccer", "transfermarkt", "fbref", "sofascore", "opta", "entity-resolution"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://github.com/withqwerty/reep"
+Repository = "https://github.com/withqwerty/reep"
+
+[project.scripts]
+reep = "reep:main"
