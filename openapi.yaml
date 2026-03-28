@@ -122,6 +122,7 @@ paths:
               - kicker
               - clubelo
               - sportmonks
+              - api_football
           example: transfermarkt
           description: Source provider name
         - name: id
