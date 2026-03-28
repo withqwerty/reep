@@ -5,10 +5,12 @@ info:
     The football entity register. Resolve player, team, and coach IDs across
     Transfermarkt, FBref, Sofascore, Opta, and 10+ data providers.
 
-    475,000+ entities with cross-provider ID mappings sourced from Wikidata.
+    475,000+ entities with cross-provider ID mappings sourced from Wikidata,
+    plus proprietary mappings for Club Elo, SportMonks, and more.
     Updated weekly.
 
-    Free CSV download: https://github.com/withqwerty/reep
+    The API includes extended provider coverage beyond the free CSV download.
+    Free CSV (Wikidata IDs only): https://github.com/withqwerty/reep
   version: 1.0.0
   contact:
     name: withqwerty
@@ -118,6 +120,8 @@ paths:
               - worldfootball
               - soccerbase
               - kicker
+              - clubelo
+              - sportmonks
           example: transfermarkt
           description: Source provider name
         - name: id
