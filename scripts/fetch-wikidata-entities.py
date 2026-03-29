@@ -40,6 +40,17 @@ PLAYER_IDS = {
     "worldfootball": "P2020",
     "soccerbase": "P2193",
     "kicker": "P8912",
+    # New providers
+    "uefa": "P2276",
+    "lequipe": "P3665",
+    "fff_fr": "P9264",
+    "serie_a": "P13064",
+    "besoccer": "P12577",
+    "footballdatabase_eu": "P3537",
+    "eu_football_info": "P3726",
+    "hugman": "P12606",
+    "german_fa": "P4023",
+    "statmuse_pl": "P12567",
 }
 
 TEAM_IDS = {
@@ -48,6 +59,14 @@ TEAM_IDS = {
     "soccerway": "P6131",
     "opta": "P8737",
     "espn": "P13590",
+    # New providers
+    "kicker": "P12312",
+    "flashscore": "P7876",
+    "sofascore": "P13897",
+    "soccerbase": "P7454",
+    "uefa": "P7361",
+    "footballdatabase_eu": "P7351",
+    "worldfootball": "P7287",
 }
 
 COACH_IDS = {

@@ -45,6 +45,17 @@ PEOPLE_COLUMNS = [
     "key_worldfootball",
     "key_soccerbase",
     "key_kicker",
+    # New providers
+    "key_uefa",
+    "key_lequipe",
+    "key_fff_fr",
+    "key_serie_a",
+    "key_besoccer",
+    "key_footballdatabase_eu",
+    "key_eu_football_info",
+    "key_hugman",
+    "key_german_fa",
+    "key_statmuse_pl",
 ]
 
 # Column order for teams.csv
@@ -59,6 +70,14 @@ TEAM_COLUMNS = [
     "key_fbref",
     "key_soccerway",
     "key_opta",
+    # New providers
+    "key_kicker",
+    "key_flashscore",
+    "key_sofascore",
+    "key_soccerbase",
+    "key_uefa",
+    "key_footballdatabase_eu",
+    "key_worldfootball",
     "key_espn",
 ]
 
