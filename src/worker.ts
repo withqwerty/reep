@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database;
   RAPIDAPI_PROXY_SECRET?: string;
+  BYPASS_KEY?: string;
 }
 
 const CORS = {
@@ -24,15 +25,14 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // RapidAPI proxy secret validation (if configured)
-    if (env.RAPIDAPI_PROXY_SECRET) {
-      const proxySecret = request.headers.get("X-RapidAPI-Proxy-Secret");
-      if (proxySecret !== env.RAPIDAPI_PROXY_SECRET) {
-        // Allow direct access too (free tier) -- only block if header is present but wrong
-        if (proxySecret) {
-          return json({ error: "Unauthorized" }, 401);
-        }
-      }
+    // Auth: RapidAPI proxy secret or bypass key for internal use
+    const proxySecret = request.headers.get("X-RapidAPI-Proxy-Secret");
+    const bypassKey = request.headers.get("X-Reep-Key");
+    const isRapidApi = env.RAPIDAPI_PROXY_SECRET && proxySecret === env.RAPIDAPI_PROXY_SECRET;
+    const isBypass = env.BYPASS_KEY && bypassKey === env.BYPASS_KEY;
+
+    if (env.RAPIDAPI_PROXY_SECRET && !isRapidApi && !isBypass) {
+      return json({ error: "Unauthorized. Subscribe at https://rapidapi.com/withqwerty-Default/api/the-reep-register" }, 401);
     }
 
     if (path === "/" || path === "") {
@@ -49,7 +49,7 @@ export default {
       });
     }
 
-    const paid = isPaidPlan(request);
+    const paid = isPaidPlan(request) || !!isBypass;
 
     if (path === "/lookup") {
       return handleLookup(url.searchParams, env.DB, paid);
