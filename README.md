@@ -172,7 +172,7 @@ The Reep API provides the same data as the CSVs, plus proprietary provider mappi
 
 **API-exclusive providers** (not in CSVs): Understat, WhoScored, Opta Code (FPL), Club Elo, SportMonks, API-Football.
 
-Available on [RapidAPI](https://rapidapi.com/withqwerty-Default/api/the-reep-register) with free and paid tiers.
+Available on [RapidAPI](https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register) with free and paid tiers.
 
 ## CLI
 

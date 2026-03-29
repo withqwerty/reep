@@ -32,7 +32,7 @@ export default {
     const isBypass = env.BYPASS_KEY && bypassKey === env.BYPASS_KEY;
 
     if (env.RAPIDAPI_PROXY_SECRET && !isRapidApi && !isBypass) {
-      return json({ error: "Unauthorized. Subscribe at https://rapidapi.com/withqwerty-Default/api/the-reep-register" }, 401);
+      return json({ error: "Unauthorized. Subscribe at https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" }, 401);
     }
 
     if (path === "/" || path === "") {
