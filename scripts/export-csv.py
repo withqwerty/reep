@@ -56,6 +56,7 @@ PEOPLE_COLUMNS = [
     "key_hugman",
     "key_german_fa",
     "key_statmuse_pl",
+    "key_sofifa",
 ]
 
 # Column order for teams.csv

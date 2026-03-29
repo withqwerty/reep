@@ -51,6 +51,7 @@ PLAYER_IDS = {
     "hugman": "P12606",
     "german_fa": "P4023",
     "statmuse_pl": "P12567",
+    "sofifa": "P1469",
 }
 
 TEAM_IDS = {

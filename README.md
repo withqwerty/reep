@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/withqwerty/reep/actions/workflows/ci.yml/badge.svg)](https://github.com/withqwerty/reep/actions/workflows/ci.yml)
 
+![Charles Reep's match notations from 1953](https://ichef.bbci.co.uk/ace/standard/624/cpsprodpb/FC93/production/_124995646_bbc1953notations.jpg)
+
 The football entity register. Maps player, team, and coach identities across Transfermarkt, FBref, UEFA, Sofascore, and 25+ data providers.
 
 Named after [Charles Reep](https://en.wikipedia.org/wiki/Charles_Reep) (1904--2002), an RAF wing commander who hand-recorded every action in over 2,200 football matches starting in the 1950s. He's considered the grandfather of football analytics -- decades before expected goals or tracking data, Reep was tallying passes, shots, and sequences with pen and paper, pioneering the idea that football could be understood through data.
@@ -57,6 +59,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_hugman` | [Barry Hugman's Footballers](https://www.barryhugmansfootballers.com/) ID | — |
 | `key_german_fa` | [DFB](https://www.dfb.de/) person ID | — |
 | `key_statmuse_pl` | [StatMuse](https://www.statmuse.com/) PL player ID | — |
+| `key_sofifa` | [SoFIFA](https://sofifa.com/) / EA FC player ID | — |
 
 ### Teams schema
 
@@ -236,6 +239,7 @@ All data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wik
 | [P13897](https://www.wikidata.org/wiki/Property:P13897) | Sofascore team ID |
 | [P7454](https://www.wikidata.org/wiki/Property:P7454) | Soccerbase team ID |
 | [P7287](https://www.wikidata.org/wiki/Property:P7287) | WorldFootball.net team ID |
+| [P1469](https://www.wikidata.org/wiki/Property:P1469) | SoFIFA / EA FC player ID |
 
 ## Updates
 
