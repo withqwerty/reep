@@ -59,6 +59,8 @@ PEOPLE_COLUMNS = [
     "key_german_fa",
     "key_statmuse_pl",
     "key_sofifa",
+    "key_soccerdonna",
+    "key_dongqiudi",
     # Custom verified providers (sourced outside Wikidata)
     "key_understat",
     "key_whoscored",
@@ -88,6 +90,7 @@ TEAM_COLUMNS = [
     "key_footballdatabase_eu",
     "key_worldfootball",
     "key_espn",
+    "key_playmakerstats",
     # Custom verified providers (sourced outside Wikidata)
     "key_clubelo",
     "key_sportmonks",

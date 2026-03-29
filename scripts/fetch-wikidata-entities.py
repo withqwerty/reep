@@ -26,6 +26,19 @@ USER_AGENT = "reep-football-register/1.0 (https://github.com/withqwerty/reep)"
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "json"
 
 # External ID properties per entity type
+#
+# Excluded Wikidata properties (reviewed and skipped):
+#   P12924  365scores player ID          — only 200 entities, too small
+#   P12939  365scores team ID            — only 6 entities
+#   P13901  Foot Mercato player ID       — only 296 entities, too small
+#   P12758  Transfermarkt competition ID — only 13, competition entity type not supported
+#   P13665  FBref match ID              — only 4 entities, match entity type not supported
+#   P7455   Transfermarkt match ID      — 26K but match entity type not supported yet
+#   P7460   Flashscore match ID         — only 22 entities
+#   P8735   Opta competition ID         — only 53 entities
+#   P13664  FBref competition ID        — 148 entities, competition entity type not supported yet
+#   P5628   Football.it female player   — redundant with Soccerdonna (P4381)
+#   P7878   Soccerdonna team ID         — not checked, women's team coverage TBD
 PLAYER_IDS = {
     "transfermarkt": "P2446",
     "fbref": "P5750",
@@ -52,6 +65,8 @@ PLAYER_IDS = {
     "german_fa": "P4023",
     "statmuse_pl": "P12567",
     "sofifa": "P1469",
+    "soccerdonna": "P4381",
+    "dongqiudi": "P11379",
 }
 
 TEAM_IDS = {
@@ -68,6 +83,7 @@ TEAM_IDS = {
     "uefa": "P7361",
     "footballdatabase_eu": "P7351",
     "worldfootball": "P7287",
+    "playmakerstats": "P7280",
 }
 
 COACH_IDS = {
@@ -76,6 +92,7 @@ COACH_IDS = {
     "fbref": "P5750",
     "soccerway": "P2369",
     "soccerbase": "P2195",
+    "soccerdonna": "P8134",
 }
 
 BIO_BATCH_SIZE = 200  # QIDs per bio-detail batch

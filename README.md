@@ -60,6 +60,8 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_german_fa` | [DFB](https://www.dfb.de/) person ID | — |
 | `key_statmuse_pl` | [StatMuse](https://www.statmuse.com/) PL player ID | — |
 | `key_sofifa` | [SoFIFA](https://sofifa.com/) / EA FC player ID | — |
+| `key_soccerdonna` | [Soccerdonna](https://www.soccerdonna.de/) player ID (women's football) | — |
+| `key_dongqiudi` | [Dongqiudi](https://www.dongqiudi.com/) player ID | — |
 | `key_understat` | [Understat](https://understat.com/) player ID | `1234` |
 | `key_whoscored` | [WhoScored](https://www.whoscored.com/) player ID | `456789` |
 | `key_fbref_verified` | FBref ID (cross-verified via worldfootballR) | `dc7f8a28` |
@@ -87,6 +89,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_footballdatabase_eu` | FootballDatabase.eu team ID | — |
 | `key_worldfootball` | WorldFootball.net team ID | — |
 | `key_espn` | ESPN team ID | — |
+| `key_playmakerstats` | [PlaymakerStats](https://www.playmakerstats.com/) team ID | — |
 | `key_clubelo` | [Club Elo](http://clubelo.com/) team ID | `Arsenal` |
 | `key_sportmonks` | SportMonks team ID | `123` |
 | `key_api_football` | API-Football team ID | `42` |
@@ -252,6 +255,10 @@ All data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wik
 | [P7454](https://www.wikidata.org/wiki/Property:P7454) | Soccerbase team ID |
 | [P7287](https://www.wikidata.org/wiki/Property:P7287) | WorldFootball.net team ID |
 | [P1469](https://www.wikidata.org/wiki/Property:P1469) | SoFIFA / EA FC player ID |
+| [P4381](https://www.wikidata.org/wiki/Property:P4381) | Soccerdonna player ID (women's football) |
+| [P8134](https://www.wikidata.org/wiki/Property:P8134) | Soccerdonna coach ID |
+| [P11379](https://www.wikidata.org/wiki/Property:P11379) | Dongqiudi player ID |
+| [P7280](https://www.wikidata.org/wiki/Property:P7280) | PlaymakerStats team ID |
 
 ## Updates
 
