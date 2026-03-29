@@ -1,5 +1,7 @@
 # Reep
 
+[![CI](https://github.com/withqwerty/reep/actions/workflows/ci.yml/badge.svg)](https://github.com/withqwerty/reep/actions/workflows/ci.yml)
+
 The football entity register. Maps player, team, and coach identities across Transfermarkt, FBref, UEFA, Sofascore, and 25+ data providers.
 
 Named after [Charles Reep](https://en.wikipedia.org/wiki/Charles_Reep) (1904--2002), an RAF wing commander who hand-recorded every action in over 2,200 football matches starting in the 1950s. He's considered the grandfather of football analytics -- decades before expected goals or tracking data, Reep was tallying passes, shots, and sequences with pen and paper, pioneering the idea that football could be understood through data.
