@@ -45,6 +45,16 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_worldfootball` | [WorldFootball.net](https://www.worldfootball.net/) ID | `cole-palmer` |
 | `key_soccerbase` | [Soccerbase](https://www.soccerbase.com/) player ID | `125454` |
 | `key_kicker` | [Kicker](https://www.kicker.de/) player ID | `cole-palmer` |
+| `key_uefa` | [UEFA](https://www.uefa.com/) player ID | — |
+| `key_lequipe` | [L'Equipe](https://www.lequipe.fr/) player ID | — |
+| `key_fff_fr` | [FFF.fr](https://www.fff.fr/) player ID | — |
+| `key_serie_a` | [Lega Serie A](https://www.legaseriea.it/) player ID | — |
+| `key_besoccer` | [BeSoccer](https://www.besoccer.com/) player ID | — |
+| `key_footballdatabase_eu` | [FootballDatabase.eu](https://www.footballdatabase.eu/) person ID | — |
+| `key_eu_football_info` | [EU-Football.info](https://eu-football.info/) player ID | — |
+| `key_hugman` | [Barry Hugman's Footballers](https://www.barryhugmansfootballers.com/) ID | — |
+| `key_german_fa` | [DFB](https://www.dfb.de/) person ID | — |
+| `key_statmuse_pl` | [StatMuse](https://www.statmuse.com/) PL player ID | — |
 
 ### Teams schema
 
@@ -59,6 +69,13 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_fbref` | FBref squad ID | `18bb7c10` |
 | `key_soccerway` | Soccerway team ID | `660` |
 | `key_opta` | Opta team ID | — |
+| `key_kicker` | Kicker team ID | — |
+| `key_flashscore` | Flashscore team ID | — |
+| `key_sofascore` | Sofascore team ID | — |
+| `key_soccerbase` | Soccerbase team ID | — |
+| `key_uefa` | UEFA team ID | — |
+| `key_footballdatabase_eu` | FootballDatabase.eu team ID | — |
+| `key_worldfootball` | WorldFootball.net team ID | — |
 | `key_espn` | ESPN team ID | — |
 
 ### Names schema
@@ -200,6 +217,23 @@ All data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wik
 | [P2574](https://www.wikidata.org/wiki/Property:P2574) | National Football Teams ID |
 | [P2020](https://www.wikidata.org/wiki/Property:P2020) | WorldFootball.net ID |
 | [P2193](https://www.wikidata.org/wiki/Property:P2193) | Soccerbase player ID |
+| [P2276](https://www.wikidata.org/wiki/Property:P2276) | UEFA player ID |
+| [P7361](https://www.wikidata.org/wiki/Property:P7361) | UEFA team ID |
+| [P3665](https://www.wikidata.org/wiki/Property:P3665) | L'Equipe player ID |
+| [P9264](https://www.wikidata.org/wiki/Property:P9264) | FFF.fr player ID |
+| [P13064](https://www.wikidata.org/wiki/Property:P13064) | Lega Serie A player ID |
+| [P12577](https://www.wikidata.org/wiki/Property:P12577) | BeSoccer player ID |
+| [P3537](https://www.wikidata.org/wiki/Property:P3537) | FootballDatabase.eu person ID |
+| [P7351](https://www.wikidata.org/wiki/Property:P7351) | FootballDatabase.eu team ID |
+| [P3726](https://www.wikidata.org/wiki/Property:P3726) | EU-Football.info player ID |
+| [P12606](https://www.wikidata.org/wiki/Property:P12606) | Barry Hugman's Footballers ID |
+| [P4023](https://www.wikidata.org/wiki/Property:P4023) | German FA person ID |
+| [P12567](https://www.wikidata.org/wiki/Property:P12567) | StatMuse PL player ID |
+| [P12312](https://www.wikidata.org/wiki/Property:P12312) | Kicker team ID |
+| [P7876](https://www.wikidata.org/wiki/Property:P7876) | Flashscore team ID |
+| [P13897](https://www.wikidata.org/wiki/Property:P13897) | Sofascore team ID |
+| [P7454](https://www.wikidata.org/wiki/Property:P7454) | Soccerbase team ID |
+| [P7287](https://www.wikidata.org/wiki/Property:P7287) | WorldFootball.net team ID |
 
 ## Updates
 
