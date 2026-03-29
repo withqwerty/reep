@@ -6,7 +6,7 @@ export interface Env {
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
@@ -18,12 +18,13 @@ export default {
       return new Response(null, { headers: CORS });
     }
 
-    if (request.method !== "GET") {
-      return json({ error: "Method not allowed" }, 405);
-    }
-
     const url = new URL(request.url);
     const path = url.pathname;
+    const method = request.method;
+
+    if (method !== "GET" && method !== "POST") {
+      return json({ error: "Method not allowed" }, 405);
+    }
 
     // Auth: RapidAPI proxy secret or bypass key for internal use
     const proxySecret = request.headers.get("X-RapidAPI-Proxy-Secret");
@@ -41,30 +42,38 @@ export default {
         version: "1.0.0",
         docs: "https://github.com/withqwerty/reep",
         endpoints: {
-          "/lookup": "Look up an entity by Wikidata QID",
-          "/search": "Search entities by name",
-          "/resolve": "Resolve a provider ID to all other provider IDs",
-          "/stats": "Database statistics",
+          "GET /lookup": "Look up an entity by Wikidata QID",
+          "GET /search": "Search entities by name",
+          "GET /resolve": "Resolve a provider ID to all other provider IDs",
+          "GET /stats": "Database statistics",
+          "POST /batch/lookup": "Look up multiple QIDs in one request (max 100)",
+          "POST /batch/resolve": "Resolve multiple provider IDs in one request (max 100)",
         },
       });
     }
 
-    const paid = isPaidPlan(request) || !!isBypass;
-
-    if (path === "/lookup") {
-      return handleLookup(url.searchParams, env.DB, paid);
+    if (method === "GET" && path === "/lookup") {
+      return handleLookup(url.searchParams, env.DB);
     }
 
-    if (path === "/search") {
-      return handleSearch(url.searchParams, env.DB, paid);
+    if (method === "GET" && path === "/search") {
+      return handleSearch(url.searchParams, env.DB);
     }
 
-    if (path === "/resolve") {
-      return handleResolve(url.searchParams, env.DB, paid);
+    if (method === "GET" && path === "/resolve") {
+      return handleResolve(url.searchParams, env.DB);
     }
 
-    if (path === "/stats") {
-      return handleStats(env.DB, paid);
+    if (method === "GET" && path === "/stats") {
+      return handleStats(env.DB);
+    }
+
+    if (method === "POST" && path === "/batch/lookup") {
+      return handleBatchLookup(request, env.DB);
+    }
+
+    if (method === "POST" && path === "/batch/resolve") {
+      return handleBatchResolve(request, env.DB);
     }
 
     return json({ error: "Not found" }, 404);
@@ -78,30 +87,18 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
-// Check if request is from a paid RapidAPI plan
-function isPaidPlan(request: Request): boolean {
-  const plan = request.headers.get("X-RapidAPI-Subscription");
-  return plan === "PRO" || plan === "ULTRA" || plan === "MEGA";
-}
-
-// Fetch IDs for a QID. Paid plans get Wikidata + custom, free gets Wikidata only.
-async function fetchAllIds(db: D1Database, qid: string, paid: boolean): Promise<Record<string, string>> {
-  const wikidata = await db
-    .prepare("SELECT provider, external_id FROM external_ids WHERE qid = ?")
-    .bind(qid)
-    .all();
+// Fetch all IDs for a QID from both Wikidata and custom sources.
+async function fetchAllIds(db: D1Database, qid: string): Promise<Record<string, string>> {
+  const [wikidata, custom] = await Promise.all([
+    db.prepare("SELECT provider, external_id FROM external_ids WHERE qid = ?").bind(qid).all(),
+    db.prepare("SELECT provider, external_id FROM custom_ids WHERE qid = ?").bind(qid).all(),
+  ]);
 
   const ids: Record<string, string> = {};
   for (const r of wikidata.results) ids[r.provider as string] = r.external_id as string;
-
-  if (paid) {
-    const custom = await db
-      .prepare("SELECT provider, external_id FROM custom_ids WHERE qid = ?")
-      .bind(qid)
-      .all();
-    for (const r of custom.results) {
-      if (!(r.provider as string in ids)) ids[r.provider as string] = r.external_id as string;
-    }
+  // Custom IDs fill gaps, don't overwrite Wikidata
+  for (const r of custom.results) {
+    if (!(r.provider as string in ids)) ids[r.provider as string] = r.external_id as string;
   }
 
   return ids;
@@ -111,7 +108,6 @@ async function fetchAllIds(db: D1Database, qid: string, paid: boolean): Promise<
 async function handleLookup(
   params: URLSearchParams,
   db: D1Database,
-  paid: boolean,
 ): Promise<Response> {
   const qid = params.get("qid");
   if (!qid) {
@@ -121,27 +117,16 @@ async function handleLookup(
     );
   }
 
-  const entity = await db
-    .prepare(
-      "SELECT qid, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_qid, height_cm, country, founded, stadium FROM entities WHERE qid = ?",
-    )
-    .bind(qid)
-    .first();
-
+  const entity = await lookupEntity(db, qid);
   if (!entity) return json({ results: [] });
 
-  const external_ids = await fetchAllIds(db, qid, paid);
-
-  return json({
-    results: [{ ...entity, external_ids }],
-  });
+  return json({ results: [entity] });
 }
 
 // GET /search?name=Cole+Palmer&type=player&limit=20
 async function handleSearch(
   params: URLSearchParams,
   db: D1Database,
-  paid: boolean,
 ): Promise<Response> {
   const name = params.get("name");
   if (!name) {
@@ -175,7 +160,7 @@ async function handleSearch(
   const results = await Promise.all(
     entities.results.map(async (e) => ({
       ...e,
-      external_ids: await fetchAllIds(db, e.qid as string, paid),
+      external_ids: await fetchAllIds(db, e.qid as string),
     })),
   );
 
@@ -186,7 +171,6 @@ async function handleSearch(
 async function handleResolve(
   params: URLSearchParams,
   db: D1Database,
-  paid: boolean,
 ): Promise<Response> {
   const provider = params.get("provider");
   const id = params.get("id");
@@ -199,6 +183,7 @@ async function handleResolve(
           "transfermarkt",
           "transfermarkt_manager",
           "fbref",
+          "fbref_verified",
           "soccerway",
           "sofascore",
           "flashscore",
@@ -210,52 +195,132 @@ async function handleResolve(
           "worldfootball",
           "soccerbase",
           "kicker",
+          "understat",
+          "whoscored",
+          "sportmonks",
+          "api_football",
+          "clubelo",
+          "sofifa",
         ],
       },
       400,
     );
   }
 
-  // Check Wikidata IDs first, then custom (paid only)
+  const entity = await resolveEntity(db, provider, id);
+  if (!entity) return json({ results: [] });
+
+  return json({ results: [entity] });
+}
+
+// Helper: look up a single entity by QID (shared by lookup and batch)
+async function lookupEntity(db: D1Database, qid: string): Promise<Record<string, unknown> | null> {
+  const entity = await db
+    .prepare(
+      "SELECT qid, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_qid, height_cm, country, founded, stadium FROM entities WHERE qid = ?",
+    )
+    .bind(qid)
+    .first();
+
+  if (!entity) return null;
+
+  const external_ids = await fetchAllIds(db, qid);
+  return { ...entity, external_ids };
+}
+
+// Helper: resolve a provider+id to an entity (shared by resolve and batch)
+async function resolveEntity(db: D1Database, provider: string, id: string): Promise<Record<string, unknown> | null> {
   let match = await db
     .prepare("SELECT qid FROM external_ids WHERE provider = ? AND external_id = ?")
     .bind(provider, id)
     .first();
 
-  if (!match && paid) {
+  if (!match) {
     match = await db
       .prepare("SELECT qid FROM custom_ids WHERE provider = ? AND external_id = ?")
       .bind(provider, id)
       .first();
   }
 
-  if (!match) return json({ results: [] });
+  if (!match) return null;
+  return lookupEntity(db, match.qid as string);
+}
 
-  // Delegate to lookup
-  const lookupParams = new URLSearchParams({ qid: match.qid as string });
-  return handleLookup(lookupParams, db, paid);
+const BATCH_MAX = 100;
+
+// POST /batch/lookup — body: { qids: ["Q99760796", "Q1354960", ...] }
+async function handleBatchLookup(request: Request, db: D1Database): Promise<Response> {
+  let body: { qids?: string[] };
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "Invalid JSON body" }, 400);
+  }
+
+  const qids = body.qids;
+  if (!Array.isArray(qids) || qids.length === 0) {
+    return json({ error: "Required: { qids: [\"Q99760796\", ...] }" }, 400);
+  }
+
+  if (qids.length > BATCH_MAX) {
+    return json({ error: `Maximum ${BATCH_MAX} QIDs per request` }, 400);
+  }
+
+  const results = await Promise.all(
+    qids.map(async (qid) => {
+      const entity = await lookupEntity(db, qid);
+      return entity ?? { qid, error: "not_found" };
+    }),
+  );
+
+  return json({ results, count: results.length });
+}
+
+// POST /batch/resolve — body: { items: [{ provider: "transfermarkt", id: "568177" }, ...] }
+async function handleBatchResolve(request: Request, db: D1Database): Promise<Response> {
+  let body: { items?: { provider: string; id: string }[] };
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "Invalid JSON body" }, 400);
+  }
+
+  const items = body.items;
+  if (!Array.isArray(items) || items.length === 0) {
+    return json({ error: 'Required: { items: [{ provider: "transfermarkt", id: "568177" }, ...] }' }, 400);
+  }
+
+  if (items.length > BATCH_MAX) {
+    return json({ error: `Maximum ${BATCH_MAX} items per request` }, 400);
+  }
+
+  const results = await Promise.all(
+    items.map(async ({ provider, id }) => {
+      if (!provider || !id) return { provider, id, error: "missing_fields" };
+      const entity = await resolveEntity(db, provider, id);
+      return entity ?? { provider, id, error: "not_found" };
+    }),
+  );
+
+  return json({ results, count: results.length });
 }
 
 // GET /stats
-async function handleStats(db: D1Database, paid: boolean): Promise<Response> {
-  const [counts, idCounts, customCounts, total] = await Promise.all([
+async function handleStats(db: D1Database): Promise<Response> {
+  const [counts, idCounts, customCounts, total, customTotal] = await Promise.all([
     db.prepare("SELECT type, COUNT(*) as count FROM entities GROUP BY type").all(),
     db.prepare("SELECT provider, COUNT(*) as count FROM external_ids GROUP BY provider ORDER BY count DESC").all(),
     db.prepare("SELECT provider, COUNT(*) as count FROM custom_ids GROUP BY provider ORDER BY count DESC").all(),
     db.prepare("SELECT COUNT(*) as total FROM entities").first(),
+    db.prepare("SELECT COUNT(*) as total FROM custom_ids").first(),
   ]);
 
   const byProvider: Record<string, number> = {};
   for (const r of idCounts.results) byProvider[r.provider as string] = r.count as number;
-
-  if (paid) {
-    for (const r of customCounts.results) {
-      const p = r.provider as string;
-      byProvider[p] = (byProvider[p] ?? 0) + (r.count as number);
-    }
+  for (const r of customCounts.results) {
+    const p = r.provider as string;
+    byProvider[p] = (byProvider[p] ?? 0) + (r.count as number);
   }
-
-  const customTotal = await db.prepare("SELECT COUNT(*) as total FROM custom_ids").first();
 
   return json({
     total_entities: total?.total,
@@ -263,7 +328,6 @@ async function handleStats(db: D1Database, paid: boolean): Promise<Response> {
     by_provider: Object.fromEntries(
       Object.entries(byProvider).sort(([, a], [, b]) => b - a),
     ),
-    custom_ids_count: paid ? (customTotal?.total ?? 0) : undefined,
-    ...(paid ? {} : { upgrade: "Paid plans include 839+ additional IDs from Club Elo, SportMonks, and API-Football" }),
+    custom_ids_count: customTotal?.total ?? 0,
   });
 }

@@ -4,7 +4,7 @@
 
 ![Charles Reep's match notations from 1953](https://ichef.bbci.co.uk/ace/standard/624/cpsprodpb/FC93/production/_124995646_bbc1953notations.jpg)
 
-The football entity register. Maps player, team, and coach identities across Transfermarkt, FBref, UEFA, Sofascore, and 25+ data providers.
+The football entity register. Maps player, team, and coach identities across Transfermarkt, FBref, UEFA, Sofascore, and 30+ data providers.
 
 Named after [Charles Reep](https://en.wikipedia.org/wiki/Charles_Reep) (1904--2002), an RAF wing commander who hand-recorded every action in over 2,200 football matches starting in the 1950s. He's considered the grandfather of football analytics -- decades before expected goals or tracking data, Reep was tallying passes, shots, and sequences with pen and paper, pioneering the idea that football could be understood through data.
 
@@ -60,6 +60,11 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_german_fa` | [DFB](https://www.dfb.de/) person ID | — |
 | `key_statmuse_pl` | [StatMuse](https://www.statmuse.com/) PL player ID | — |
 | `key_sofifa` | [SoFIFA](https://sofifa.com/) / EA FC player ID | — |
+| `key_understat` | [Understat](https://understat.com/) player ID | `1234` |
+| `key_whoscored` | [WhoScored](https://www.whoscored.com/) player ID | `456789` |
+| `key_fbref_verified` | FBref ID (cross-verified via worldfootballR) | `dc7f8a28` |
+| `key_sportmonks` | [SportMonks](https://www.sportmonks.com/) player ID | `12345` |
+| `key_api_football` | [API-Football](https://www.api-football.com/) player ID | `1100` |
 
 ### Teams schema
 
@@ -82,6 +87,10 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_footballdatabase_eu` | FootballDatabase.eu team ID | — |
 | `key_worldfootball` | WorldFootball.net team ID | — |
 | `key_espn` | ESPN team ID | — |
+| `key_clubelo` | [Club Elo](http://clubelo.com/) team ID | `Arsenal` |
+| `key_sportmonks` | SportMonks team ID | `123` |
+| `key_api_football` | API-Football team ID | `42` |
+| `key_sofifa` | SoFIFA / EA FC team ID | `1` |
 
 ### Names schema
 
@@ -93,18 +102,23 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 
 ## Coverage
 
-Not every entity has every ID. Coverage depends on what the Wikidata community has mapped:
+Not every entity has every ID. Coverage depends on what the Wikidata community has mapped plus custom verified mappings:
 
-| Provider | Player coverage | Notes |
-|----------|----------------|-------|
-| Transfermarkt | Best | Highest coverage across all entities |
-| FBref | Good | Strong for recent players |
-| Soccerway | Good | Broad international coverage |
-| Sofascore | Good | Modern players well covered |
-| Opta | Sparse | Few entries have Opta IDs in Wikidata |
-| Premier League | Decent | PL players only |
+| Provider | Player coverage | Source | Notes |
+|----------|----------------|--------|-------|
+| Transfermarkt | Best | Wikidata | Highest coverage across all entities |
+| FBref | Good | Wikidata | Strong for recent players |
+| Soccerway | Good | Wikidata | Broad international coverage |
+| Sofascore | Good | Wikidata | Modern players well covered |
+| Opta | Sparse | Wikidata | Few entries have Opta IDs in Wikidata |
+| Premier League | Decent | Wikidata | PL players only |
+| Understat | ~2.3K | Custom | Matched via Transfermarkt bridge |
+| WhoScored | ~2.3K | Custom | Matched via Transfermarkt bridge |
+| SportMonks | ~600 | Custom | Players + teams via TM bridge |
+| API-Football | Growing | Custom | Name + DOB matching |
+| Club Elo | ~176 teams | Custom | Manual team mapping |
 
-**Not in Wikidata CSVs:** WhoScored, Understat, FotMob, and Wyscout have no Wikidata properties, so they're not in the CSV downloads. However, the [Reep API](#api) includes proprietary mappings for WhoScored, Understat, Opta Code (FPL), Club Elo, SportMonks, and API-Football.
+IDs sourced from Wikidata are community-maintained. Custom IDs are verified independently — see the [Reep API](#api) for methodology details.
 
 ## Usage
 
@@ -162,7 +176,7 @@ SELECT * FROM people WHERE key_fbref = 'e342ad68';
 
 ## API
 
-The Reep API provides the same data as the CSVs, plus proprietary provider mappings not available in the free download.
+The Reep API provides the same data as the CSVs via a convenient REST interface. All providers (Wikidata + custom verified) are available to all plans.
 
 **Base URL:** `https://reep-api.rahulkeerthi2-95d.workers.dev`
 
@@ -173,9 +187,7 @@ The Reep API provides the same data as the CSVs, plus proprietary provider mappi
 | `GET /lookup` | Look up by Wikidata QID | `/lookup?qid=Q99760796` |
 | `GET /stats` | Database statistics | `/stats` |
 
-**API-exclusive providers** (not in CSVs): Understat, WhoScored, Opta Code (FPL), Club Elo, SportMonks, API-Football.
-
-Available on [RapidAPI](https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register) with free and paid tiers.
+Available on [RapidAPI](https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register).
 
 ## CLI
 

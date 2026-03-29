@@ -57,11 +57,18 @@ jobs:
           wrangler d1 execute football-entities --remote \
             --command="SELECT type, COUNT(*) as count FROM entities GROUP BY type;"
 
-      # Step 4: Export to CSV
+      # Step 4: Fetch custom IDs from D1
+      - name: Fetch custom IDs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: python scripts/fetch-custom-ids.py
+
+      # Step 5: Export to CSV (Wikidata + custom IDs merged)
       - name: Export CSVs
         run: python scripts/export-csv.py
 
-      # Step 5: Commit and push
+      # Step 6: Commit and push
       - name: Commit updated data
         run: |
           git config user.name "github-actions[bot]"

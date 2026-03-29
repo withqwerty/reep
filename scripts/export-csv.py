@@ -1,7 +1,8 @@
 """
 Export Wikidata entity JSON files to Chadwick-style CSV register files.
 
-Reads from myteam-website/data/wikidata/ and produces:
+Reads from data/json/ (Wikidata) and optionally data/custom_ids.json
+(custom provider mappings) to produce:
   data/people.csv     — all players and coaches with bio + provider IDs
   data/teams.csv      — all teams with bio + provider IDs
   data/names.csv      — alternate names / aliases
@@ -18,6 +19,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 DEFAULT_SOURCE = Path(__file__).parent.parent / "data" / "json"
+CUSTOM_IDS_PATH = Path(__file__).parent.parent / "data" / "custom_ids.json"
 OUTPUT_DIR = Path(__file__).parent.parent / "data"
 
 # Column order for people.csv
@@ -57,6 +59,12 @@ PEOPLE_COLUMNS = [
     "key_german_fa",
     "key_statmuse_pl",
     "key_sofifa",
+    # Custom verified providers (sourced outside Wikidata)
+    "key_understat",
+    "key_whoscored",
+    "key_fbref_verified",
+    "key_sportmonks",
+    "key_api_football",
 ]
 
 # Column order for teams.csv
@@ -80,6 +88,11 @@ TEAM_COLUMNS = [
     "key_footballdatabase_eu",
     "key_worldfootball",
     "key_espn",
+    # Custom verified providers (sourced outside Wikidata)
+    "key_clubelo",
+    "key_sportmonks",
+    "key_api_football",
+    "key_sofifa",
 ]
 
 # Column order for names.csv
@@ -95,8 +108,23 @@ def load_json(path: Path) -> list[dict]:
         return json.load(f)
 
 
-def export_people(players: list[dict], coaches: list[dict], out_path: Path):
+def load_custom_ids(path: Path) -> dict[str, dict[str, str]]:
+    """Load custom_ids.json into {qid: {provider: external_id}} lookup."""
+    if not path.exists():
+        return {}
+    with open(path) as f:
+        rows = json.load(f)
+    lookup: dict[str, dict[str, str]] = {}
+    for row in rows:
+        lookup.setdefault(row["qid"], {})[row["provider"]] = row["external_id"]
+    print(f"Loaded {len(rows)} custom IDs for {len(lookup)} entities")
+    return lookup
+
+
+def export_people(players: list[dict], coaches: list[dict], out_path: Path,
+                   custom_ids: dict[str, dict[str, str]] | None = None):
     """Export players + coaches to people.csv."""
+    custom_ids = custom_ids or {}
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=PEOPLE_COLUMNS, extrasaction="ignore")
         writer.writeheader()
@@ -119,13 +147,21 @@ def export_people(players: list[dict], coaches: list[dict], out_path: Path):
                 if col in PEOPLE_COLUMNS:
                     row[col] = ext_id
 
+            # Merge custom IDs (don't overwrite Wikidata)
+            for provider, ext_id in custom_ids.get(entity["qid"], {}).items():
+                col = f"key_{provider}"
+                if col in PEOPLE_COLUMNS and col not in row:
+                    row[col] = ext_id
+
             writer.writerow(row)
 
     return len(players) + len(coaches)
 
 
-def export_teams(teams: list[dict], out_path: Path):
+def export_teams(teams: list[dict], out_path: Path,
+                 custom_ids: dict[str, dict[str, str]] | None = None):
     """Export teams to teams.csv."""
+    custom_ids = custom_ids or {}
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=TEAM_COLUMNS, extrasaction="ignore")
         writer.writeheader()
@@ -143,6 +179,12 @@ def export_teams(teams: list[dict], out_path: Path):
             for provider, ext_id in ids.items():
                 col = f"key_{provider}"
                 if col in TEAM_COLUMNS:
+                    row[col] = ext_id
+
+            # Merge custom IDs (don't overwrite Wikidata)
+            for provider, ext_id in custom_ids.get(entity["qid"], {}).items():
+                col = f"key_{provider}"
+                if col in TEAM_COLUMNS and col not in row:
                     row[col] = ext_id
 
             writer.writerow(row)
@@ -192,17 +234,20 @@ def main():
     print(f"Source: {source}")
     print(f"Output: {OUTPUT_DIR}\n")
 
-    # Load
+    # Load Wikidata entities
     players = load_json(source / "players.json")
     teams = load_json(source / "teams.json")
     coaches = load_json(source / "coachs.json")
     print(f"Loaded: {len(players)} players, {len(teams)} teams, {len(coaches)} coaches")
 
+    # Load custom IDs (if available)
+    custom_ids = load_custom_ids(CUSTOM_IDS_PATH)
+
     # Export
-    n_people = export_people(players, coaches, OUTPUT_DIR / "people.csv")
+    n_people = export_people(players, coaches, OUTPUT_DIR / "people.csv", custom_ids)
     print(f"Exported {n_people} people to data/people.csv")
 
-    n_teams = export_teams(teams, OUTPUT_DIR / "teams.csv")
+    n_teams = export_teams(teams, OUTPUT_DIR / "teams.csv", custom_ids)
     print(f"Exported {n_teams} teams to data/teams.csv")
 
     n_names = export_names(players + teams + coaches, OUTPUT_DIR / "names.csv")
@@ -211,11 +256,12 @@ def main():
     # Write metadata
     meta = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "source": "Wikidata SPARQL (query.wikidata.org)",
+        "source": "Wikidata SPARQL + custom verified mappings",
         "counts": {
             "people": n_people,
             "teams": n_teams,
             "aliases": n_names,
+            "custom_ids": sum(len(v) for v in custom_ids.values()),
         },
     }
     with open(OUTPUT_DIR / "meta.json", "w") as f:

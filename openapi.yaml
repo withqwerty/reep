@@ -3,14 +3,12 @@ info:
   title: The Reep Register
   description: |
     The football entity register. Resolve player, team, and coach IDs across
-    Transfermarkt, FBref, Sofascore, Opta, and 10+ data providers.
+    Transfermarkt, FBref, Sofascore, Understat, WhoScored, and 30+ data providers.
 
-    475,000+ entities with cross-provider ID mappings sourced from Wikidata,
-    plus proprietary mappings for Club Elo, SportMonks, and more.
-    Updated weekly.
+    475,000+ entities with cross-provider ID mappings sourced from Wikidata
+    and custom verified sources. Updated weekly.
 
-    The API includes extended provider coverage beyond the free CSV download.
-    Free CSV (Wikidata IDs only): https://github.com/withqwerty/reep
+    All data is open source: https://github.com/withqwerty/reep
   version: 1.0.0
   contact:
     name: withqwerty
@@ -109,6 +107,7 @@ paths:
               - transfermarkt
               - transfermarkt_manager
               - fbref
+              - fbref_verified
               - soccerway
               - sofascore
               - flashscore
@@ -120,9 +119,12 @@ paths:
               - worldfootball
               - soccerbase
               - kicker
+              - understat
+              - whoscored
               - clubelo
               - sportmonks
               - api_football
+              - sofifa
           example: transfermarkt
           description: Source provider name
         - name: id
