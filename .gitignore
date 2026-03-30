@@ -3,4 +3,5 @@ __pycache__/
 .DS_Store
 node_modules/
 data/json/
+data/match_dictionary.csv
 CLAUDE.md
