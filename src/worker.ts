@@ -201,6 +201,7 @@ async function handleResolve(
           "api_football",
           "clubelo",
           "sofifa",
+          "fotmob",
         ],
       },
       400,

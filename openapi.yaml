@@ -125,6 +125,7 @@ paths:
               - sportmonks
               - api_football
               - sofifa
+              - fotmob
           example: transfermarkt
           description: Source provider name
         - name: id

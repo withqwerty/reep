@@ -67,6 +67,7 @@ PEOPLE_COLUMNS = [
     "key_fbref_verified",
     "key_sportmonks",
     "key_api_football",
+    "key_fotmob",
 ]
 
 # Column order for teams.csv
@@ -96,6 +97,7 @@ TEAM_COLUMNS = [
     "key_sportmonks",
     "key_api_football",
     "key_sofifa",
+    "key_fotmob",
 ]
 
 # Column order for names.csv

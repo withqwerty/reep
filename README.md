@@ -67,6 +67,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_fbref_verified` | FBref ID (cross-verified via worldfootballR) | `dc7f8a28` |
 | `key_sportmonks` | [SportMonks](https://www.sportmonks.com/) player ID | `12345` |
 | `key_api_football` | [API-Football](https://www.api-football.com/) player ID | `1100` |
+| `key_fotmob` | [FotMob](https://www.fotmob.com/) player ID | `292462` |
 
 ### Teams schema
 
@@ -94,6 +95,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_sportmonks` | SportMonks team ID | `123` |
 | `key_api_football` | API-Football team ID | `42` |
 | `key_sofifa` | SoFIFA / EA FC team ID | `1` |
+| `key_fotmob` | FotMob team ID | `9825` |
 
 ### Names schema
 
@@ -120,6 +122,7 @@ Not every entity has every ID. Coverage depends on what the Wikidata community h
 | SportMonks | ~600 | Custom | Players + teams via TM bridge |
 | API-Football | Growing | Custom | Name + DOB matching |
 | Club Elo | ~176 teams | Custom | Manual team mapping |
+| FotMob | ~4.6K | Custom | DOB + name matching (top 6 leagues) |
 
 IDs sourced from Wikidata are community-maintained. Custom IDs are verified independently — see the [Reep API](#api) for methodology details.
 
