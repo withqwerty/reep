@@ -46,7 +46,7 @@ export default {
     if (path === "/" || path === "") {
       response = json({
         name: "Reep — The Football Entity Register",
-        version: "1.0.0",
+        version: "1.1.0",
         docs: "https://github.com/withqwerty/reep",
         endpoints: {
           "GET /lookup": "Look up an entity by Wikidata QID (optionally filter by &type=player|team|coach)",
@@ -120,12 +120,12 @@ async function handleLookup(
   const type = params.get("type");
   if (type) {
     const entity = await lookupEntity(db, qid, type);
-    if (!entity) return json({ results: [] });
-    return json({ results: [entity] });
+    if (!entity) return json({ results: [], count: 0 });
+    return json({ results: [entity], count: 1 });
   }
 
   const entities = await lookupEntities(db, qid);
-  return json({ results: entities });
+  return json({ results: entities, count: entities.length });
 }
 
 // GET /search?name=Cole+Palmer&type=player&limit=20

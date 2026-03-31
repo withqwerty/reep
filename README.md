@@ -12,6 +12,8 @@ Named after [Charles Reep](https://en.wikipedia.org/wiki/Charles_Reep) (1904--20
 
 A canonical identity file for football. Every person and club gets a stable [Wikidata](https://www.wikidata.org/) QID, linked to their IDs on other platforms. If you have a Transfermarkt ID and need the FBref ID for the same player, this register gives you the answer.
 
+People who are both players and coaches (e.g. Pep Guardiola) have separate records with type-specific provider IDs. The unique key is `(key_wikidata, type)`, not just `key_wikidata`.
+
 Think of it as the football equivalent of the [Chadwick Baseball Bureau Register](https://github.com/chadwickbureau/register).
 
 ## Data
@@ -190,8 +192,10 @@ The Reep API provides the same data as the CSVs via a convenient REST interface.
 |----------|-------------|---------|
 | `GET /search` | Search by name (prefix matching) | `/search?name=Cole Palmer&type=player` |
 | `GET /resolve` | Translate provider ID | `/resolve?provider=transfermarkt&id=568177` |
-| `GET /lookup` | Look up by Wikidata QID | `/lookup?qid=Q99760796` |
+| `GET /lookup` | Look up by Wikidata QID (filter by `&type=`) | `/lookup?qid=Q99760796&type=player` |
 | `GET /stats` | Database statistics | `/stats` |
+
+All endpoints that return entities accept an optional `type` parameter (`player`, `team`, `coach`). For dual-role people, `/lookup` without `type` returns all records.
 
 ## CLI
 

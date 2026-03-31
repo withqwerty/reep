@@ -197,6 +197,13 @@ def extract_entity(entity: dict) -> list[dict]:
         # Move coach IDs into player bucket instead
         for provider, val in ids_by_type.pop("coach").items():
             ids_by_type.setdefault("player", {})[provider] = val
+    elif "coach" in ids_by_type and has_coach_specific:
+        # Remove shared player IDs that are redundant with coach-specific ones
+        # e.g. transfermarkt_player is misleading when transfermarkt_manager exists
+        coach_ids = ids_by_type["coach"]
+        if "transfermarkt_manager" in coach_ids:
+            coach_ids.pop("transfermarkt_player", None)
+            coach_ids.pop("transfermarkt", None)
 
     if not ids_by_type:
         return []
