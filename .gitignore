@@ -6,3 +6,4 @@ data/json/
 data/match_dictionary.csv
 CLAUDE.md
 .env
+openapi.yaml
