@@ -184,16 +184,14 @@ SELECT * FROM people WHERE key_fbref = 'e342ad68';
 
 The Reep API provides the same data as the CSVs via a convenient REST interface. All providers (Wikidata + custom verified) are available to all plans.
 
-**Base URL:** `https://reep-api.rahulkeerthi2-95d.workers.dev`
+**Get your API key on [RapidAPI](https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register).**
 
 | Endpoint | Description | Example |
 |----------|-------------|---------|
-| `GET /search` | Search by name | `/search?name=Cole Palmer&type=player` |
+| `GET /search` | Search by name (prefix matching) | `/search?name=Cole Palmer&type=player` |
 | `GET /resolve` | Translate provider ID | `/resolve?provider=transfermarkt&id=568177` |
 | `GET /lookup` | Look up by Wikidata QID | `/lookup?qid=Q99760796` |
 | `GET /stats` | Database statistics | `/stats` |
-
-Available on [RapidAPI](https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register).
 
 ## CLI
 
