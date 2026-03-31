@@ -222,12 +222,25 @@ async function handleResolve(
           "worldfootball",
           "soccerbase",
           "kicker",
+          "uefa",
+          "lequipe",
+          "fff_fr",
+          "serie_a",
+          "besoccer",
+          "footballdatabase_eu",
+          "eu_football_info",
+          "hugman",
+          "german_fa",
+          "statmuse_pl",
+          "sofifa",
+          "soccerdonna",
+          "dongqiudi",
+          "playmakerstats",
           "understat",
           "whoscored",
+          "clubelo",
           "sportmonks",
           "api_football",
-          "clubelo",
-          "sofifa",
           "fotmob",
         ],
       },
@@ -236,9 +249,9 @@ async function handleResolve(
   }
 
   const entity = await resolveEntity(db, provider, id);
-  if (!entity) return json({ results: [] });
+  if (!entity) return json({ results: [], count: 0 });
 
-  return json({ results: [entity] });
+  return json({ results: [entity], count: 1 });
 }
 
 const ENTITY_COLS = "qid, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_qid, height_cm, country, founded, stadium";
