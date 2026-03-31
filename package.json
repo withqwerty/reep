@@ -18,6 +18,9 @@
     "url": "https://github.com/withqwerty/reep/issues"
   },
   "homepage": "https://github.com/withqwerty/reep#readme",
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "sharp", "workerd"]
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260317.1",
     "typescript": "^6.0.2",

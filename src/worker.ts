@@ -14,6 +14,8 @@ const JSON_HEADERS = { "Content-Type": "application/json", ...CORS };
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const start = Date.now();
+
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: CORS });
     }
@@ -21,8 +23,10 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
     const method = request.method;
+    const params = Object.fromEntries(url.searchParams);
 
     if (method !== "GET" && method !== "POST") {
+      console.log(JSON.stringify({ method, path, params, status: 405, ms: Date.now() - start }));
       return json({ error: "Method not allowed" }, 405);
     }
 
@@ -33,50 +37,44 @@ export default {
     const isBypass = env.BYPASS_KEY && bypassKey === env.BYPASS_KEY;
 
     if (env.RAPIDAPI_PROXY_SECRET && !isRapidApi && !isBypass) {
+      console.log(JSON.stringify({ method, path, params, status: 401, ms: Date.now() - start }));
       return json({ error: "Unauthorized. Subscribe at https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" }, 401);
     }
 
+    let response: Response;
+
     if (path === "/" || path === "") {
-      return json({
+      response = json({
         name: "Reep — The Football Entity Register",
         version: "1.0.0",
         docs: "https://github.com/withqwerty/reep",
         endpoints: {
           "GET /lookup": "Look up an entity by Wikidata QID",
-          "GET /search": "Search entities by name",
+          "GET /search": "Search entities by name (prefix matching, e.g. 'Cole Palm')",
           "GET /resolve": "Resolve a provider ID to all other provider IDs",
           "GET /stats": "Database statistics",
           "POST /batch/lookup": "Look up multiple QIDs in one request (max 100)",
           "POST /batch/resolve": "Resolve multiple provider IDs in one request (max 100)",
         },
       });
+    } else if (method === "GET" && path === "/lookup") {
+      response = await handleLookup(url.searchParams, env.DB);
+    } else if (method === "GET" && path === "/search") {
+      response = await handleSearch(url.searchParams, env.DB);
+    } else if (method === "GET" && path === "/resolve") {
+      response = await handleResolve(url.searchParams, env.DB);
+    } else if (method === "GET" && path === "/stats") {
+      response = await handleStats(env.DB);
+    } else if (method === "POST" && path === "/batch/lookup") {
+      response = await handleBatchLookup(request, env.DB);
+    } else if (method === "POST" && path === "/batch/resolve") {
+      response = await handleBatchResolve(request, env.DB);
+    } else {
+      response = json({ error: "Not found" }, 404);
     }
 
-    if (method === "GET" && path === "/lookup") {
-      return handleLookup(url.searchParams, env.DB);
-    }
-
-    if (method === "GET" && path === "/search") {
-      return handleSearch(url.searchParams, env.DB);
-    }
-
-    if (method === "GET" && path === "/resolve") {
-      return handleResolve(url.searchParams, env.DB);
-    }
-
-    if (method === "GET" && path === "/stats") {
-      return handleStats(env.DB);
-    }
-
-    if (method === "POST" && path === "/batch/lookup") {
-      return handleBatchLookup(request, env.DB);
-    }
-
-    if (method === "POST" && path === "/batch/resolve") {
-      return handleBatchResolve(request, env.DB);
-    }
-
-    return json({ error: "Not found" }, 404);
+    console.log(JSON.stringify({ method, path, params, status: response.status, ms: Date.now() - start }));
+    return response;
   },
 } satisfies ExportedHandler<Env>;
 
@@ -138,28 +136,50 @@ async function handleSearch(
 
   const type = params.get("type");
   const limit = Math.min(Number(params.get("limit")) || 25, 100);
-  const pattern = `%${name}%`;
 
-  let query =
-    "SELECT qid, type, name_en, aliases_en, date_of_birth, nationality, position FROM entities WHERE (name_en LIKE ? OR aliases_en LIKE ?)";
-  const binds: unknown[] = [pattern, pattern];
+  // Sanitize FTS query: strip non-word chars, quote each token, prefix-match last token
+  const sanitized = name.replace(/[^\p{L}\p{N}\s'-]/gu, " ").trim();
+  if (!sanitized) {
+    return json({ results: [], count: 0 });
+  }
+  const tokens = sanitized.split(/\s+/).filter(Boolean);
+  const ftsQuery = tokens
+    .map((t, i) => '"' + t.replace(/"/g, '""') + '"' + (i === tokens.length - 1 ? "*" : ""))
+    .join(" ");
+
+  let query = `
+    SELECT e.qid, e.type, e.name_en, e.aliases_en,
+           e.date_of_birth, e.nationality, e.position,
+           bm25(entities_fts, 10.0, 1.0) AS score
+    FROM entities_fts
+    JOIN entities e ON e.rowid = entities_fts.rowid
+    WHERE entities_fts MATCH ?`;
+  const binds: (string | number)[] = [ftsQuery];
 
   if (type) {
-    query += " AND type = ?";
+    query += " AND e.type = ?";
     binds.push(type);
   }
 
-  query += " LIMIT ?";
+  query += " ORDER BY score LIMIT ?";
   binds.push(limit);
 
-  const entities = await db
-    .prepare(query)
-    .bind(...binds)
-    .all();
+  let entities: D1Result<Record<string, unknown>>;
+  try {
+    entities = await db.prepare(query).bind(...binds).all();
+  } catch {
+    return json({ error: "Invalid search query" }, 400);
+  }
 
   const results = await Promise.all(
     entities.results.map(async (e) => ({
-      ...e,
+      qid: e.qid,
+      type: e.type,
+      name_en: e.name_en,
+      aliases_en: e.aliases_en,
+      date_of_birth: e.date_of_birth,
+      nationality: e.nationality,
+      position: e.position,
       external_ids: await fetchAllIds(db, e.qid as string),
     })),
   );
