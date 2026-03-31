@@ -1,9 +1,10 @@
 {
-  "generated_at": "2026-03-28T16:15:29.831588+00:00",
-  "source": "Wikidata SPARQL (query.wikidata.org)",
+  "generated_at": "2026-03-31T13:58:40.786676+00:00",
+  "source": "Wikidata SPARQL + custom verified mappings",
   "counts": {
-    "people": 429668,
-    "teams": 45349,
-    "aliases": 149251
+    "people": 429789,
+    "teams": 45353,
+    "aliases": 149308,
+    "custom_ids": 11834
   }
 }
