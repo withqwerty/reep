@@ -15,7 +15,7 @@ info:
     url: https://github.com/withqwerty/reep
 
 servers:
-  - url: https://reep-api.withqwerty.workers.dev
+  - url: https://reep-api.rahulkeerthi2-95d.workers.dev
 
 paths:
   /search:
