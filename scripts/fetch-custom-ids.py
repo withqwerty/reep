@@ -58,7 +58,7 @@ def main():
     all_rows = []
     offset = 0
     while offset < total:
-        sql = f"SELECT qid, provider, external_id FROM custom_ids ORDER BY qid, provider LIMIT {BATCH_SIZE} OFFSET {offset};"
+        sql = f"SELECT qid, type, provider, external_id FROM custom_ids ORDER BY qid, type, provider LIMIT {BATCH_SIZE} OFFSET {offset};"
         rows = query_d1(sql, args.local)
         if not rows:
             break

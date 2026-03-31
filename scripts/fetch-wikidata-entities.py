@@ -114,7 +114,7 @@ def sparql_query(query: str, retries: int = 3) -> list[dict]:
     for attempt in range(retries + 1):
         try:
             with urllib.request.urlopen(req, timeout=120) as resp:
-                data = json.loads(resp.read().decode())
+                data = json.loads(resp.read().decode(), strict=False)
             rows = []
             for binding in data["results"]["bindings"]:
                 row = {}

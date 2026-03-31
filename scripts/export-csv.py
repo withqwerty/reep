@@ -113,28 +113,30 @@ def load_json(path: Path) -> list[dict]:
         return json.load(f)
 
 
-def load_custom_ids(path: Path) -> dict[str, dict[str, str]]:
-    """Load custom_ids.json into {qid: {provider: external_id}} lookup."""
+def load_custom_ids(path: Path) -> dict[tuple[str, str], dict[str, str]]:
+    """Load custom_ids.json into {(qid, type): {provider: external_id}} lookup."""
     if not path.exists():
         return {}
     with open(path) as f:
         rows = json.load(f)
-    lookup: dict[str, dict[str, str]] = {}
+    lookup: dict[tuple[str, str], dict[str, str]] = {}
     for row in rows:
-        lookup.setdefault(row["qid"], {})[row["provider"]] = row["external_id"]
+        # Support both old (no type) and new (with type) shapes
+        key = (row["qid"], row.get("type", "player"))
+        lookup.setdefault(key, {})[row["provider"]] = row["external_id"]
     print(f"Loaded {len(rows)} custom IDs for {len(lookup)} entities")
     return lookup
 
 
 def export_people(players: list[dict], coaches: list[dict], out_path: Path,
-                   custom_ids: dict[str, dict[str, str]] | None = None):
+                   custom_ids: dict[tuple[str, str], dict[str, str]] | None = None):
     """Export players + coaches to people.csv."""
     custom_ids = custom_ids or {}
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=PEOPLE_COLUMNS, extrasaction="ignore")
         writer.writeheader()
 
-        for entity in sorted(players + coaches, key=lambda e: e.get("name_en", "")):
+        for entity in sorted(players + coaches, key=lambda e: (e.get("name_en", ""), e.get("type", ""))):
             row = {
                 "key_wikidata": entity["qid"],
                 "type": entity["type"],
@@ -153,7 +155,7 @@ def export_people(players: list[dict], coaches: list[dict], out_path: Path,
                     row[col] = ext_id
 
             # Merge custom IDs (don't overwrite Wikidata)
-            for provider, ext_id in custom_ids.get(entity["qid"], {}).items():
+            for provider, ext_id in custom_ids.get((entity["qid"], entity["type"]), {}).items():
                 col = f"key_{provider}"
                 if col in PEOPLE_COLUMNS and col not in row:
                     row[col] = ext_id
@@ -164,7 +166,7 @@ def export_people(players: list[dict], coaches: list[dict], out_path: Path,
 
 
 def export_teams(teams: list[dict], out_path: Path,
-                 custom_ids: dict[str, dict[str, str]] | None = None):
+                 custom_ids: dict[tuple[str, str], dict[str, str]] | None = None):
     """Export teams to teams.csv."""
     custom_ids = custom_ids or {}
     with open(out_path, "w", newline="", encoding="utf-8") as f:
@@ -187,7 +189,7 @@ def export_teams(teams: list[dict], out_path: Path,
                     row[col] = ext_id
 
             # Merge custom IDs (don't overwrite Wikidata)
-            for provider, ext_id in custom_ids.get(entity["qid"], {}).items():
+            for provider, ext_id in custom_ids.get((entity["qid"], "team"), {}).items():
                 col = f"key_{provider}"
                 if col in TEAM_COLUMNS and col not in row:
                     row[col] = ext_id
@@ -200,6 +202,7 @@ def export_teams(teams: list[dict], out_path: Path,
 def export_names(all_entities: list[dict], out_path: Path):
     """Export alias mappings to names.csv."""
     rows = []
+    seen: set[tuple[str, str]] = set()
     for entity in all_entities:
         aliases_str = entity.get("aliases_en")
         if not aliases_str:
@@ -207,7 +210,9 @@ def export_names(all_entities: list[dict], out_path: Path):
         name = entity.get("name_en", "")
         for alias in aliases_str.split(", "):
             alias = alias.strip()
-            if alias and alias != name:
+            key = (entity["qid"], alias)
+            if alias and alias != name and key not in seen:
+                seen.add(key)
                 rows.append({
                     "key_wikidata": entity["qid"],
                     "name": name,

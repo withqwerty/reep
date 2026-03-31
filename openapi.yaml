@@ -73,7 +73,10 @@ paths:
     get:
       operationId: lookupByQid
       summary: Look up entity by Wikidata QID
-      description: Exact lookup by Wikidata QID. Returns full entity with all provider IDs and bio data.
+      description: |
+        Exact lookup by Wikidata QID. Returns full entity with all provider IDs and bio data.
+        A QID may have multiple records if the person is both a player and coach (e.g. Pep Guardiola).
+        Use the type parameter to filter to a specific role.
       parameters:
         - name: qid
           in: query
@@ -82,6 +85,13 @@ paths:
             type: string
           example: Q99760796
           description: Wikidata QID
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [player, team, coach]
+          description: Filter by entity type (returns all types if omitted)
       responses:
         '200':
           description: Entity details

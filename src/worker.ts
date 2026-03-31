@@ -49,7 +49,7 @@ export default {
         version: "1.0.0",
         docs: "https://github.com/withqwerty/reep",
         endpoints: {
-          "GET /lookup": "Look up an entity by Wikidata QID",
+          "GET /lookup": "Look up an entity by Wikidata QID (optionally filter by &type=player|team|coach)",
           "GET /search": "Search entities by name (prefix matching, e.g. 'Cole Palm')",
           "GET /resolve": "Resolve a provider ID to all other provider IDs",
           "GET /stats": "Database statistics",
@@ -85,11 +85,11 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
-// Fetch all IDs for a QID from both Wikidata and custom sources.
-async function fetchAllIds(db: D1Database, qid: string): Promise<Record<string, string>> {
+// Fetch all IDs for a (QID, type) pair from both Wikidata and custom sources.
+async function fetchAllIds(db: D1Database, qid: string, type: string): Promise<Record<string, string>> {
   const [wikidata, custom] = await Promise.all([
-    db.prepare("SELECT provider, external_id FROM external_ids WHERE qid = ?").bind(qid).all(),
-    db.prepare("SELECT provider, external_id FROM custom_ids WHERE qid = ?").bind(qid).all(),
+    db.prepare("SELECT provider, external_id FROM external_ids WHERE qid = ? AND type = ?").bind(qid, type).all(),
+    db.prepare("SELECT provider, external_id FROM custom_ids WHERE qid = ? AND type = ?").bind(qid, type).all(),
   ]);
 
   const ids: Record<string, string> = {};
@@ -102,7 +102,7 @@ async function fetchAllIds(db: D1Database, qid: string): Promise<Record<string, 
   return ids;
 }
 
-// GET /lookup?qid=Q99760796
+// GET /lookup?qid=Q99760796&type=player
 async function handleLookup(
   params: URLSearchParams,
   db: D1Database,
@@ -115,10 +115,15 @@ async function handleLookup(
     );
   }
 
-  const entity = await lookupEntity(db, qid);
-  if (!entity) return json({ results: [] });
+  const type = params.get("type");
+  if (type) {
+    const entity = await lookupEntity(db, qid, type);
+    if (!entity) return json({ results: [] });
+    return json({ results: [entity] });
+  }
 
-  return json({ results: [entity] });
+  const entities = await lookupEntities(db, qid);
+  return json({ results: entities });
 }
 
 // GET /search?name=Cole+Palmer&type=player&limit=20
@@ -180,7 +185,7 @@ async function handleSearch(
       date_of_birth: e.date_of_birth,
       nationality: e.nationality,
       position: e.position,
-      external_ids: await fetchAllIds(db, e.qid as string),
+      external_ids: await fetchAllIds(db, e.qid as string, e.type as string),
     })),
   );
 
@@ -234,37 +239,52 @@ async function handleResolve(
   return json({ results: [entity] });
 }
 
-// Helper: look up a single entity by QID (shared by lookup and batch)
-async function lookupEntity(db: D1Database, qid: string): Promise<Record<string, unknown> | null> {
+const ENTITY_COLS = "qid, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_qid, height_cm, country, founded, stadium";
+
+// Helper: look up a single entity by (QID, type)
+async function lookupEntity(db: D1Database, qid: string, type: string): Promise<Record<string, unknown> | null> {
   const entity = await db
-    .prepare(
-      "SELECT qid, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_qid, height_cm, country, founded, stadium FROM entities WHERE qid = ?",
-    )
-    .bind(qid)
+    .prepare(`SELECT ${ENTITY_COLS} FROM entities WHERE qid = ? AND type = ?`)
+    .bind(qid, type)
     .first();
 
   if (!entity) return null;
 
-  const external_ids = await fetchAllIds(db, qid);
+  const external_ids = await fetchAllIds(db, qid, type);
   return { ...entity, external_ids };
+}
+
+// Helper: look up all type records for a QID
+async function lookupEntities(db: D1Database, qid: string): Promise<Record<string, unknown>[]> {
+  const rows = await db
+    .prepare(`SELECT ${ENTITY_COLS} FROM entities WHERE qid = ?`)
+    .bind(qid)
+    .all();
+
+  return Promise.all(
+    rows.results.map(async (entity) => ({
+      ...entity,
+      external_ids: await fetchAllIds(db, entity.qid as string, entity.type as string),
+    })),
+  );
 }
 
 // Helper: resolve a provider+id to an entity (shared by resolve and batch)
 async function resolveEntity(db: D1Database, provider: string, id: string): Promise<Record<string, unknown> | null> {
   let match = await db
-    .prepare("SELECT qid FROM external_ids WHERE provider = ? AND external_id = ?")
+    .prepare("SELECT qid, type FROM external_ids WHERE provider = ? AND external_id = ?")
     .bind(provider, id)
     .first();
 
   if (!match) {
     match = await db
-      .prepare("SELECT qid FROM custom_ids WHERE provider = ? AND external_id = ?")
+      .prepare("SELECT qid, type FROM custom_ids WHERE provider = ? AND external_id = ?")
       .bind(provider, id)
       .first();
   }
 
   if (!match) return null;
-  return lookupEntity(db, match.qid as string);
+  return lookupEntity(db, match.qid as string, match.type as string);
 }
 
 const BATCH_MAX = 100;
@@ -287,12 +307,13 @@ async function handleBatchLookup(request: Request, db: D1Database): Promise<Resp
     return json({ error: `Maximum ${BATCH_MAX} QIDs per request` }, 400);
   }
 
-  const results = await Promise.all(
+  const nested = await Promise.all(
     qids.map(async (qid) => {
-      const entity = await lookupEntity(db, qid);
-      return entity ?? { qid, error: "not_found" };
+      const entities = await lookupEntities(db, qid);
+      return entities.length > 0 ? entities : [{ qid, error: "not_found" }];
     }),
   );
+  const results = nested.flat();
 
   return json({ results, count: results.length });
 }

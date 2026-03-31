@@ -118,7 +118,10 @@ def cmd_resolve(args):
 
 def cmd_lookup(args):
     """Lookup by Wikidata QID."""
-    data = api_get(f"/lookup?qid={urllib.parse.quote(args.qid)}")
+    url = f"/lookup?qid={urllib.parse.quote(args.qid)}"
+    if args.type:
+        url += f"&type={args.type}"
+    data = api_get(url)
 
     if not data.get("results"):
         print(f"No entity found for {args.qid}")
@@ -263,6 +266,7 @@ def main():
     # lookup
     p_lookup = sub.add_parser("lookup", help="Look up by Wikidata QID")
     p_lookup.add_argument("qid", help="Wikidata QID (e.g. Q99760796)")
+    p_lookup.add_argument("--type", choices=["player", "team", "coach"])
     p_lookup.set_defaults(func=cmd_lookup)
 
     # translate
