@@ -5,8 +5,11 @@ info:
     The football entity register. Resolve player, team, and coach IDs across
     Transfermarkt, FBref, Sofascore, Understat, WhoScored, and 30+ data providers.
 
-    475,000+ entities with cross-provider ID mappings sourced from Wikidata
+    435,000+ entities with cross-provider ID mappings sourced from Wikidata
     and custom verified sources. Updated weekly.
+
+    People who are both players and coaches (e.g. Pep Guardiola) have separate
+    records with type-specific provider IDs. Use the `type` parameter to filter.
 
     All data is open source: https://github.com/withqwerty/reep
   version: 1.1.0
@@ -15,14 +18,18 @@ info:
     url: https://github.com/withqwerty/reep
 
 servers:
-  - url: https://reep-api.rahulkeerthi2-95d.workers.dev
+  - url: https://the-reep-register.p.rapidapi.com
+    description: RapidAPI (requires API key)
 
 paths:
   /search:
     get:
       operationId: searchEntities
       summary: Search entities by name
-      description: Fuzzy search across players, teams, and coaches by name or alias.
+      description: |
+        Full-text search across players, teams, and coaches by name or alias.
+        Uses prefix matching with BM25 relevance ranking (e.g. "Cole Palm" matches "Cole Palmer").
+        Diacritics-insensitive ("Muller" matches "Müller").
       parameters:
         - name: name
           in: query
@@ -30,7 +37,7 @@ paths:
           schema:
             type: string
           example: Cole Palmer
-          description: Name to search for (matches name and aliases)
+          description: Name to search for (prefix matching on name and aliases)
         - name: type
           in: query
           required: false
@@ -48,7 +55,7 @@ paths:
           description: Maximum results to return
       responses:
         '200':
-          description: Search results
+          description: Search results ranked by relevance
           content:
             application/json:
               schema:
@@ -94,7 +101,7 @@ paths:
           description: Filter by entity type (returns all types if omitted)
       responses:
         '200':
-          description: Entity details
+          description: Entity details (may contain multiple records for dual-role people)
           content:
             application/json:
               schema:
@@ -129,12 +136,25 @@ paths:
               - worldfootball
               - soccerbase
               - kicker
+              - uefa
+              - lequipe
+              - fff_fr
+              - serie_a
+              - besoccer
+              - footballdatabase_eu
+              - eu_football_info
+              - hugman
+              - german_fa
+              - statmuse_pl
+              - sofifa
+              - soccerdonna
+              - dongqiudi
+              - playmakerstats
               - understat
               - whoscored
               - clubelo
               - sportmonks
               - api_football
-              - sofifa
               - fotmob
           example: transfermarkt
           description: Source provider name
@@ -153,6 +173,78 @@ paths:
               schema:
                 $ref: '#/components/schemas/LookupResponse'
 
+  /batch/lookup:
+    post:
+      operationId: batchLookup
+      summary: Look up multiple QIDs in one request
+      description: |
+        Batch lookup by Wikidata QIDs. Returns all matching entities.
+        A single QID may return multiple records if the person is both a player and coach.
+        Results are flattened into a single array — use the qid and type fields to correlate.
+        Maximum 100 QIDs per request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [qids]
+              properties:
+                qids:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 100
+                  description: Array of Wikidata QIDs
+            example:
+              qids: ["Q99760796", "Q11893"]
+      responses:
+        '200':
+          description: Batch lookup results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchLookupResponse'
+
+  /batch/resolve:
+    post:
+      operationId: batchResolve
+      summary: Resolve multiple provider IDs in one request
+      description: |
+        Batch resolve provider IDs to entities. Maximum 100 items per request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [provider, id]
+                    properties:
+                      provider:
+                        type: string
+                      id:
+                        type: string
+                  maxItems: 100
+            example:
+              items:
+                - provider: transfermarkt
+                  id: "568177"
+                - provider: fbref
+                  id: dea698d9
+      responses:
+        '200':
+          description: Batch resolve results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResolveResponse'
+
   /stats:
     get:
       operationId: getStats
@@ -165,16 +257,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatsResponse'
-              example:
-                total_entities: 475017
-                by_type:
-                  player: 386025
-                  team: 45349
-                  coach: 43643
-                by_provider:
-                  transfermarkt: 320000
-                  fbref: 180000
-                  soccerway: 160000
 
 components:
   schemas:
@@ -204,6 +286,11 @@ components:
         position:
           type: string
           nullable: true
+          description: For players only
+        current_team_qid:
+          type: string
+          nullable: true
+          description: Wikidata QID of current team (players only)
         height_cm:
           type: number
           nullable: true
@@ -242,6 +329,46 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Entity'
+        count:
+          type: integer
+
+    BatchLookupResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/Entity'
+              - type: object
+                properties:
+                  qid:
+                    type: string
+                  error:
+                    type: string
+                    enum: [not_found]
+        count:
+          type: integer
+
+    BatchResolveResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/Entity'
+              - type: object
+                properties:
+                  provider:
+                    type: string
+                  id:
+                    type: string
+                  error:
+                    type: string
+                    enum: [not_found, missing_fields]
+        count:
+          type: integer
 
     StatsResponse:
       type: object
@@ -256,3 +383,5 @@ components:
           type: object
           additionalProperties:
             type: integer
+        custom_ids_count:
+          type: integer
