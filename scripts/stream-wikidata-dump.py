@@ -454,6 +454,7 @@ def main():
     parser.add_argument("--file", type=str, help="Local dump file path (default: stream from web)")
     parser.add_argument("--limit", type=int, help="Max lines to process (for testing)")
     parser.add_argument("--dry-run", action="store_true", help="Count entities without writing files")
+    parser.add_argument("--output", type=str, help="Output directory (default: data/json/)")
     args = parser.parse_args()
 
     players: list[dict] = []
@@ -576,10 +577,11 @@ def main():
         print("\nDry run — no files written.")
         return
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(args.output) if args.output else OUTPUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     for name, data in [("players", players), ("teams", teams), ("coachs", coaches)]:
-        path = OUTPUT_DIR / f"{name}.json"
+        path = out_dir / f"{name}.json"
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
         print(f"Wrote {len(data):,} entities to {path}")
