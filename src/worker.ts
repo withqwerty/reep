@@ -87,9 +87,9 @@ function json(data: unknown, status = 200): Response {
 
 // Fetch all IDs for a (QID, type) pair from both Wikidata and custom sources.
 async function fetchAllIds(db: D1Database, qid: string, type: string): Promise<Record<string, string>> {
-  // custom_ids may not have a type column yet (reep-custom migration pending).
-  // Query with type first; fall back to qid-only if the column doesn't exist.
-  const wikidataPromise = db.prepare("SELECT provider, external_id FROM external_ids WHERE qid = ? AND type = ?").bind(qid, type).all();
+  // Tables may not have a type column yet (pre-migration). Fall back to qid-only.
+  const wikidataPromise = db.prepare("SELECT provider, external_id FROM external_ids WHERE qid = ? AND type = ?").bind(qid, type).all()
+    .catch(() => db.prepare("SELECT provider, external_id FROM external_ids WHERE qid = ?").bind(qid).all());
   const customPromise = db.prepare("SELECT provider, external_id FROM custom_ids WHERE qid = ? AND type = ?").bind(qid, type).all()
     .catch(() => db.prepare("SELECT provider, external_id FROM custom_ids WHERE qid = ?").bind(qid).all());
   const [wikidata, custom] = await Promise.all([wikidataPromise, customPromise]);
@@ -273,13 +273,14 @@ async function lookupEntities(db: D1Database, qid: string): Promise<Record<strin
 
 // Helper: resolve a provider+id to an entity (shared by resolve and batch)
 async function resolveEntity(db: D1Database, provider: string, id: string): Promise<Record<string, unknown> | null> {
+  // Tables may not have type column yet (pre-migration). Fall back to qid-only.
   let match = await db
     .prepare("SELECT qid, type FROM external_ids WHERE provider = ? AND external_id = ?")
     .bind(provider, id)
-    .first();
+    .first()
+    .catch(() => db.prepare("SELECT qid FROM external_ids WHERE provider = ? AND external_id = ?").bind(provider, id).first());
 
   if (!match) {
-    // custom_ids may not have type column yet (reep-custom migration pending)
     match = await db
       .prepare("SELECT qid, type FROM custom_ids WHERE provider = ? AND external_id = ?")
       .bind(provider, id)
