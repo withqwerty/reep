@@ -70,6 +70,13 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_sportmonks` | [SportMonks](https://www.sportmonks.com/) player ID | `12345` |
 | `key_api_football` | [API-Football](https://www.api-football.com/) player ID | `1100` |
 | `key_fotmob` | [FotMob](https://www.fotmob.com/) player ID | `292462` |
+| `key_fpl_code` | FPL internal player code | `223340` |
+| `key_opta_f1` | Opta F1 alphanumeric player ID | `7cwgrmorsb42qaj5vrhp8fhzp` |
+| `key_thesportsdb` | [TheSportsDB](https://www.thesportsdb.com/) player ID | `34146086` |
+| `key_skillcorner` | [SkillCorner](https://www.skillcorner.com/) player ID | `23959` |
+| `key_wyscout` | [Wyscout](https://wyscout.com/) player ID | `234966` |
+| `key_impect` | [Impect](https://www.impect.com/) player ID | `52615` |
+| `key_heimspiel` | [heim:spiel](https://heimspiel.de/) player ID | `361032` |
 
 ### Teams schema
 
@@ -117,14 +124,23 @@ Not every entity has every ID. Coverage depends on what the Wikidata community h
 | FBref | Good | Wikidata | Strong for recent players |
 | Soccerway | Good | Wikidata | Broad international coverage |
 | Sofascore | Good | Wikidata | Modern players well covered |
-| Opta | Sparse | Wikidata | Few entries have Opta IDs in Wikidata |
-| Premier League | Decent | Wikidata | PL players only |
-| Understat | ~2.3K | Custom | Matched via Transfermarkt bridge |
-| WhoScored | ~2.3K | Custom | Matched via Transfermarkt bridge |
+| Impect | ~56K | Custom | DOB + name matching via Impect export |
+| Wyscout | ~47K | Custom | Via Impect ID mappings |
+| SkillCorner | ~46K | Custom | Via Impect ID mappings |
+| heim:spiel | ~44K | Custom | Via Impect ID mappings |
+| TheSportsDB | ~39K | Custom | Direct QID + DOB/name matching |
+| Opta F1 | ~38K | Custom | Alphanumeric Opta F1 IDs via TM bridge |
+| API-Football | ~36K | Custom | Via TheSportsDB + direct matching |
+| ESPN | ~19K | Custom | Via TheSportsDB mappings |
+| FotMob | ~4.6K | Custom | DOB + name matching |
+| FBref verified | ~4K | Custom | Cross-verified via worldfootballR |
+| FPL code | ~2.5K | Custom | FPL internal player codes |
+| Understat | ~2.4K | Custom | Matched via Transfermarkt bridge |
+| WhoScored | ~2.5K | Custom | Matched via Transfermarkt bridge |
 | SportMonks | ~600 | Custom | Players + teams via TM bridge |
-| API-Football | Growing | Custom | Name + DOB matching |
 | Club Elo | ~176 teams | Custom | Manual team mapping |
-| FotMob | ~4.6K | Custom | DOB + name matching (top 6 leagues) |
+| Opta | Sparse | Wikidata | Numeric Opta IDs from Wikidata P8736 |
+| Premier League | Decent | Wikidata | PL players only |
 
 IDs sourced from Wikidata are community-maintained. Custom IDs are verified independently — see the [Reep API](#api) for methodology details.
 

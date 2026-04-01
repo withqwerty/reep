@@ -68,6 +68,13 @@ PEOPLE_COLUMNS = [
     "key_sportmonks",
     "key_api_football",
     "key_fotmob",
+    "key_fpl_code",
+    "key_opta_f1",
+    "key_thesportsdb",
+    "key_skillcorner",
+    "key_wyscout",
+    "key_impect",
+    "key_heimspiel",
 ]
 
 # Column order for teams.csv
