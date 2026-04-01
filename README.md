@@ -271,10 +271,44 @@ The register is rebuilt weekly from Wikidata. Each release picks up new entities
 
 ## Contributing
 
-The best way to improve this register is to **edit Wikidata directly**. If a player is missing a Transfermarkt ID or FBref ID, add it to their Wikidata page. The next weekly build will pick it up automatically.
+### Share ID mappings
+
+Have a dataset that maps football player or team IDs across providers? We'd love to include it. Send us a CSV with these columns:
+
+| Column | Required | Description | Example |
+|--------|----------|-------------|---------|
+| `provider` | Yes | Provider name | `wyscout` |
+| `external_id` | Yes | The player/team ID on that provider | `12345` |
+| `name` | Yes | Player or team name (for validation) | `Cole Palmer` |
+| `date_of_birth` | Recommended | ISO date (helps us match accurately) | `2002-05-06` |
+| `transfermarkt_id` | Recommended | Transfermarkt ID (our strongest bridge) | `568177` |
+| `type` | Recommended | `player`, `team`, or `coach` | `player` |
+| `nationality` | Optional | Country (helps disambiguate) | `England` |
+
+The more columns you include, the more accurately we can match to Wikidata QIDs. A Transfermarkt ID or date of birth alone is usually enough.
+
+**How to submit:**
+- [Open an issue](https://github.com/withqwerty/reep/issues/new) with your CSV attached or linked
+- Email getintouch@withqwerty.com if you prefer to contribute anonymously
+
+We validate and match all submissions before adding them. Your IDs go into our verified custom mappings and are served via the API alongside Wikidata data.
+
+### Edit Wikidata directly
+
+If a player is missing a Transfermarkt ID or FBref ID, the ideal fix is to add it to their [Wikidata](https://www.wikidata.org/) page — the next weekly build picks it up automatically.
 
 - [How to edit Wikidata](https://www.wikidata.org/wiki/Wikidata:Introduction)
 - [Add an external identifier](https://www.wikidata.org/wiki/Help:Statements#Adding_statements)
+
+Wikidata requires ~50 manual edits and a 4-day waiting period before bulk edits are possible. If you have a large dataset, send it to us (see above) and we'll handle the Wikidata submission on your behalf.
+
+### Code contributions
+
+PRs to the API, CLI, scripts, and documentation are welcome. Note that the data CSVs are regenerated weekly from Wikidata — don't PR data changes directly.
+
+### What this repo doesn't contain
+
+This repo publishes IDs and tools, not scraping logic or raw data dumps from providers. Matching and ingestion scripts are maintained separately.
 
 ## License
 
