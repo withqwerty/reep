@@ -43,7 +43,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_soccerway` | [Soccerway](https://www.scorebar.com/) person ID | `525801` |
 | `key_sofascore` | [Sofascore](https://www.sofascore.com/) player ID | `982780` |
 | `key_flashscore` | [Flashscore](https://www.flashscore.com/) player ID | `palmer-cole/h8agbDt7` |
-| `key_opta` | Opta player ID | — |
+| `key_opta` | [Opta](https://www.statsperform.com/) player ID | `7cwgrmorsb42qaj5vrhp8fhzp` |
 | `key_premier_league` | [Premier League](https://www.premierleague.com/) player ID | `49293` |
 | `key_11v11` | [11v11](https://www.11v11.com/) player ID | `265554` |
 | `key_espn` | [ESPN FC](https://www.espn.com/football/) player ID | — |
@@ -71,7 +71,6 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_api_football` | [API-Football](https://www.api-football.com/) player ID | `1100` |
 | `key_fotmob` | [FotMob](https://www.fotmob.com/) player ID | `292462` |
 | `key_fpl_code` | FPL internal player code | `223340` |
-| `key_opta_f1` | Opta F1 alphanumeric player ID | `7cwgrmorsb42qaj5vrhp8fhzp` |
 | `key_thesportsdb` | [TheSportsDB](https://www.thesportsdb.com/) player ID | `34146086` |
 | `key_skillcorner` | [SkillCorner](https://www.skillcorner.com/) player ID | `23959` |
 | `key_wyscout` | [Wyscout](https://wyscout.com/) player ID | `234966` |
@@ -90,7 +89,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_transfermarkt` | Transfermarkt team ID | `11` |
 | `key_fbref` | FBref squad ID | `18bb7c10` |
 | `key_soccerway` | Soccerway team ID | `660` |
-| `key_opta` | Opta team ID | — |
+| `key_opta` | Opta team ID | `b3sy95iqnw2bv69a0gxunhiot` |
 | `key_kicker` | Kicker team ID | — |
 | `key_flashscore` | Flashscore team ID | — |
 | `key_sofascore` | Sofascore team ID | — |
@@ -129,7 +128,7 @@ Not every entity has every ID. Coverage depends on what the Wikidata community h
 | SkillCorner | ~46K | Custom | Via Impect ID mappings |
 | heim:spiel | ~44K | Custom | Via Impect ID mappings |
 | TheSportsDB | ~39K | Custom | Direct QID + DOB/name matching |
-| Opta F1 | ~38K | Custom | Alphanumeric Opta F1 IDs via TM bridge |
+| Opta | ~38K | Wikidata + Custom | Alphanumeric Opta IDs via TM bridge |
 | API-Football | ~36K | Custom | Via TheSportsDB + direct matching |
 | ESPN | ~19K | Custom | Via TheSportsDB mappings |
 | FotMob | ~4.6K | Custom | DOB + name matching |
@@ -139,7 +138,6 @@ Not every entity has every ID. Coverage depends on what the Wikidata community h
 | WhoScored | ~2.5K | Custom | Matched via Transfermarkt bridge |
 | SportMonks | ~600 | Custom | Players + teams via TM bridge |
 | Club Elo | ~176 teams | Custom | Manual team mapping |
-| Opta | Sparse | Wikidata | Numeric Opta IDs from Wikidata P8736 |
 | Premier League | Decent | Wikidata | PL players only |
 
 IDs sourced from Wikidata are community-maintained. Custom IDs are verified independently — see the [Reep API](#api) for methodology details.

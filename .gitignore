@@ -9,3 +9,4 @@ CLAUDE.md
 openapi.yaml
 .wrangler/
 .playwright-mcp/
+docs/

@@ -69,7 +69,6 @@ PEOPLE_COLUMNS = [
     "key_api_football",
     "key_fotmob",
     "key_fpl_code",
-    "key_opta_f1",
     "key_thesportsdb",
     "key_skillcorner",
     "key_wyscout",

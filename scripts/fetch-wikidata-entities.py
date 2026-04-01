@@ -35,6 +35,8 @@ OUTPUT_DIR = Path(__file__).parent.parent / "data" / "json"
 #   P13665  FBref match ID              — only 4 entities, match entity type not supported
 #   P7455   Transfermarkt match ID      — 26K but match entity type not supported yet
 #   P7460   Flashscore match ID         — only 22 entities
+#   P8736   Opta player ID              — numeric IDs, replaced by alphanumeric Opta IDs via custom matching
+#   P8737   Opta team ID               — numeric IDs, replaced by alphanumeric Opta IDs via custom matching
 #   P8735   Opta competition ID         — only 53 entities
 #   P13664  FBref competition ID        — 148 entities, competition entity type not supported yet
 #   P5628   Football.it female player   — redundant with Soccerdonna (P4381)
@@ -45,7 +47,6 @@ PLAYER_IDS = {
     "soccerway": "P2369",
     "sofascore": "P12302",
     "flashscore": "P8259",
-    "opta": "P8736",
     "premier_league": "P12539",
     "11v11": "P12551",
     "espn": "P3681",
@@ -73,7 +74,6 @@ TEAM_IDS = {
     "transfermarkt": "P7223",
     "fbref": "P8642",
     "soccerway": "P6131",
-    "opta": "P8737",
     "espn": "P13590",
     # New providers
     "kicker": "P12312",
