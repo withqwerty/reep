@@ -96,17 +96,14 @@ COACH_IDS = {
 }
 
 BIO_BATCH_SIZE = 200  # QIDs per bio-detail batch
-PAGE_SIZE = 10000  # SPARQL pagination size (smaller = more reliable, less truncation)
+PAGE_SIZE = 50000  # SPARQL pagination size
 
 
 def sparql_query(query: str, retries: int = 5, expected_min: int = 0) -> list[dict]:
     """Execute a SPARQL query against Wikidata via POST.
 
-    Requests TSV format instead of JSON to avoid corrupt JSON responses
-    from Wikidata's SPARQL endpoint (missing delimiters, unescaped chars).
-    TSV is line-based so partial/truncated responses just mean fewer rows.
-
-    If expected_min > 0, retries when the response has fewer rows (truncated).
+    Uses JSON format with strict=False to handle control characters.
+    Retries on malformed JSON (corrupt responses from Wikidata).
     """
     body = urllib.parse.urlencode({"query": query}).encode("utf-8")
     req = urllib.request.Request(
@@ -114,20 +111,20 @@ def sparql_query(query: str, retries: int = 5, expected_min: int = 0) -> list[di
         data=body,
         headers={
             "User-Agent": USER_AGENT,
-            "Accept": "text/tab-separated-values",
+            "Accept": "application/sparql-results+json",
             "Content-Type": "application/x-www-form-urlencoded",
         },
     )
     for attempt in range(retries + 1):
         try:
             with urllib.request.urlopen(req, timeout=120) as resp:
-                text = resp.read().decode("utf-8", errors="replace")
-            rows = parse_tsv_results(text)
-            # Detect truncated responses
-            if expected_min > 0 and len(rows) < expected_min and attempt < retries:
-                print(f"  Truncated response: {len(rows)} rows (expected ≥{expected_min}). Retrying in 10s...")
-                time.sleep(10)
-                continue
+                data = json.loads(resp.read().decode(), strict=False)
+            rows = []
+            for binding in data["results"]["bindings"]:
+                row = {}
+                for key, val in binding.items():
+                    row[key] = val["value"]
+                rows.append(row)
             return rows
         except urllib.error.HTTPError as e:
             print(f"  HTTP {e.code}: {e.reason}")
@@ -213,8 +210,7 @@ def sparql_query_paginated(query_fn, limit: int = 0) -> list[dict]:
         page_limit = min(PAGE_SIZE, limit - len(all_rows)) if limit else PAGE_SIZE
         print(f"    Page at offset {offset}...", end=" ", flush=True)
         query = query_fn(limit=page_limit, offset=offset)
-        # Expect at least 50% of page size (except possibly the last page)
-        rows = sparql_query(query, expected_min=min(page_limit // 2, page_limit))
+        rows = sparql_query(query)
         print(f"{len(rows)} rows")
         all_rows.extend(rows)
         if len(rows) < page_limit:
