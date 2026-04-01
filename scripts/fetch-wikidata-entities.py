@@ -99,7 +99,7 @@ BIO_BATCH_SIZE = 200  # QIDs per bio-detail batch
 PAGE_SIZE = 50000  # SPARQL pagination size for full extraction
 
 
-def sparql_query(query: str, retries: int = 3) -> list[dict]:
+def sparql_query(query: str, retries: int = 5) -> list[dict]:
     """Execute a SPARQL query against Wikidata via POST."""
     body = urllib.parse.urlencode({"query": query}).encode("utf-8")
     req = urllib.request.Request(
