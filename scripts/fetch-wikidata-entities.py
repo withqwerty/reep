@@ -96,7 +96,7 @@ COACH_IDS = {
 }
 
 BIO_BATCH_SIZE = 200  # QIDs per bio-detail batch
-PAGE_SIZE = 50000  # SPARQL pagination size for full extraction
+PAGE_SIZE = 10000  # SPARQL pagination size (smaller = more reliable, less truncation)
 
 
 def sparql_query(query: str, retries: int = 5, expected_min: int = 0) -> list[dict]:
@@ -213,8 +213,8 @@ def sparql_query_paginated(query_fn, limit: int = 0) -> list[dict]:
         page_limit = min(PAGE_SIZE, limit - len(all_rows)) if limit else PAGE_SIZE
         print(f"    Page at offset {offset}...", end=" ", flush=True)
         query = query_fn(limit=page_limit, offset=offset)
-        # Expect at least 10K rows per page (except possibly the last page)
-        rows = sparql_query(query, expected_min=min(10000, page_limit))
+        # Expect at least 50% of page size (except possibly the last page)
+        rows = sparql_query(query, expected_min=min(page_limit // 2, page_limit))
         print(f"{len(rows)} rows")
         all_rows.extend(rows)
         if len(rows) < page_limit:
