@@ -55,7 +55,7 @@ SAMPLE_TEAM = {
 }
 
 SAMPLE_SEARCH_RESPONSE = {"results": [SAMPLE_ENTITY], "count": 1}
-SAMPLE_LOOKUP_RESPONSE = {"results": [SAMPLE_ENTITY]}
+SAMPLE_LOOKUP_RESPONSE = {"results": [SAMPLE_ENTITY], "count": 1}
 SAMPLE_STATS_RESPONSE = {
     "total_entities": 435280,
     "by_type": {"player": 386025, "team": 45347, "coach": 3908},
@@ -166,10 +166,18 @@ class TestLookupCommand:
     @patch("reep.api_get")
     def test_lookup_by_qid(self, mock_api, capsys):
         mock_api.return_value = SAMPLE_LOOKUP_RESPONSE
-        args = SimpleNamespace(qid="Q99760796")
+        args = SimpleNamespace(qid="Q99760796", type=None)
         reep.cmd_lookup(args)
         output = capsys.readouterr().out
         assert "Cole Palmer" in output
+
+    @patch("reep.api_get")
+    def test_lookup_with_type_filter(self, mock_api, capsys):
+        mock_api.return_value = SAMPLE_LOOKUP_RESPONSE
+        args = SimpleNamespace(qid="Q99760796", type="player")
+        reep.cmd_lookup(args)
+        call_path = mock_api.call_args[0][0]
+        assert "type=player" in call_path
 
 
 class TestTranslateCommand:

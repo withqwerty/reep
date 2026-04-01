@@ -396,16 +396,46 @@ def stream_dump(source: str | None, limit: int | None) -> "iter":
         # Local file
         path = Path(source)
         if path.suffix == ".bz2":
-            f = bz2.open(path, "rt", encoding="utf-8")
+            # Use lbzip2/pbzip2 for parallel decompression (much faster than Python's bz2)
+            decompressor = None
+            for cmd in ["lbzip2", "pbzip2", "bzip2"]:
+                if subprocess.run(["which", cmd], capture_output=True).returncode == 0:
+                    decompressor = cmd
+                    break
+
+            if decompressor:
+                print(f"Decompressing {path.name} with {decompressor}")
+                proc = subprocess.Popen(
+                    [decompressor, "-d", "-c", str(path)],
+                    stdout=subprocess.PIPE,
+                )
+                try:
+                    for i, line in enumerate(proc.stdout):
+                        if limit and i >= limit:
+                            break
+                        yield line.decode("utf-8", errors="replace")
+                finally:
+                    proc.stdout.close()
+                    proc.wait()
+            else:
+                # Fallback to Python bz2 (single-threaded, slow)
+                f = bz2.open(path, "rt", encoding="utf-8")
+                try:
+                    for i, line in enumerate(f):
+                        if limit and i >= limit:
+                            break
+                        yield line
+                finally:
+                    f.close()
         else:
             f = open(path, "r", encoding="utf-8")
-        try:
-            for i, line in enumerate(f):
-                if limit and i >= limit:
-                    break
-                yield line
-        finally:
-            f.close()
+            try:
+                for i, line in enumerate(f):
+                    if limit and i >= limit:
+                        break
+                    yield line
+            finally:
+                f.close()
     else:
         # Stream from URL using curl + bzip2 subprocess for better performance
         # (Python's bz2 module is single-threaded; lbzip2/pbzip2 can be faster)
