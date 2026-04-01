@@ -250,6 +250,7 @@ WHERE {{
   {{
     SELECT DISTINCT ?e WHERE {{
       ?e wdt:P106 wd:Q937857 .
+      ?e wdt:P31 wd:Q5 .
     }}
     ORDER BY ?e
     {limit_clause} {offset_clause}
@@ -302,6 +303,7 @@ WHERE {{
   {{
     SELECT DISTINCT ?e WHERE {{
       ?e wdt:P106 wd:Q628099 .
+      ?e wdt:P31 wd:Q5 .
     }}
     ORDER BY ?e
     {limit_clause} {offset_clause}
