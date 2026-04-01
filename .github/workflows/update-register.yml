@@ -18,7 +18,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -71,7 +71,15 @@ jobs:
       - name: Export CSVs
         run: python scripts/export-csv.py
 
-      # Step 6: Commit and push
+      # Step 6: Regenerate samples
+      - name: Regenerate sample CSVs
+        run: |
+          for f in data/people.csv data/teams.csv data/names.csv; do
+            base=$(basename "$f")
+            (head -1 "$f"; tail -n +2 "$f" | awk 'BEGIN{srand(42)} {print rand() "\t" $0}' | sort -n | head -50 | cut -f2-) > "data/samples/$base"
+          done
+
+      # Step 7: Commit and push
       - name: Commit updated data
         run: |
           git config user.name "github-actions[bot]"
