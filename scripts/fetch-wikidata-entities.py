@@ -99,28 +99,35 @@ BIO_BATCH_SIZE = 200  # QIDs per bio-detail batch
 PAGE_SIZE = 50000  # SPARQL pagination size for full extraction
 
 
-def sparql_query(query: str, retries: int = 5) -> list[dict]:
-    """Execute a SPARQL query against Wikidata via POST."""
+def sparql_query(query: str, retries: int = 5, expected_min: int = 0) -> list[dict]:
+    """Execute a SPARQL query against Wikidata via POST.
+
+    Requests TSV format instead of JSON to avoid corrupt JSON responses
+    from Wikidata's SPARQL endpoint (missing delimiters, unescaped chars).
+    TSV is line-based so partial/truncated responses just mean fewer rows.
+
+    If expected_min > 0, retries when the response has fewer rows (truncated).
+    """
     body = urllib.parse.urlencode({"query": query}).encode("utf-8")
     req = urllib.request.Request(
         ENDPOINT,
         data=body,
         headers={
             "User-Agent": USER_AGENT,
-            "Accept": "application/sparql-results+json",
+            "Accept": "text/tab-separated-values",
             "Content-Type": "application/x-www-form-urlencoded",
         },
     )
     for attempt in range(retries + 1):
         try:
             with urllib.request.urlopen(req, timeout=120) as resp:
-                data = json.loads(resp.read().decode(), strict=False)
-            rows = []
-            for binding in data["results"]["bindings"]:
-                row = {}
-                for key, val in binding.items():
-                    row[key] = val["value"]
-                rows.append(row)
+                text = resp.read().decode("utf-8", errors="replace")
+            rows = parse_tsv_results(text)
+            # Detect truncated responses
+            if expected_min > 0 and len(rows) < expected_min and attempt < retries:
+                print(f"  Truncated response: {len(rows)} rows (expected ≥{expected_min}). Retrying in 10s...")
+                time.sleep(10)
+                continue
             return rows
         except urllib.error.HTTPError as e:
             print(f"  HTTP {e.code}: {e.reason}")
@@ -129,7 +136,7 @@ def sparql_query(query: str, retries: int = 5) -> list[dict]:
                 print(f"  Rate limited. Waiting {wait}s...")
                 time.sleep(wait)
                 continue
-            if e.code == 500 and attempt < retries:
+            if e.code in (500, 502, 503) and attempt < retries:
                 print(f"  Server error. Retrying in 15s... (attempt {attempt + 1}/{retries})")
                 time.sleep(15)
                 continue
@@ -147,6 +154,54 @@ def sparql_query(query: str, retries: int = 5) -> list[dict]:
     return []
 
 
+def parse_tsv_results(text: str) -> list[dict]:
+    """Parse SPARQL TSV results into list of dicts.
+
+    TSV format: first line is ?var1\\t?var2\\t... headers,
+    subsequent lines are values. URIs are wrapped in <>, strings in quotes.
+    """
+    lines = text.strip().split("\n")
+    if not lines:
+        return []
+
+    # Headers: strip leading ? from variable names
+    headers = [h.lstrip("?") for h in lines[0].split("\t")]
+
+    rows = []
+    for line in lines[1:]:
+        if not line.strip():
+            continue
+        values = line.split("\t")
+        row = {}
+        for i, val in enumerate(values):
+            if i >= len(headers):
+                break
+            val = val.strip()
+            if not val:
+                continue
+            # Strip URI brackets: <http://www.wikidata.org/entity/Q123> → http://...
+            if val.startswith("<") and val.endswith(">"):
+                val = val[1:-1]
+            # Strip string quotes: "value" → value
+            elif val.startswith('"'):
+                # Handle "value"@en or "value"^^<type>
+                if '"@' in val:
+                    val = val[1:val.rindex('"@')]
+                elif '"^^' in val:
+                    val = val[1:val.rindex('"^^')]
+                elif val.endswith('"'):
+                    val = val[1:-1]
+            row[headers[i]] = val
+        if row:
+            rows.append(row)
+
+    # Drop last row if it has fewer columns than the header (truncated response)
+    if rows and len(rows[-1]) < len(headers) // 2:
+        rows.pop()
+
+    return rows
+
+
 def sparql_query_paginated(query_fn, limit: int = 0) -> list[dict]:
     """Fetch all results using OFFSET/LIMIT pagination for large datasets."""
     if limit and limit <= PAGE_SIZE:
@@ -158,7 +213,8 @@ def sparql_query_paginated(query_fn, limit: int = 0) -> list[dict]:
         page_limit = min(PAGE_SIZE, limit - len(all_rows)) if limit else PAGE_SIZE
         print(f"    Page at offset {offset}...", end=" ", flush=True)
         query = query_fn(limit=page_limit, offset=offset)
-        rows = sparql_query(query)
+        # Expect at least 10K rows per page (except possibly the last page)
+        rows = sparql_query(query, expected_min=min(10000, page_limit))
         print(f"{len(rows)} rows")
         all_rows.extend(rows)
         if len(rows) < page_limit:
