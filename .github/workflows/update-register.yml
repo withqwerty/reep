@@ -44,14 +44,46 @@ jobs:
           fi
           python scripts/fetch-wikidata-entities.py $FLAGS
 
-      # Step 2: Seed into D1
+      # Step 2: Validate fetch output
+      - name: Validate fetch output
+        run: |
+          python3 -c "
+          import json
+          from pathlib import Path
+          data_dir = Path('data/json')
+          total = 0
+          for name in ['players', 'teams', 'coachs']:
+              path = data_dir / f'{name}.json'
+              if not path.exists():
+                  print(f'MISSING: {path}')
+                  exit(1)
+              count = len(json.load(open(path)))
+              print(f'  {name}: {count:,}')
+              total += count
+          print(f'  total: {total:,}')
+          if total < 100000:
+              print(f'FAILED: only {total:,} entities (expected 400K+)')
+              exit(1)
+          print('Validation passed')
+          "
+
+      # Step 3: Snapshot current D1 counts (for comparison if seed fails)
+      - name: Snapshot D1 before seed
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          wrangler d1 execute football-entities --remote \
+            --command="SELECT type, COUNT(*) as count FROM entities GROUP BY type;"
+
+      # Step 4: Seed into D1 (has built-in count gate — aborts if new < 90% of current)
       - name: Seed into D1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: python scripts/seed-wikidata-d1.py
 
-      # Step 3: Verify D1
+      # Step 5: Verify D1
       - name: Verify D1 counts
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -60,18 +92,18 @@ jobs:
           wrangler d1 execute football-entities --remote \
             --command="SELECT type, COUNT(*) as count FROM entities GROUP BY type;"
 
-      # Step 4: Fetch custom IDs from D1
+      # Step 6: Fetch custom IDs from D1
       - name: Fetch custom IDs
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: python scripts/fetch-custom-ids.py
 
-      # Step 5: Export to CSV (Wikidata + custom IDs merged)
+      # Step 7: Export to CSV (Wikidata + custom IDs merged)
       - name: Export CSVs
         run: python scripts/export-csv.py
 
-      # Step 6: Regenerate samples
+      # Step 8: Regenerate samples
       - name: Regenerate sample CSVs
         run: |
           for f in data/people.csv data/teams.csv data/names.csv; do
@@ -79,7 +111,7 @@ jobs:
             (head -1 "$f"; tail -n +2 "$f" | awk 'BEGIN{srand(42)} {print rand() "\t" $0}' | sort -n | head -50 | cut -f2-) > "data/samples/$base"
           done
 
-      # Step 7: Commit and push
+      # Step 9: Commit and push
       - name: Commit updated data
         run: |
           git config user.name "github-actions[bot]"

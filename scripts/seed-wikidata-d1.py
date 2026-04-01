@@ -24,6 +24,24 @@ ROWS_PER_INSERT = 200  # rows per INSERT statement (avoids "statement too long")
 STMTS_PER_FILE = 5000  # statements per SQL file
 
 
+SAFETY_THRESHOLD = 0.9  # refuse to seed if new count < 90% of current
+
+
+def query_d1(sql: str, remote: bool = True) -> list[dict]:
+    """Run a SQL query against D1 and return result rows."""
+    cmd = ["npx", "wrangler", "d1", "execute", DB_NAME, f"--command={sql}"]
+    if remote:
+        cmd.append("--remote")
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    try:
+        data = json.loads(
+            result.stdout[result.stdout.index("["):result.stdout.rindex("]") + 1]
+        )
+        return data[0].get("results", [])
+    except (json.JSONDecodeError, ValueError, IndexError):
+        return []
+
+
 def escape_sql(val) -> str:
     if val is None:
         return "NULL"
@@ -103,11 +121,39 @@ def main():
     parser.add_argument("--type", choices=["player", "team", "coach"], help="Single entity type")
     parser.add_argument("--dry-run", action="store_true", help="Generate SQL only")
     parser.add_argument("--local", action="store_true", help="Use local D1")
+    parser.add_argument("--force", action="store_true", help="Skip safety count check")
     args = parser.parse_args()
 
     types = ["player", "team", "coach"]
     if args.type:
         types = [args.type]
+
+    # --- Pre-seed safety gate ---
+    # Count new entities from JSON, compare to current D1 count.
+    # Refuse to proceed if the new count is significantly lower (truncated fetch).
+    new_count = 0
+    for entity_type in types:
+        filename = f"{entity_type}s.json" if entity_type != "coach" else "coachs.json"
+        json_path = DATA_DIR / filename
+        if json_path.exists():
+            with open(json_path) as f:
+                new_count += len(json.load(f))
+
+    if not args.dry_run and not args.local and not args.force:
+        rows = query_d1("SELECT COUNT(*) as total FROM entities;")
+        current_count = rows[0]["total"] if rows else 0
+
+        if current_count > 0 and new_count > 0:
+            ratio = new_count / current_count
+            print(f"Safety check: {new_count:,} new entities vs {current_count:,} in D1 ({ratio:.0%})")
+            if ratio < SAFETY_THRESHOLD:
+                print(f"ABORTED — new count is {ratio:.0%} of current ({SAFETY_THRESHOLD:.0%} minimum).")
+                print("This likely means the Wikidata fetch was incomplete.")
+                print("Use --force to override, or fix the fetch and retry.")
+                sys.exit(1)
+        elif current_count > 0 and new_count == 0:
+            print("ABORTED — no new entities found in JSON files.")
+            sys.exit(1)
 
     # Drop and recreate tables with current schema.
     # Safe because the seed is a full refresh. FTS table must also be recreated
