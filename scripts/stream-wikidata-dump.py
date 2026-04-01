@@ -109,6 +109,7 @@ ALL_FOOTBALL_PROPERTIES = set(PROPERTY_MAP.keys())
 # Bio properties
 P_DOB = "P569"           # date of birth
 P_NATIONALITY = "P27"    # country of citizenship
+P_SPORT_COUNTRY = "P1532" # country for sport (FIFA nationality — preferred over P27)
 P_POSITION = "P413"      # position played on team
 P_HEIGHT = "P2048"       # height
 P_CURRENT_TEAM = "P54"   # member of sports team
@@ -227,7 +228,7 @@ def extract_entity(entity: dict) -> list[dict]:
     dob = first_claim_value(P_DOB)
     if dob:
         person_bio["date_of_birth"] = dob
-    nationality_qid = first_claim_value(P_NATIONALITY)
+    nationality_qid = first_claim_value(P_SPORT_COUNTRY) or first_claim_value(P_NATIONALITY)
     if nationality_qid:
         person_bio["nationality_qid"] = nationality_qid
     position_qid = first_claim_value(P_POSITION)

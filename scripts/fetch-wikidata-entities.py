@@ -300,7 +300,9 @@ WHERE {{
   OPTIONAL {{ ?e skos:altLabel ?altLabels . FILTER(LANG(?altLabels) = "en") }}
   OPTIONAL {{ ?e wdt:P1477 ?birthName . FILTER(LANG(?birthName) = "en") }}
   OPTIONAL {{ ?e wdt:P569 ?dob . }}
-  OPTIONAL {{ ?e wdt:P27 ?nationality . }}
+  OPTIONAL {{ ?e wdt:P1532 ?sportNat . }}
+  OPTIONAL {{ ?e wdt:P27 ?citizenship . }}
+  BIND(COALESCE(?sportNat, ?citizenship) AS ?nationality)
   OPTIONAL {{ ?e wdt:P413 ?position . }}
   OPTIONAL {{
     ?e p:P2048 ?hStmt .
@@ -337,7 +339,9 @@ WHERE {{
   OPTIONAL {{ ?e skos:altLabel ?altLabels . FILTER(LANG(?altLabels) = "en") }}
   OPTIONAL {{ ?e wdt:P1477 ?birthName . FILTER(LANG(?birthName) = "en") }}
   OPTIONAL {{ ?e wdt:P569 ?dob . }}
-  OPTIONAL {{ ?e wdt:P27 ?nationality . }}
+  OPTIONAL {{ ?e wdt:P1532 ?sportNat . }}
+  OPTIONAL {{ ?e wdt:P27 ?citizenship . }}
+  BIND(COALESCE(?sportNat, ?citizenship) AS ?nationality)
   SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
 }}
 """
