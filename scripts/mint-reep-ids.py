@@ -17,6 +17,7 @@ import subprocess
 import sys
 import tempfile
 import uuid
+from collections import Counter
 from pathlib import Path
 
 DB_NAME = "football-entities"
@@ -44,7 +45,7 @@ def query_d1(sql: str, remote: bool = True) -> list[dict]:
         return []
 
 
-def escape_sql(val) -> str:
+def escape_sql(val: str | None) -> str:
     if val is None:
         return "NULL"
     return "'" + str(val).replace("'", "''") + "'"
@@ -166,7 +167,6 @@ def main():
             print(f"  {s}")
 
         # Show type distribution
-        from collections import Counter
         types = Counter(t for _, _, t in all_updates)
         print(f"\nType distribution:")
         for t, c in types.most_common():
@@ -182,7 +182,10 @@ def main():
             f.write("\n".join(batch))
             sql_path = f.name
 
-        ok = execute_sql_file(sql_path, remote=remote)
+        try:
+            ok = execute_sql_file(sql_path, remote=remote)
+        finally:
+            Path(sql_path).unlink(missing_ok=True)
         batch_num = i // BATCH_SIZE + 1
         total_batches = (len(stmts) + BATCH_SIZE - 1) // BATCH_SIZE
         status = "OK" if ok else "FAILED"
