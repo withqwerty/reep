@@ -258,8 +258,8 @@ All data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wik
 | [P6131](https://www.wikidata.org/wiki/Property:P6131) | Soccerway team ID |
 | [P12302](https://www.wikidata.org/wiki/Property:P12302) | Sofascore player ID |
 | [P8259](https://www.wikidata.org/wiki/Property:P8259) | Flashscore player ID |
-| [P8736](https://www.wikidata.org/wiki/Property:P8736) | Opta player ID |
-| [P8737](https://www.wikidata.org/wiki/Property:P8737) | Opta team ID |
+| ~~[P8736](https://www.wikidata.org/wiki/Property:P8736)~~ | ~~Opta player ID~~ (removed — outdated numeric IDs, see note below) |
+| ~~[P8737](https://www.wikidata.org/wiki/Property:P8737)~~ | ~~Opta team ID~~ (removed — outdated numeric IDs, see note below) |
 | [P12539](https://www.wikidata.org/wiki/Property:P12539) | Premier League player ID |
 | [P12551](https://www.wikidata.org/wiki/Property:P12551) | 11v11 player ID |
 | [P3681](https://www.wikidata.org/wiki/Property:P3681) | ESPN FC player ID |
@@ -289,9 +289,17 @@ All data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wik
 | [P11379](https://www.wikidata.org/wiki/Property:P11379) | Dongqiudi player ID |
 | [P7280](https://www.wikidata.org/wiki/Property:P7280) | PlaymakerStats team ID |
 
+### Provider notes
+
+**Opta** — Wikidata properties P8736/P8737 contain outdated numeric Opta IDs. Reep uses alphanumeric Opta IDs (e.g. `7cwgrmorsb42qaj5vrhp8fhzp`) sourced from Stats Perform's Opta F1 player database via proprietary matching. These are the IDs used in current Opta/Stats Perform data products.
+
+**WorldFootball.net / heim:spiel** — WorldFootball.net (owned by heim:spiel) migrated from slug-based URLs (e.g. `cole-palmer`) to numeric person IDs (e.g. `pe567392`) in November 2025. The old slugs still work via redirect. Wikidata P2020 contains the old slug format. The heim:spiel numeric IDs in Reep are the same as the new WorldFootball.net person IDs (e.g. heim:spiel `356260` = `worldfootball.net/person/pe356260/`).
+
+**Soccerway** — Soccerway changed their URL/ID scheme in September 2025. Wikidata P2369 contains the old format. A new Wikidata property has been proposed but not yet approved.
+
 ## Updates
 
-The register is rebuilt weekly from Wikidata. Each release picks up new entities, updated IDs, and corrections made by the Wikidata community.
+The register is refreshed weekly from Wikidata every Monday. Incremental updates fetch only changed entities (~1-2K/day); a full refresh runs monthly. Each update picks up new entities, updated IDs, and corrections made by the Wikidata community. Proprietary provider mappings persist across updates.
 
 ## Contributing
 
