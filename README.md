@@ -293,7 +293,14 @@ All data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wik
 
 **Opta** — Wikidata properties P8736/P8737 contain outdated numeric Opta IDs. Reep uses alphanumeric Opta IDs (e.g. `7cwgrmorsb42qaj5vrhp8fhzp`) sourced from Stats Perform's Opta F1 player database via proprietary matching. These are the IDs used in current Opta/Stats Perform data products.
 
-**WorldFootball.net / heim:spiel** — WorldFootball.net (owned by heim:spiel) migrated from slug-based URLs (e.g. `cole-palmer`) to numeric person IDs (e.g. `pe567392`) in November 2025. The old slugs still work via redirect. Wikidata P2020 contains the old slug format. The heim:spiel numeric IDs in Reep are the same as the new WorldFootball.net person IDs (e.g. heim:spiel `356260` = `worldfootball.net/person/pe356260/`).
+**WorldFootball.net / heim:spiel** — WorldFootball.net (owned by heim:spiel) migrated from slug-based URLs (e.g. `cole-palmer`) to numeric IDs in November 2025. The old slugs still work via redirect. Wikidata P2020 contains the old slug format. The heim:spiel numeric IDs in Reep are the same as the new WorldFootball.net IDs — the URL prefix indicates entity type:
+
+| Type | WorldFootball.net URL | heim:spiel ID |
+|------|----------------------|---------------|
+| Player | `/pe426937` | `426937` |
+| Team | `/te1672` | `1672` |
+| Competition | `/co91` | `91` |
+| Match | `/ma10988177` | `10988177` |
 
 **Soccerway** — Soccerway changed their URL/ID scheme in September 2025. Wikidata P2369 contains the old format. A new Wikidata property has been proposed but not yet approved.
 
