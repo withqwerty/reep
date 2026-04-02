@@ -291,7 +291,7 @@ All data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wik
 
 ### Provider notes
 
-**Opta** — Wikidata properties P8736/P8737 contain outdated numeric Opta IDs. Reep uses alphanumeric Opta IDs (e.g. `7cwgrmorsb42qaj5vrhp8fhzp`) sourced from Stats Perform's Opta F1 player database via proprietary matching. These are the IDs used in current Opta/Stats Perform data products.
+**Opta / Stats Perform** — Wikidata properties P8736/P8737 contain outdated numeric Opta IDs. Reep uses alphanumeric Opta IDs (e.g. `7cwgrmorsb42qaj5vrhp8fhzp`) sourced from Stats Perform's Opta F1 player database via proprietary matching. These are the IDs used in current Opta/Stats Perform data products. Separately, The Analyst (theanalyst.com, Opta's public stats site) uses numeric `sc-` codes in player URLs (e.g. `theanalyst.com/football/player/sc-244851/cole-palmer`) — these match the FPL player codes (`fpl_code`) in Reep, since the Premier League's FPL system also uses Opta data.
 
 **WorldFootball.net / heim:spiel** — WorldFootball.net (owned by heim:spiel) migrated from slug-based URLs (e.g. `cole-palmer`) to numeric IDs in November 2025. The old slugs still work via redirect. Wikidata P2020 contains the old slug format. The heim:spiel numeric IDs in Reep are the same as the new WorldFootball.net IDs — the URL prefix indicates entity type:
 
