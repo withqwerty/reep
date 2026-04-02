@@ -10,4 +10,4 @@ openapi.yaml
 .wrangler/
 .playwright-mcp/
 docs/
-.claude
+.claudedata/backups/
