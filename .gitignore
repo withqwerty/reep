@@ -10,4 +10,6 @@ openapi.yaml
 .wrangler/
 .playwright-mcp/
 docs/
-.claude
+.claudedata/backups/
+data/reep_id_map.json
+data/dedup-report.json

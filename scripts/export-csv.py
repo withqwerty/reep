@@ -20,10 +20,12 @@ from datetime import datetime, timezone
 
 DEFAULT_SOURCE = Path(__file__).parent.parent / "data" / "json"
 CUSTOM_IDS_PATH = Path(__file__).parent.parent / "data" / "custom_ids.json"
+REEP_ID_MAP_PATH = Path(__file__).parent.parent / "data" / "reep_id_map.json"
 OUTPUT_DIR = Path(__file__).parent.parent / "data"
 
 # Column order for people.csv
 PEOPLE_COLUMNS = [
+    "reep_id",
     "key_wikidata",
     "type",
     "name",
@@ -78,6 +80,7 @@ PEOPLE_COLUMNS = [
 
 # Column order for teams.csv
 TEAM_COLUMNS = [
+    "reep_id",
     "key_wikidata",
     "name",
     "country",
@@ -119,31 +122,48 @@ def load_json(path: Path) -> list[dict]:
         return json.load(f)
 
 
-def load_custom_ids(path: Path) -> dict[tuple[str, str], dict[str, str]]:
-    """Load custom_ids.json into {(qid, type): {provider: external_id}} lookup."""
+def load_custom_ids(path: Path) -> dict[str, dict[str, str]]:
+    """Load custom_ids.json into {reep_id: {provider: external_id}} lookup."""
     if not path.exists():
         return {}
     with open(path) as f:
         rows = json.load(f)
-    lookup: dict[tuple[str, str], dict[str, str]] = {}
+    lookup: dict[str, dict[str, str]] = {}
     for row in rows:
-        # Support both old (no type) and new (with type) shapes
-        key = (row["qid"], row.get("type", "player"))
+        key = row.get("reep_id")
+        if not key:
+            # Legacy format: fall back to qid+type (pre-rekey)
+            key = f"{row['qid']}:{row.get('type', 'player')}"
         lookup.setdefault(key, {})[row["provider"]] = row["external_id"]
     print(f"Loaded {len(rows)} custom IDs for {len(lookup)} entities")
     return lookup
 
 
+def load_reep_id_map(path: Path) -> dict[str, str]:
+    """Load reep_id_map.json: {'qid:type' -> reep_id}."""
+    if not path.exists():
+        print(f"  No reep_id map at {path} — reep_id column will be empty")
+        return {}
+    with open(path) as f:
+        data = json.load(f)
+    print(f"Loaded {len(data):,} reep_id mappings")
+    return data
+
+
 def export_people(players: list[dict], coaches: list[dict], out_path: Path,
-                   custom_ids: dict[tuple[str, str], dict[str, str]] | None = None):
+                   custom_ids: dict[str, dict[str, str]] | None = None,
+                   reep_id_map: dict[str, str] | None = None):
     """Export players + coaches to people.csv."""
     custom_ids = custom_ids or {}
+    reep_id_map = reep_id_map or {}
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=PEOPLE_COLUMNS, extrasaction="ignore")
         writer.writeheader()
 
         for entity in sorted(players + coaches, key=lambda e: (e.get("name_en", ""), e.get("type", ""))):
+            reep_id = reep_id_map.get(f"{entity['qid']}:{entity['type']}", "")
             row = {
+                "reep_id": reep_id,
                 "key_wikidata": entity["qid"],
                 "type": entity["type"],
                 "name": entity.get("name_en", ""),
@@ -160,8 +180,9 @@ def export_people(players: list[dict], coaches: list[dict], out_path: Path,
                 if col in PEOPLE_COLUMNS:
                     row[col] = ext_id
 
-            # Merge custom IDs (don't overwrite Wikidata)
-            for provider, ext_id in custom_ids.get((entity["qid"], entity["type"]), {}).items():
+            # Merge custom IDs (don't overwrite Wikidata). Key is reep_id or qid:type fallback.
+            custom_key = reep_id or f"{entity['qid']}:{entity['type']}"
+            for provider, ext_id in custom_ids.get(custom_key, {}).items():
                 col = f"key_{provider}"
                 if col in PEOPLE_COLUMNS and col not in row:
                     row[col] = ext_id
@@ -172,15 +193,19 @@ def export_people(players: list[dict], coaches: list[dict], out_path: Path,
 
 
 def export_teams(teams: list[dict], out_path: Path,
-                 custom_ids: dict[tuple[str, str], dict[str, str]] | None = None):
+                 custom_ids: dict[str, dict[str, str]] | None = None,
+                 reep_id_map: dict[str, str] | None = None):
     """Export teams to teams.csv."""
     custom_ids = custom_ids or {}
+    reep_id_map = reep_id_map or {}
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=TEAM_COLUMNS, extrasaction="ignore")
         writer.writeheader()
 
         for entity in sorted(teams, key=lambda e: e.get("name_en", "")):
+            reep_id = reep_id_map.get(f"{entity['qid']}:team", "")
             row = {
+                "reep_id": reep_id,
                 "key_wikidata": entity["qid"],
                 "name": entity.get("name_en", ""),
                 "country": entity.get("country") or "",
@@ -195,7 +220,8 @@ def export_teams(teams: list[dict], out_path: Path,
                     row[col] = ext_id
 
             # Merge custom IDs (don't overwrite Wikidata)
-            for provider, ext_id in custom_ids.get((entity["qid"], "team"), {}).items():
+            custom_key = reep_id or f"{entity['qid']}:team"
+            for provider, ext_id in custom_ids.get(custom_key, {}).items():
                 col = f"key_{provider}"
                 if col in TEAM_COLUMNS and col not in row:
                     row[col] = ext_id
@@ -259,11 +285,14 @@ def main():
     # Load custom IDs (if available)
     custom_ids = load_custom_ids(CUSTOM_IDS_PATH)
 
+    # Load reep_id map (generated by fetch-custom-ids.py)
+    reep_id_map = load_reep_id_map(REEP_ID_MAP_PATH)
+
     # Export
-    n_people = export_people(players, coaches, OUTPUT_DIR / "people.csv", custom_ids)
+    n_people = export_people(players, coaches, OUTPUT_DIR / "people.csv", custom_ids, reep_id_map)
     print(f"Exported {n_people} people to data/people.csv")
 
-    n_teams = export_teams(teams, OUTPUT_DIR / "teams.csv", custom_ids)
+    n_teams = export_teams(teams, OUTPUT_DIR / "teams.csv", custom_ids, reep_id_map)
     print(f"Exported {n_teams} teams to data/teams.csv")
 
     n_names = export_names(players + teams + coaches, OUTPUT_DIR / "names.csv")

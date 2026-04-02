@@ -10,9 +10,11 @@ Named after [Charles Reep](https://en.wikipedia.org/wiki/Charles_Reep) (1904--20
 
 ## What is this?
 
-A canonical identity file for football. Every person and club gets a stable [Wikidata](https://www.wikidata.org/) QID, linked to their IDs on other platforms. If you have a Transfermarkt ID and need the FBref ID for the same player, this register gives you the answer.
+A canonical identity file for football. Every person, club, and entity gets a stable Reep ID (`reep_<type_prefix><8hex>`), linked to their IDs on other platforms. If you have a Transfermarkt ID and need the FBref ID for the same player, this register gives you the answer.
 
-People who are both players and coaches (e.g. Pep Guardiola) have separate records with type-specific provider IDs. The unique key is `(key_wikidata, type)`, not just `key_wikidata`.
+The unique key is `reep_id`. Wikidata QIDs are available as a provider mapping where the entity exists in Wikidata, but entities can exist independently (e.g. lower-league players sourced from Opta).
+
+People who are both players and coaches (e.g. Pep Guardiola) have separate records with distinct Reep IDs — `reep_p*` for the player record, `reep_c*` for the coach record.
 
 Think of it as the football equivalent of the [Chadwick Baseball Bureau Register](https://github.com/chadwickbureau/register).
 
@@ -20,7 +22,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 
 | File | Records | Description |
 |------|---------|-------------|
-| [`data/people.csv`](data/people.csv) | ~430K | Players and coaches with provider IDs and bio |
+| [`data/people.csv`](data/people.csv) | ~488K | Players and coaches with provider IDs and bio |
 | [`data/teams.csv`](data/teams.csv) | ~45K | Clubs with provider IDs and metadata |
 | [`data/names.csv`](data/names.csv) | varies | Alternate names and aliases |
 | [`data/meta.json`](data/meta.json) | — | Generation timestamp and counts |
@@ -29,7 +31,8 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 
 | Column | Description | Example |
 |--------|-------------|---------|
-| `key_wikidata` | Wikidata QID (canonical key) | `Q99760796` |
+| `reep_id` | Reep ID (canonical key) | `reep_p2804f5db` |
+| `key_wikidata` | Wikidata QID (empty if not in Wikidata) | `Q99760796` |
 | `type` | `player` or `coach` | `player` |
 | `name` | Primary English name | `Cole Palmer` |
 | `full_name` | Birth/legal name | `Cole Jermaine Palmer` |
@@ -81,6 +84,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 
 | Column | Description | Example |
 |--------|-------------|---------|
+| `reep_id` | Reep ID (canonical key) | `reep_t0871097b` |
 | `key_wikidata` | Wikidata QID | `Q9616` |
 | `name` | Primary English name | `Arsenal F.C.` |
 | `country` | Country | `United Kingdom` |
@@ -118,9 +122,9 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 Not every entity has every ID. Coverage depends on what the Wikidata community has mapped plus custom verified mappings. To get live coverage counts:
 
 ```bash
-# Wikidata-sourced IDs
+# Wikidata-sourced IDs (provider_ids)
 pnpm exec wrangler d1 execute football-entities --remote \
-  --command "SELECT provider, COUNT(*) as cnt FROM external_ids GROUP BY provider ORDER BY cnt DESC"
+  --command "SELECT provider, COUNT(*) as cnt FROM provider_ids GROUP BY provider ORDER BY cnt DESC"
 
 # Custom verified IDs
 pnpm exec wrangler d1 execute football-entities --remote \
@@ -133,7 +137,7 @@ pnpm exec wrangler d1 execute football-entities --remote \
 | FBref | Wikidata | Strong for recent players |
 | Soccerway | Wikidata | Broad international coverage |
 | Sofascore | Wikidata | Modern players well covered |
-| Opta | Custom | Alphanumeric IDs from Stats Perform's Opta F1 database |
+| Opta | Custom | Alphanumeric IDs from Stats Perform's Opta F1 database (~50K players) |
 | Impect | Custom | DOB + name matching via Impect export |
 | Wyscout | Custom | Via Impect ID mappings |
 | SkillCorner | Custom | Via Impect ID mappings |
@@ -159,16 +163,16 @@ IDs sourced from Wikidata are community-maintained. Custom IDs are verified inde
 ```python
 import csv
 
-# Load people into a dict keyed by Transfermarkt ID
+# Load people into a dict keyed by Reep ID
 people = {}
 with open("data/people.csv") as f:
     for row in csv.DictReader(f):
-        tm_id = row["key_transfermarkt"]
-        if tm_id:
-            people[tm_id] = row
+        people[row["reep_id"]] = row
 
-# Look up Cole Palmer's FBref ID from his Transfermarkt ID
-palmer = people["568177"]
+# Look up by Transfermarkt ID
+tm_index = {row["key_transfermarkt"]: row for row in people.values() if row["key_transfermarkt"]}
+palmer = tm_index["568177"]
+print(palmer["reep_id"])    # "reep_p2804f5db"
 print(palmer["key_fbref"])  # "dc7f8a28"
 ```
 
@@ -184,7 +188,7 @@ pl_players <- people |> filter(key_premier_league != "")
 # Cross-reference: Transfermarkt -> FBref
 people |>
   filter(key_transfermarkt == "568177") |>
-  select(name, key_fbref, key_sofascore)
+  select(reep_id, name, key_fbref, key_sofascore)
 ```
 
 ### SQL (load into SQLite)
@@ -204,6 +208,9 @@ SELECT * FROM people WHERE name LIKE '%Salah%';
 
 -- Reverse lookup: FBref ID -> everything
 SELECT * FROM people WHERE key_fbref = 'e342ad68';
+
+-- Lookup by Reep ID
+SELECT * FROM people WHERE reep_id = 'reep_p2804f5db';
 ```
 
 ## API
@@ -216,10 +223,26 @@ The Reep API provides the same data as the CSVs via a convenient REST interface.
 |----------|-------------|---------|
 | `GET /search` | Search by name (prefix matching) | `/search?name=Cole Palmer&type=player` |
 | `GET /resolve` | Translate provider ID | `/resolve?provider=transfermarkt&id=568177` |
-| `GET /lookup` | Look up by Wikidata QID (filter by `&type=`) | `/lookup?qid=Q99760796&type=player` |
+| `GET /lookup` | Look up by Reep ID or Wikidata QID | `/lookup?id=reep_p2804f5db` |
 | `GET /stats` | Database statistics | `/stats` |
 
+The `/lookup` endpoint auto-detects the ID type: Reep IDs start with `reep_`, Wikidata QIDs start with `Q`. The legacy `?qid=` parameter is still supported.
+
 All endpoints that return entities accept an optional `type` parameter (`player`, `team`, `coach`). For dual-role people, `/lookup` without `type` returns all records.
+
+## Reep IDs
+
+Every entity in the register has a self-minted Reep ID as its canonical identifier. The format is `reep_<type_prefix><8hex>`:
+
+| Prefix | Entity type | Example |
+|--------|-------------|---------|
+| `reep_p` | Player | `reep_p2804f5db` (Cole Palmer) |
+| `reep_t` | Team | `reep_t0871097b` (Arsenal F.C.) |
+| `reep_c` | Coach | `reep_c9103de59` (A. H. Albut) |
+
+Reep IDs are stable — they never change, even if a player's Wikidata QID is merged or deleted. Wikidata QIDs are available as a provider mapping (`key_wikidata` in CSVs, `qid` in API responses) but are not the identity backbone.
+
+This design follows the [Chadwick Baseball Bureau Register](https://github.com/chadwickbureau/register) model: self-minted UUIDs as primary keys, with all provider IDs (including Wikidata) as cross-references.
 
 ## CLI
 
@@ -243,7 +266,9 @@ python cli/reep.py local "Salah"
 
 ## Source
 
-All data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wikidata is a free, collaborative knowledge base maintained by thousands of volunteers. The cross-provider ID mappings exist because the Wikidata community has systematically added external identifier properties for football data sources.
+Most data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wikidata is a free, collaborative knowledge base maintained by thousands of volunteers. The cross-provider ID mappings exist because the Wikidata community has systematically added external identifier properties for football data sources.
+
+Entities not in Wikidata (e.g. lower-league players) are sourced from authoritative provider databases like Opta's F1 player database.
 
 ### Wikidata properties used
 
@@ -313,7 +338,7 @@ A new Wikidata property for the new format has been proposed but not yet approve
 
 ## Updates
 
-The register is refreshed weekly from Wikidata every Monday. Incremental updates fetch only changed entities (~1-2K/day); a full refresh runs monthly. Each update picks up new entities, updated IDs, and corrections made by the Wikidata community. Proprietary provider mappings persist across updates.
+The register is refreshed weekly from Wikidata every Monday. Incremental updates fetch only changed entities (~1-2K/day); a full refresh runs monthly. Each update picks up new entities, updated IDs, and corrections made by the Wikidata community. Custom provider mappings persist across updates.
 
 ## Contributing
 
@@ -331,7 +356,7 @@ Have a dataset that maps football player or team IDs across providers? We'd love
 | `type` | Recommended | `player`, `team`, or `coach` | `player` |
 | `nationality` | Optional | Country (helps disambiguate) | `England` |
 
-The more columns you include, the more accurately we can match to Wikidata QIDs. A Transfermarkt ID or date of birth alone is usually enough.
+The more columns you include, the more accurately we can match to existing entities. A Transfermarkt ID or date of birth alone is usually enough.
 
 **How to submit:**
 - [Open an issue](https://github.com/withqwerty/reep/issues/new) with your CSV attached or linked

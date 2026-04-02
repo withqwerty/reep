@@ -46,14 +46,14 @@ export default {
     if (path === "/" || path === "") {
       response = json({
         name: "Reep — The Football Entity Register",
-        version: "1.1.0",
+        version: "2.0.0",
         docs: "https://github.com/withqwerty/reep",
         endpoints: {
-          "GET /lookup": "Look up an entity by Wikidata QID (optionally filter by &type=player|team|coach)",
+          "GET /lookup": "Look up an entity by Reep ID or Wikidata QID (?id=reep_p... or ?id=Q...)",
           "GET /search": "Search entities by name (prefix matching, e.g. 'Cole Palm')",
           "GET /resolve": "Resolve a provider ID to all other provider IDs",
           "GET /stats": "Database statistics",
-          "POST /batch/lookup": "Look up multiple QIDs in one request (max 100)",
+          "POST /batch/lookup": "Look up multiple IDs in one request (max 100)",
           "POST /batch/resolve": "Resolve multiple provider IDs in one request (max 100)",
         },
       });
@@ -85,47 +85,68 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
-// Fetch all IDs for a (QID, type) pair from both Wikidata and custom sources.
-async function fetchAllIds(db: D1Database, qid: string, type: string): Promise<Record<string, string>> {
-  // Tables may not have a type column yet (pre-migration). Fall back to qid-only.
-  const wikidataPromise = db.prepare("SELECT provider, external_id FROM external_ids WHERE qid = ? AND type = ?").bind(qid, type).all()
-    .catch(() => db.prepare("SELECT provider, external_id FROM external_ids WHERE qid = ?").bind(qid).all());
-  const customPromise = db.prepare("SELECT provider, external_id FROM custom_ids WHERE qid = ? AND type = ?").bind(qid, type).all()
-    .catch(() => db.prepare("SELECT provider, external_id FROM custom_ids WHERE qid = ?").bind(qid).all());
-  const [wikidata, custom] = await Promise.all([wikidataPromise, customPromise]);
+// Fetch all provider IDs for an entity by reep_id.
+async function fetchAllIds(db: D1Database, reepId: string): Promise<Record<string, string>> {
+  const [providerResult, customResult] = await Promise.all([
+    db.prepare("SELECT provider, external_id FROM provider_ids WHERE reep_id = ?").bind(reepId).all(),
+    db.prepare("SELECT provider, external_id FROM custom_ids WHERE reep_id = ?").bind(reepId).all(),
+  ]);
 
   const ids: Record<string, string> = {};
-  for (const r of wikidata.results) ids[r.provider as string] = r.external_id as string;
-  // Custom IDs fill gaps, don't overwrite Wikidata
-  for (const r of custom.results) {
+  for (const r of providerResult.results) ids[r.provider as string] = r.external_id as string;
+  // Custom IDs fill gaps, don't overwrite provider_ids (Wikidata-sourced)
+  for (const r of customResult.results) {
     if (!(r.provider as string in ids)) ids[r.provider as string] = r.external_id as string;
   }
 
   return ids;
 }
 
-// GET /lookup?qid=Q99760796&type=player
+// GET /lookup?id=reep_p2804f5db  OR  ?id=Q99760796  OR  ?qid=Q99760796 (legacy)
 async function handleLookup(
   params: URLSearchParams,
   db: D1Database,
 ): Promise<Response> {
-  const qid = params.get("qid");
-  if (!qid) {
+  const id = params.get("id") || params.get("qid");
+  if (!id) {
     return json(
-      { error: "Required: ?qid=Q99760796" },
+      { error: "Required: ?id=reep_p2804f5db (Reep ID) or ?id=Q99760796 (Wikidata QID)" },
       400,
     );
   }
 
   const type = params.get("type");
-  if (type) {
-    const entity = await lookupEntity(db, qid, type);
+
+  // Detect ID type by prefix
+  if (id.startsWith("reep_")) {
+    // Direct Reep ID lookup
+    const entity = await lookupByReepId(db, id);
     if (!entity) return json({ results: [], count: 0 });
     return json({ results: [entity], count: 1 });
   }
 
-  const entities = await lookupEntities(db, qid);
-  return json({ results: entities, count: entities.length });
+  // QID lookup — resolve via provider_ids (provider=wikidata)
+  const reepIds = await db
+    .prepare("SELECT reep_id FROM provider_ids WHERE provider = 'wikidata' AND external_id = ?")
+    .bind(id)
+    .all();
+
+  if (reepIds.results.length === 0) {
+    return json({ results: [], count: 0 });
+  }
+
+  // May return multiple (player + coach with same QID)
+  let entities = await Promise.all(
+    reepIds.results.map((r) => lookupByReepId(db, r.reep_id as string)),
+  );
+
+  let results = entities.filter(Boolean) as Record<string, unknown>[];
+
+  if (type) {
+    results = results.filter((e) => e.type === type);
+  }
+
+  return json({ results, count: results.length });
 }
 
 // GET /search?name=Cole+Palmer&type=player&limit=20
@@ -155,7 +176,7 @@ async function handleSearch(
     .join(" ");
 
   let query = `
-    SELECT e.qid, e.type, e.name_en, e.aliases_en,
+    SELECT e.reep_id, e.type, e.name_en, e.aliases_en,
            e.date_of_birth, e.nationality, e.position,
            bm25(entities_fts, 10.0, 1.0) AS score
     FROM entities_fts
@@ -179,16 +200,20 @@ async function handleSearch(
   }
 
   const results = await Promise.all(
-    entities.results.map(async (e) => ({
-      qid: e.qid,
-      type: e.type,
-      name_en: e.name_en,
-      aliases_en: e.aliases_en,
-      date_of_birth: e.date_of_birth,
-      nationality: e.nationality,
-      position: e.position,
-      external_ids: await fetchAllIds(db, e.qid as string, e.type as string),
-    })),
+    entities.results.map(async (e) => {
+      const ids = await fetchAllIds(db, e.reep_id as string);
+      return {
+        reep_id: e.reep_id,
+        qid: ids.wikidata ?? null,
+        type: e.type,
+        name_en: e.name_en,
+        aliases_en: e.aliases_en,
+        date_of_birth: e.date_of_birth,
+        nationality: e.nationality,
+        position: e.position,
+        external_ids: ids,
+      };
+    }),
   );
 
   return json({ results, count: results.length });
@@ -207,6 +232,7 @@ async function handleResolve(
       {
         error: "Required: ?provider=transfermarkt&id=568177",
         providers: [
+          "wikidata",
           "transfermarkt",
           "transfermarkt_manager",
           "fbref",
@@ -260,86 +286,78 @@ async function handleResolve(
   return json({ results: [entity], count: 1 });
 }
 
-const ENTITY_COLS = "qid, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_qid, height_cm, country, founded, stadium";
+const ENTITY_COLS = "reep_id, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_reep_id, height_cm, country, founded, stadium, source";
 
-// Helper: look up a single entity by (QID, type)
-async function lookupEntity(db: D1Database, qid: string, type: string): Promise<Record<string, unknown> | null> {
+// Helper: look up entity by reep_id, attach provider IDs and qid convenience field
+async function lookupByReepId(db: D1Database, reepId: string): Promise<Record<string, unknown> | null> {
   const entity = await db
-    .prepare(`SELECT ${ENTITY_COLS} FROM entities WHERE qid = ? AND type = ?`)
-    .bind(qid, type)
+    .prepare(`SELECT ${ENTITY_COLS} FROM entities WHERE reep_id = ?`)
+    .bind(reepId)
     .first();
 
   if (!entity) return null;
 
-  const external_ids = await fetchAllIds(db, qid, type);
-  return { ...entity, external_ids };
+  const ids = await fetchAllIds(db, reepId);
+  return { ...entity, qid: ids.wikidata ?? null, external_ids: ids };
 }
 
-// Helper: look up all type records for a QID
-async function lookupEntities(db: D1Database, qid: string): Promise<Record<string, unknown>[]> {
-  const rows = await db
-    .prepare(`SELECT ${ENTITY_COLS} FROM entities WHERE qid = ?`)
-    .bind(qid)
-    .all();
-
-  return Promise.all(
-    rows.results.map(async (entity) => ({
-      ...entity,
-      external_ids: await fetchAllIds(db, entity.qid as string, entity.type as string),
-    })),
-  );
-}
-
-// Helper: resolve a provider+id to an entity (shared by resolve and batch)
+// Helper: resolve a provider+id to an entity
 async function resolveEntity(db: D1Database, provider: string, id: string): Promise<Record<string, unknown> | null> {
-  // Tables may not have type column yet (pre-migration). Fall back to qid-only.
+  // Search provider_ids first (Wikidata-sourced), then custom_ids
   let match = await db
-    .prepare("SELECT qid, type FROM external_ids WHERE provider = ? AND external_id = ?")
+    .prepare("SELECT reep_id FROM provider_ids WHERE provider = ? AND external_id = ?")
     .bind(provider, id)
-    .first()
-    .catch(() => db.prepare("SELECT qid FROM external_ids WHERE provider = ? AND external_id = ?").bind(provider, id).first());
+    .first();
 
   if (!match) {
     match = await db
-      .prepare("SELECT qid, type FROM custom_ids WHERE provider = ? AND external_id = ?")
+      .prepare("SELECT reep_id FROM custom_ids WHERE provider = ? AND external_id = ?")
       .bind(provider, id)
-      .first()
-      .catch(() => db.prepare("SELECT qid FROM custom_ids WHERE provider = ? AND external_id = ?").bind(provider, id).first());
+      .first();
   }
 
   if (!match) return null;
-  const qid = match.qid as string;
-  const type = match.type as string | undefined;
-  if (type) return lookupEntity(db, qid, type);
-  // Fallback: custom_ids had no type column, look up all types and return first
-  const entities = await lookupEntities(db, qid);
-  return entities[0] ?? null;
+  return lookupByReepId(db, match.reep_id as string);
 }
 
 const BATCH_MAX = 100;
 
-// POST /batch/lookup — body: { qids: ["Q99760796", "Q1354960", ...] }
+// POST /batch/lookup — body: { ids: ["reep_p...", "Q99760796", ...] }
+// Also accepts legacy { qids: [...] } format
 async function handleBatchLookup(request: Request, db: D1Database): Promise<Response> {
-  let body: { qids?: string[] };
+  let body: { ids?: string[]; qids?: string[] };
   try {
     body = await request.json();
   } catch {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
-  const qids = body.qids;
-  if (!Array.isArray(qids) || qids.length === 0) {
-    return json({ error: "Required: { qids: [\"Q99760796\", ...] }" }, 400);
+  const ids = body.ids || body.qids;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return json({ error: 'Required: { ids: ["reep_p...", "Q99760796", ...] }' }, 400);
   }
 
-  if (qids.length > BATCH_MAX) {
-    return json({ error: `Maximum ${BATCH_MAX} QIDs per request` }, 400);
+  if (ids.length > BATCH_MAX) {
+    return json({ error: `Maximum ${BATCH_MAX} IDs per request` }, 400);
   }
 
   const nested = await Promise.all(
-    qids.map(async (qid) => {
-      const entities = await lookupEntities(db, qid);
-      return entities.length > 0 ? entities : [{ qid, error: "not_found" }];
+    ids.map(async (id) => {
+      if (id.startsWith("reep_")) {
+        const entity = await lookupByReepId(db, id);
+        return entity ? [entity] : [{ id, error: "not_found" }];
+      }
+      // QID lookup
+      const reepIds = await db
+        .prepare("SELECT reep_id FROM provider_ids WHERE provider = 'wikidata' AND external_id = ?")
+        .bind(id)
+        .all();
+      if (reepIds.results.length === 0) return [{ qid: id, error: "not_found" }];
+      const entities = await Promise.all(
+        reepIds.results.map((r) => lookupByReepId(db, r.reep_id as string)),
+      );
+      const valid = entities.filter(Boolean) as Record<string, unknown>[];
+      return valid.length > 0 ? valid : [{ qid: id, error: "not_found" }];
     }),
   );
   const results = nested.flat();
@@ -378,16 +396,16 @@ async function handleBatchResolve(request: Request, db: D1Database): Promise<Res
 
 // GET /stats
 async function handleStats(db: D1Database): Promise<Response> {
-  const [counts, idCounts, customCounts, total, customTotal] = await Promise.all([
+  const [counts, providerCounts, customCounts, total, customTotal] = await Promise.all([
     db.prepare("SELECT type, COUNT(*) as count FROM entities GROUP BY type").all(),
-    db.prepare("SELECT provider, COUNT(*) as count FROM external_ids GROUP BY provider ORDER BY count DESC").all(),
+    db.prepare("SELECT provider, COUNT(*) as count FROM provider_ids GROUP BY provider ORDER BY count DESC").all(),
     db.prepare("SELECT provider, COUNT(*) as count FROM custom_ids GROUP BY provider ORDER BY count DESC").all(),
     db.prepare("SELECT COUNT(*) as total FROM entities").first(),
     db.prepare("SELECT COUNT(*) as total FROM custom_ids").first(),
   ]);
 
   const byProvider: Record<string, number> = {};
-  for (const r of idCounts.results) byProvider[r.provider as string] = r.count as number;
+  for (const r of providerCounts.results) byProvider[r.provider as string] = r.count as number;
   for (const r of customCounts.results) {
     const p = r.provider as string;
     byProvider[p] = (byProvider[p] ?? 0) + (r.count as number);
