@@ -70,7 +70,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_sportmonks` | [SportMonks](https://www.sportmonks.com/) player ID | `12345` |
 | `key_api_football` | [API-Football](https://www.api-football.com/) player ID | `1100` |
 | `key_fotmob` | [FotMob](https://www.fotmob.com/) player ID | `292462` |
-| `key_fpl_code` | FPL internal player code | `223340` |
+| `key_fpl_code` | Opta Stats Centre / FPL player code (same as [The Analyst](https://theanalyst.com/) `sc-` IDs) | `244851` |
 | `key_thesportsdb` | [TheSportsDB](https://www.thesportsdb.com/) player ID | `34146086` |
 | `key_skillcorner` | [SkillCorner](https://www.skillcorner.com/) player ID | `23959` |
 | `key_wyscout` | [Wyscout](https://wyscout.com/) player ID | `234966` |
