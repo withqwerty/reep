@@ -89,8 +89,15 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          echo "=== Entities ==="
           wrangler d1 execute football-entities --remote \
             --command="SELECT type, COUNT(*) as count FROM entities GROUP BY type;"
+          echo "=== Provider IDs ==="
+          wrangler d1 execute football-entities --remote \
+            --command="SELECT COUNT(*) as count FROM provider_ids;"
+          echo "=== Custom IDs ==="
+          wrangler d1 execute football-entities --remote \
+            --command="SELECT COUNT(*) as count FROM custom_ids;"
 
       # Step 6: Fetch custom IDs from D1
       - name: Fetch custom IDs
