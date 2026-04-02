@@ -27,9 +27,15 @@ GITHUB_RAW = "https://raw.githubusercontent.com/withqwerty/reep/main/data"
 DATA_DIR = Path.home() / ".reep"
 
 PROVIDERS = [
-    "transfermarkt", "transfermarkt_manager", "fbref", "soccerway",
-    "sofascore", "flashscore", "opta", "premier_league", "11v11",
+    "transfermarkt", "transfermarkt_manager", "fbref", "fbref_verified",
+    "soccerway", "sofascore", "flashscore", "opta", "premier_league", "11v11",
     "espn", "national_football_teams", "worldfootball", "soccerbase", "kicker",
+    "uefa", "lequipe", "fff_fr", "serie_a", "besoccer",
+    "footballdatabase_eu", "eu_football_info", "hugman", "german_fa",
+    "statmuse_pl", "sofifa", "soccerdonna", "dongqiudi", "playmakerstats",
+    "understat", "whoscored", "clubelo", "sportmonks",
+    "api_football", "fotmob", "fpl_code",
+    "thesportsdb", "impect", "wyscout", "skillcorner", "heimspiel",
 ]
 
 

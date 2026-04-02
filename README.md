@@ -115,30 +115,40 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 
 ## Coverage
 
-Not every entity has every ID. Coverage depends on what the Wikidata community has mapped plus custom verified mappings:
+Not every entity has every ID. Coverage depends on what the Wikidata community has mapped plus custom verified mappings. To get live coverage counts:
 
-| Provider | Player coverage | Source | Notes |
-|----------|----------------|--------|-------|
-| Transfermarkt | Best | Wikidata | Highest coverage across all entities |
-| FBref | Good | Wikidata | Strong for recent players |
-| Soccerway | Good | Wikidata | Broad international coverage |
-| Sofascore | Good | Wikidata | Modern players well covered |
-| Impect | ~56K | Custom | DOB + name matching via Impect export |
-| Wyscout | ~47K | Custom | Via Impect ID mappings |
-| SkillCorner | ~46K | Custom | Via Impect ID mappings |
-| heim:spiel | ~44K | Custom | Via Impect ID mappings |
-| TheSportsDB | ~39K | Custom | Direct QID + DOB/name matching |
-| Opta | ~38K | Wikidata + Custom | Alphanumeric Opta IDs via TM bridge |
-| API-Football | ~36K | Custom | Via TheSportsDB + direct matching |
-| ESPN | ~19K | Custom | Via TheSportsDB mappings |
-| FotMob | ~4.6K | Custom | DOB + name matching |
-| FBref verified | ~4K | Custom | Cross-verified via worldfootballR |
-| FPL code | ~2.5K | Custom | FPL internal player codes |
-| Understat | ~2.4K | Custom | Matched via Transfermarkt bridge |
-| WhoScored | ~2.5K | Custom | Matched via Transfermarkt bridge |
-| SportMonks | ~600 | Custom | Players + teams via TM bridge |
-| Club Elo | ~176 teams | Custom | Manual team mapping |
-| Premier League | Decent | Wikidata | PL players only |
+```bash
+# Wikidata-sourced IDs
+pnpm exec wrangler d1 execute football-entities --remote \
+  --command "SELECT provider, COUNT(*) as cnt FROM external_ids GROUP BY provider ORDER BY cnt DESC"
+
+# Custom verified IDs
+pnpm exec wrangler d1 execute football-entities --remote \
+  --command "SELECT provider, COUNT(*) as cnt FROM custom_ids GROUP BY provider ORDER BY cnt DESC"
+```
+
+| Provider | Source | Notes |
+|----------|--------|-------|
+| Transfermarkt | Wikidata | Highest coverage across all entities |
+| FBref | Wikidata | Strong for recent players |
+| Soccerway | Wikidata | Broad international coverage |
+| Sofascore | Wikidata | Modern players well covered |
+| Opta | Wikidata + Custom | Alphanumeric Opta IDs via TM bridge |
+| Impect | Custom | DOB + name matching via Impect export |
+| Wyscout | Custom | Via Impect ID mappings |
+| SkillCorner | Custom | Via Impect ID mappings |
+| heim:spiel | Custom | Via Impect ID mappings |
+| TheSportsDB | Custom | Direct QID + DOB/name matching |
+| API-Football | Custom | Via TheSportsDB + direct matching |
+| ESPN | Custom | Via TheSportsDB mappings |
+| FotMob | Custom | DOB + name matching |
+| FBref verified | Custom | Cross-verified via worldfootballR |
+| FPL code | Custom | FPL internal player codes |
+| Understat | Custom | Matched via Transfermarkt bridge |
+| WhoScored | Custom | Matched via Transfermarkt bridge |
+| SportMonks | Custom | Players + teams via TM bridge |
+| Club Elo | Custom | Manual team mapping |
+| Premier League | Wikidata | PL players only |
 
 IDs sourced from Wikidata are community-maintained. Custom IDs are verified independently — see the [Reep API](#api) for methodology details.
 
