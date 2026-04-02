@@ -155,7 +155,7 @@ async function handleSearch(
     .join(" ");
 
   let query = `
-    SELECT e.qid, e.type, e.name_en, e.aliases_en,
+    SELECT e.reep_id, e.qid, e.type, e.name_en, e.aliases_en,
            e.date_of_birth, e.nationality, e.position,
            bm25(entities_fts, 10.0, 1.0) AS score
     FROM entities_fts
@@ -180,6 +180,7 @@ async function handleSearch(
 
   const results = await Promise.all(
     entities.results.map(async (e) => ({
+      reep_id: e.reep_id,
       qid: e.qid,
       type: e.type,
       name_en: e.name_en,
@@ -260,7 +261,7 @@ async function handleResolve(
   return json({ results: [entity], count: 1 });
 }
 
-const ENTITY_COLS = "qid, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_qid, height_cm, country, founded, stadium";
+const ENTITY_COLS = "reep_id, qid, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_qid, height_cm, country, founded, stadium";
 
 // Helper: look up a single entity by (QID, type)
 async function lookupEntity(db: D1Database, qid: string, type: string): Promise<Record<string, unknown> | null> {

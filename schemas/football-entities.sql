@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS entities (
   country TEXT,                   -- for teams: country
   founded TEXT,                   -- for teams: founding date
   stadium TEXT,                   -- for teams: home ground
+  reep_id TEXT,                   -- universal ID: reep_<type_prefix><8hex> (Phase 1: nullable, Phase 4: PK)
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now')),
   PRIMARY KEY (qid, type)
@@ -34,6 +35,7 @@ CREATE TABLE IF NOT EXISTS external_ids (
 CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(type);
 CREATE INDEX IF NOT EXISTS idx_entities_name ON entities(name_en);
 CREATE INDEX IF NOT EXISTS idx_entities_current_team ON entities(current_team_qid);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_entities_reep_id ON entities(reep_id);
 CREATE INDEX IF NOT EXISTS idx_external_ids_provider ON external_ids(provider, external_id);
 
 -- Full-text search on entity names (must use lowercase 'fts5' for D1)
