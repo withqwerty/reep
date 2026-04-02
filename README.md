@@ -302,7 +302,14 @@ All data is extracted from [Wikidata](https://www.wikidata.org/) via SPARQL. Wik
 | Competition | `/co91` | `91` |
 | Match | `/ma10988177` | `10988177` |
 
-**Soccerway** — Soccerway changed their URL/ID scheme in September 2025. Wikidata P2369 contains the old format. A new Wikidata property has been proposed but not yet approved.
+**Soccerway** — Soccerway changed their URL/ID scheme in September 2025. Reep has 139K IDs in the old numeric format from Wikidata P2369 (e.g. `45569`). The old URLs still redirect:
+
+| Format | URL | ID |
+|--------|-----|----|
+| Old (numeric) | `int.soccerway.com/players/-/45569/` | `45569` |
+| New (slug) | `soccerway.com/player/zver-mateja/p0DFdwlo/` | `p0DFdwlo` |
+
+A new Wikidata property for the new format has been proposed but not yet approved.
 
 ## Updates
 
