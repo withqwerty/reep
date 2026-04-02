@@ -133,7 +133,7 @@ pnpm exec wrangler d1 execute football-entities --remote \
 | FBref | Wikidata | Strong for recent players |
 | Soccerway | Wikidata | Broad international coverage |
 | Sofascore | Wikidata | Modern players well covered |
-| Opta | Wikidata + Custom | Alphanumeric Opta IDs via TM bridge |
+| Opta | Custom | Alphanumeric IDs from Stats Perform's Opta F1 database |
 | Impect | Custom | DOB + name matching via Impect export |
 | Wyscout | Custom | Via Impect ID mappings |
 | SkillCorner | Custom | Via Impect ID mappings |
@@ -144,9 +144,9 @@ pnpm exec wrangler d1 execute football-entities --remote \
 | FotMob | Custom | DOB + name matching |
 | FBref verified | Custom | Cross-verified via worldfootballR |
 | FPL code | Custom | FPL internal player codes |
-| Understat | Custom | Matched via Transfermarkt bridge |
-| WhoScored | Custom | Matched via Transfermarkt bridge |
-| SportMonks | Custom | Players + teams via TM bridge |
+| Understat | Custom | Verified cross-reference matching |
+| WhoScored | Custom | Verified cross-reference matching |
+| SportMonks | Custom | Verified cross-reference matching |
 | Club Elo | Custom | Manual team mapping |
 | Premier League | Wikidata | PL players only |
 
@@ -327,7 +327,7 @@ Have a dataset that maps football player or team IDs across providers? We'd love
 | `external_id` | Yes | The player/team ID on that provider | `12345` |
 | `name` | Yes | Player or team name (for validation) | `Cole Palmer` |
 | `date_of_birth` | Recommended | ISO date (helps us match accurately) | `2002-05-06` |
-| `transfermarkt_id` | Recommended | Transfermarkt ID (our strongest bridge) | `568177` |
+| `transfermarkt_id` | Recommended | Transfermarkt ID (best for accurate matching) | `568177` |
 | `type` | Recommended | `player`, `team`, or `coach` | `player` |
 | `nationality` | Optional | Country (helps disambiguate) | `England` |
 
