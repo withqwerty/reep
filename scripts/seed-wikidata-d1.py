@@ -16,6 +16,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import uuid
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "json"
@@ -183,6 +184,7 @@ CREATE TABLE IF NOT EXISTS entities (
   country TEXT,
   founded TEXT,
   stadium TEXT,
+  reep_id TEXT,
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now')),
   PRIMARY KEY (qid, type)
@@ -200,6 +202,7 @@ CREATE TABLE IF NOT EXISTS external_ids (
 CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(type);
 CREATE INDEX IF NOT EXISTS idx_entities_name ON entities(name_en);
 CREATE INDEX IF NOT EXISTS idx_entities_current_team ON entities(current_team_qid);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_entities_reep_id ON entities(reep_id);
 CREATE INDEX IF NOT EXISTS idx_external_ids_provider ON external_ids(provider, external_id);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS entities_fts USING fts5(
@@ -267,6 +270,162 @@ CREATE VIRTUAL TABLE IF NOT EXISTS entities_fts USING fts5(
                 return
 
             Path(tmp_path).unlink()
+
+    # --- Mint reep_ids for all entities ---
+    # After a full seed, entities have no reep_ids. Mint them before building provider_ids.
+    if not args.dry_run:
+        print("\nMinting reep_ids for all entities...")
+        type_prefixes = {"player": "p", "team": "t", "coach": "c"}
+        page_size = 10_000
+        offset = 0
+        mint_stmts = []
+        used_ids: set[str] = set()
+
+        while True:
+            rows = query_d1(
+                f"SELECT qid, type FROM entities WHERE reep_id IS NULL "
+                f"LIMIT {page_size} OFFSET {offset};",
+                remote=not args.local,
+            )
+            if not rows:
+                break
+            for row in rows:
+                prefix = type_prefixes[row["type"]]
+                for _ in range(10):
+                    reep_id = f"reep_{prefix}{uuid.uuid4().hex[:8]}"
+                    if reep_id not in used_ids:
+                        break
+                used_ids.add(reep_id)
+                mint_stmts.append(
+                    f"UPDATE entities SET reep_id = {escape_sql(reep_id)} "
+                    f"WHERE qid = {escape_sql(row['qid'])} AND type = {escape_sql(row['type'])} "
+                    f"AND reep_id IS NULL;"
+                )
+            offset += page_size
+        print(f"  Generated {len(mint_stmts):,} reep_ids")
+
+        batch_size = 500
+        failed = 0
+        for i in range(0, len(mint_stmts), batch_size):
+            batch = mint_stmts[i:i + batch_size]
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as f:
+                f.write("\n".join(batch))
+                tmp_path = f.name
+            try:
+                if not execute_sql_file(tmp_path, remote=not args.local):
+                    failed += 1
+            finally:
+                Path(tmp_path).unlink(missing_ok=True)
+
+        if failed > 0:
+            print(f"  WARNING: {failed} batch(es) failed during minting")
+        else:
+            print(f"  Minted {len(mint_stmts):,} reep_ids — OK")
+
+    # --- Rebuild provider_ids from external_ids + wikidata QIDs ---
+    if not args.dry_run:
+        print("\nRebuilding provider_ids table...")
+        provider_schema = """
+DROP TABLE IF EXISTS provider_ids;
+CREATE TABLE IF NOT EXISTS provider_ids (
+    reep_id TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    external_id TEXT NOT NULL,
+    PRIMARY KEY (reep_id, provider, external_id)
+);
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as f:
+            f.write(provider_schema)
+            tmp_path = f.name
+        try:
+            execute_sql_file(tmp_path, remote=not args.local)
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+
+        # Populate from external_ids via JOIN on entities for reep_id
+        offset = 0
+        provider_stmts = []
+        while True:
+            rows = query_d1(
+                f"SELECT e.reep_id, ei.provider, ei.external_id "
+                f"FROM external_ids ei "
+                f"JOIN entities e ON ei.qid = e.qid AND ei.type = e.type "
+                f"LIMIT {page_size} OFFSET {offset};",
+                remote=not args.local,
+            )
+            if not rows:
+                break
+            for r in rows:
+                provider_stmts.append(
+                    f"({escape_sql(r['reep_id'])}, {escape_sql(r['provider'])}, {escape_sql(r['external_id'])})"
+                )
+            offset += page_size
+
+        # Add wikidata QID mappings
+        offset = 0
+        while True:
+            rows = query_d1(
+                f"SELECT reep_id, qid FROM entities WHERE reep_id IS NOT NULL "
+                f"LIMIT {page_size} OFFSET {offset};",
+                remote=not args.local,
+            )
+            if not rows:
+                break
+            for r in rows:
+                provider_stmts.append(
+                    f"({escape_sql(r['reep_id'])}, 'wikidata', {escape_sql(r['qid'])})"
+                )
+            offset += page_size
+
+        # Write INSERT statements
+        insert_stmts = []
+        for i in range(0, len(provider_stmts), ROWS_PER_INSERT):
+            batch = provider_stmts[i:i + ROWS_PER_INSERT]
+            insert_stmts.append(
+                "INSERT OR IGNORE INTO provider_ids (reep_id, provider, external_id) VALUES\n"
+                + ",\n".join(batch) + ";"
+            )
+
+        print(f"  {len(provider_stmts):,} provider_ids rows to insert")
+        failed = 0
+        total_files = (len(insert_stmts) + STMTS_PER_FILE - 1) // STMTS_PER_FILE
+        for i in range(0, len(insert_stmts), STMTS_PER_FILE):
+            batch = insert_stmts[i:i + STMTS_PER_FILE]
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as f:
+                f.write("\n".join(batch))
+                tmp_path = f.name
+            try:
+                if not execute_sql_file(tmp_path, remote=not args.local):
+                    failed += 1
+            finally:
+                Path(tmp_path).unlink(missing_ok=True)
+
+        if failed > 0:
+            print(f"  WARNING: {failed} file(s) failed during provider_ids population")
+        else:
+            print(f"  provider_ids rebuilt — OK")
+
+        # Create lookup index
+        query_d1(
+            "CREATE INDEX IF NOT EXISTS idx_provider_ids_lookup ON provider_ids(provider, external_id);",
+            remote=not args.local,
+        )
+
+        # Verify counts
+        ext_rows = query_d1("SELECT COUNT(*) as cnt FROM external_ids;", remote=not args.local)
+        prov_rows = query_d1("SELECT COUNT(*) as cnt FROM provider_ids;", remote=not args.local)
+        ent_rows = query_d1("SELECT COUNT(*) as cnt FROM entities WHERE reep_id IS NOT NULL;", remote=not args.local)
+        ext_count = ext_rows[0]["cnt"] if ext_rows else 0
+        prov_count = prov_rows[0]["cnt"] if prov_rows else 0
+        ent_count = ent_rows[0]["cnt"] if ent_rows else 0
+        expected = ext_count + ent_count
+        print(f"  provider_ids: {prov_count:,} (expected {expected:,})")
+        if prov_count > 0 and abs(prov_count - expected) / expected < 0.01:
+            print(f"  Counts within tolerance — OK")
+        elif prov_count == expected:
+            print(f"  Counts match exactly — OK")
+        else:
+            print(f"  WARNING: Count mismatch!")
 
     # Rebuild FTS index after all entities are seeded
     print("\nRebuilding FTS index...", end=" ", flush=True)

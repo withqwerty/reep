@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -275,16 +276,31 @@ STMTS_PER_FILE = 5000
 
 ENTITY_COLS = ("qid", "type", "name_en", "aliases_en", "full_name",
                "date_of_birth", "nationality", "position", "current_team_qid",
-               "height_cm", "country", "founded", "stadium")
+               "height_cm", "country", "founded", "stadium", "reep_id")
+
+TYPE_PREFIXES = {"player": "p", "team": "t", "coach": "c"}
 
 
-def generate_update_sql(entities: dict[str, dict], entity_type: str) -> list[str]:
-    """Generate SQL statements: DELETE stale external_ids + INSERT OR REPLACE entities + external_ids."""
+def generate_update_sql(entities: dict[str, dict], entity_type: str,
+                        existing_reep_ids: dict[tuple[str, str], str] | None = None) -> list[str]:
+    """Generate SQL: DELETE stale IDs + INSERT OR REPLACE entities + external_ids + provider_ids.
+
+    existing_reep_ids: map of (qid, type) -> reep_id for entities already in D1.
+    New entities get a freshly minted reep_id.
+    """
     stmts = []
     entity_list = list(entities.values())
 
+    # Assign reep_ids: look up existing or mint new
+    for e in entity_list:
+        key = (e["qid"], e["type"])
+        if existing_reep_ids and key in existing_reep_ids:
+            e["reep_id"] = existing_reep_ids[key]
+        elif not e.get("reep_id"):
+            prefix = TYPE_PREFIXES.get(e["type"], "p")
+            e["reep_id"] = f"reep_{prefix}{uuid.uuid4().hex[:8]}"
+
     # DELETE external_ids for changed entities (Wikidata-sourced only)
-    # Preserves custom_ids-sourced mappings (e.g. opta)
     for i in range(0, len(entity_list), ROWS_PER_INSERT):
         batch = entity_list[i : i + ROWS_PER_INSERT]
         qid_type_pairs = ", ".join(
@@ -294,11 +310,18 @@ def generate_update_sql(entities: dict[str, dict], entity_type: str) -> list[str
         stmts.append(
             f"DELETE FROM external_ids WHERE (qid, type) IN ({qid_type_pairs}) "
             f"AND provider NOT IN ("
-            f"SELECT provider FROM custom_ids WHERE (qid, type) IN ({qid_type_pairs})"
-            f");"
+            f"SELECT provider FROM custom_ids WHERE reep_id IN ("
+            f"SELECT reep_id FROM entities WHERE (qid, type) IN ({qid_type_pairs})"
+            f"));"
         )
 
-    # INSERT OR REPLACE entities
+    # DELETE provider_ids for changed entities (will be re-inserted)
+    for i in range(0, len(entity_list), ROWS_PER_INSERT):
+        batch = entity_list[i : i + ROWS_PER_INSERT]
+        reep_ids = ", ".join(escape_sql(e["reep_id"]) for e in batch)
+        stmts.append(f"DELETE FROM provider_ids WHERE reep_id IN ({reep_ids});")
+
+    # INSERT OR REPLACE entities (now includes reep_id)
     col_str = ", ".join(ENTITY_COLS)
     for i in range(0, len(entity_list), ROWS_PER_INSERT):
         batch = entity_list[i : i + ROWS_PER_INSERT]
@@ -318,6 +341,7 @@ def generate_update_sql(entities: dict[str, dict], entity_type: str) -> list[str
                 escape_sql(e.get("country")),
                 escape_sql(e.get("founded")),
                 escape_sql(e.get("stadium")),
+                escape_sql(e.get("reep_id")),
             )
             rows.append(f"({', '.join(vals)})")
         stmts.append(
@@ -341,6 +365,30 @@ def generate_update_sql(entities: dict[str, dict], entity_type: str) -> list[str
             )
         stmts.append(
             "INSERT OR REPLACE INTO external_ids (qid, type, provider, external_id) VALUES\n"
+            + ",\n".join(rows) + ";"
+        )
+
+    # INSERT provider_ids (dual-write: same data as external_ids, keyed by reep_id)
+    all_provider_rows = []
+    for e in entity_list:
+        reep_id = e.get("reep_id")
+        if not reep_id:
+            continue
+        # Wikidata QID mapping
+        all_provider_rows.append((reep_id, "wikidata", e["qid"]))
+        # Provider ID mappings
+        for provider, ext_id in e.get("external_ids", {}).items():
+            all_provider_rows.append((reep_id, provider, ext_id))
+
+    for i in range(0, len(all_provider_rows), ROWS_PER_INSERT):
+        batch = all_provider_rows[i : i + ROWS_PER_INSERT]
+        rows = []
+        for reep_id, provider, ext_id in batch:
+            rows.append(
+                f"({escape_sql(reep_id)}, {escape_sql(provider)}, {escape_sql(ext_id)})"
+            )
+        stmts.append(
+            "INSERT OR IGNORE INTO provider_ids (reep_id, provider, external_id) VALUES\n"
             + ",\n".join(rows) + ";"
         )
 
@@ -465,9 +513,24 @@ def main():
         entities = fetch_scoped(qids, entity_type)
         print(f"  Parsed {len(entities):,} entities")
 
+        # Look up existing reep_ids for changed entities so we don't lose them on INSERT OR REPLACE
+        existing_reep_ids: dict[tuple[str, str], str] = {}
+        qid_list_for_lookup = list(entities.keys())
+        for i in range(0, len(qid_list_for_lookup), 200):
+            batch_qids = qid_list_for_lookup[i:i + 200]
+            qid_sql = ", ".join(escape_sql(q) for q in batch_qids)
+            rows = query_d1(
+                f"SELECT qid, type, reep_id FROM entities "
+                f"WHERE qid IN ({qid_sql}) AND reep_id IS NOT NULL;",
+                remote=remote,
+            )
+            for r in rows:
+                existing_reep_ids[(r["qid"], r["type"])] = r["reep_id"]
+        print(f"  Found {len(existing_reep_ids):,} existing reep_ids")
+
         # Step 5: Update D1
         print(f"  Generating SQL...")
-        stmts = generate_update_sql(entities, entity_type)
+        stmts = generate_update_sql(entities, entity_type, existing_reep_ids)
         print(f"  {len(stmts)} statements")
 
         if not execute_stmts(stmts, remote, entity_type):

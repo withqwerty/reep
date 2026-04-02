@@ -17,6 +17,7 @@ from pathlib import Path
 
 DB_NAME = "football-entities"
 OUTPUT = Path(__file__).parent.parent / "data" / "custom_ids.json"
+REEP_ID_MAP_OUTPUT = Path(__file__).parent.parent / "data" / "reep_id_map.json"
 REPO_ROOT = Path(__file__).parent.parent
 
 BATCH_SIZE = 5000
@@ -58,7 +59,7 @@ def main():
     all_rows = []
     offset = 0
     while offset < total:
-        sql = f"SELECT qid, type, provider, external_id FROM custom_ids ORDER BY qid, type, provider LIMIT {BATCH_SIZE} OFFSET {offset};"
+        sql = f"SELECT reep_id, provider, external_id, source, confidence FROM custom_ids ORDER BY reep_id, provider LIMIT {BATCH_SIZE} OFFSET {offset};"
         rows = query_d1(sql, args.local)
         if not rows:
             break
@@ -80,6 +81,26 @@ def main():
     print("Providers:")
     for p, count in sorted(providers.items(), key=lambda x: -x[1]):
         print(f"  {p}: {count}")
+
+    # Also export reep_id map: {qid+type -> reep_id} for use by export-csv.py
+    print("\nFetching reep_id map...")
+    reep_map: dict[str, str] = {}
+    offset = 0
+    while True:
+        rows = query_d1(
+            f"SELECT qid, type, reep_id FROM entities WHERE reep_id IS NOT NULL "
+            f"LIMIT {BATCH_SIZE} OFFSET {offset};",
+            args.local,
+        )
+        if not rows:
+            break
+        for r in rows:
+            reep_map[f"{r['qid']}:{r['type']}"] = r["reep_id"]
+        offset += len(rows)
+
+    with open(REEP_ID_MAP_OUTPUT, "w") as f:
+        json.dump(reep_map, f)
+    print(f"Wrote {len(reep_map):,} reep_id mappings to {REEP_ID_MAP_OUTPUT}")
 
 
 if __name__ == "__main__":
