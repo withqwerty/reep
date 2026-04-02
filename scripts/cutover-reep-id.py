@@ -239,20 +239,19 @@ ORDER BY e.reep_id;
     print("  Counts match — OK")
 
     # =========================================================================
-    # Step 6: Drop old entities, rename
+    # Step 6: Drop external_ids first (has FK to entities — must go before entities)
     # =========================================================================
-    print("\nStep 6: Drop old entities, rename entities_new")
-    run_sql("""
-DROP TABLE entities;
-ALTER TABLE entities_new RENAME TO entities;
-""", db, remote, "table swap")
+    print("\nStep 6: Drop external_ids (has FK to entities, must drop first)")
+    run_sql("DROP TABLE IF EXISTS external_ids;", db, remote, "drop external_ids")
     print("  OK")
 
     # =========================================================================
-    # Step 7: Drop external_ids
+    # Step 7: Drop old entities, rename
     # =========================================================================
-    print("\nStep 7: Drop external_ids (replaced by provider_ids)")
-    run_sql("DROP TABLE IF EXISTS external_ids;", db, remote, "drop external_ids")
+    print("\nStep 7: Drop old entities, rename entities_new")
+    # Execute as separate commands — D1 can't batch DROP + RENAME reliably
+    run_sql("DROP TABLE entities;", db, remote, "drop old entities")
+    run_sql("ALTER TABLE entities_new RENAME TO entities;", db, remote, "rename entities_new")
     print("  OK")
 
     # =========================================================================
