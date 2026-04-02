@@ -11,3 +11,5 @@ openapi.yaml
 .playwright-mcp/
 docs/
 .claudedata/backups/
+data/reep_id_map.json
+data/dedup-report.json
