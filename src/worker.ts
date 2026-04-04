@@ -31,12 +31,17 @@ export default {
     }
 
     // Auth: RapidAPI proxy secret or bypass key for internal use
+    // Fail closed: if RAPIDAPI_PROXY_SECRET is not configured, reject all requests
+    if (!env.RAPIDAPI_PROXY_SECRET) {
+      return json({ error: "Server misconfigured" }, 500);
+    }
+
     const proxySecret = request.headers.get("X-RapidAPI-Proxy-Secret");
     const bypassKey = request.headers.get("X-Reep-Key");
-    const isRapidApi = env.RAPIDAPI_PROXY_SECRET && proxySecret === env.RAPIDAPI_PROXY_SECRET;
-    const isBypass = env.BYPASS_KEY && bypassKey === env.BYPASS_KEY;
+    const isRapidApi = await safeCompare(proxySecret || "", env.RAPIDAPI_PROXY_SECRET);
+    const isBypass = env.BYPASS_KEY ? await safeCompare(bypassKey || "", env.BYPASS_KEY) : false;
 
-    if (env.RAPIDAPI_PROXY_SECRET && !isRapidApi && !isBypass) {
+    if (!isRapidApi && !isBypass) {
       console.log(JSON.stringify({ method, path, params, status: 401, ms: Date.now() - start }));
       return json({ error: "Unauthorized. Subscribe at https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" }, 401);
     }
@@ -77,6 +82,24 @@ export default {
     return response;
   },
 } satisfies ExportedHandler<Env>;
+
+/** Constant-time string comparison to prevent timing side-channels on auth secrets. */
+async function safeCompare(a: string, b: string): Promise<boolean> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw", enc.encode("reep-auth"), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const [sigA, sigB] = await Promise.all([
+    crypto.subtle.sign("HMAC", key, enc.encode(a)),
+    crypto.subtle.sign("HMAC", key, enc.encode(b)),
+  ]);
+  const bufA = new Uint8Array(sigA);
+  const bufB = new Uint8Array(sigB);
+  if (bufA.length !== bufB.length) return false;
+  let diff = 0;
+  for (let i = 0; i < bufA.length; i++) diff |= bufA[i] ^ bufB[i];
+  return diff === 0;
+}
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {

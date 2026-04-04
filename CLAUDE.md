@@ -164,3 +164,14 @@ pnpm exec wrangler d1 execute football-entities --remote --command "
 ```
 
 Key multi-type providers: fbref (player/team/coach), soccerway (player/team/coach), transfermarkt (player/team via main, coach via transfermarkt_manager), fotmob (player/team/coach), soccerbase (player/team/coach). Most other providers are player-only. playmakerstats is team-only. clubelo is player+team.
+
+## Security
+
+**Auth model:** Worker checks `X-RapidAPI-Proxy-Secret` (set by RapidAPI proxy) or `X-Reep-Key` (bypass for internal use). Auth fails closed — if `RAPIDAPI_PROXY_SECRET` env var is missing, all requests are rejected. Both comparisons use constant-time HMAC to prevent timing side-channels. Secrets are stored in Cloudflare's encrypted secret store (`wrangler secret`).
+
+**Accepted risks:**
+- **CORS wildcard `*`**: Intentional. This is a public read-only API. No cookies or sessions. Any origin can make requests.
+- **D1 database ID in `wrangler.toml`**: Required by Wrangler. The ID alone does not grant access — a valid Cloudflare API token + account ID is needed.
+- **Manual SQL escaping in Python scripts**: The `escape_sql()` function uses single-quote doubling, correct for SQLite. Data sources are controlled (Wikidata SPARQL, verified CSVs). Not a risk unless upstream data is compromised.
+- **No rate limiting on bypass path**: The bypass key is not distributed. RapidAPI handles rate limiting for subscribers. If bypass abuse becomes a concern, add Cloudflare Rate Limiting rules.
+- **Cache-Control `public` on all responses**: Acceptable for a public read-only API. Error responses (401, 404) are also cached — this is fine since they contain no user-specific data.
