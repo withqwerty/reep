@@ -2,7 +2,7 @@
 """
 reep — The Football Entity Register CLI
 
-Look up football player, team, and coach IDs across providers.
+Look up football player, team, coach, competition, and season IDs across providers.
 
 Usage:
   reep search "Cole Palmer"
@@ -258,7 +258,7 @@ def main():
     # search
     p_search = sub.add_parser("search", help="Search entities by name (online)")
     p_search.add_argument("name", help="Name to search for")
-    p_search.add_argument("--type", choices=["player", "team", "coach"])
+    p_search.add_argument("--type", choices=["player", "team", "coach", "competition", "season"])
     p_search.add_argument("--limit", type=int, default=10)
     p_search.add_argument("-v", "--verbose", action="store_true")
     p_search.set_defaults(func=cmd_search)
@@ -272,7 +272,7 @@ def main():
     # lookup
     p_lookup = sub.add_parser("lookup", help="Look up by Wikidata QID")
     p_lookup.add_argument("qid", help="Wikidata QID (e.g. Q99760796)")
-    p_lookup.add_argument("--type", choices=["player", "team", "coach"])
+    p_lookup.add_argument("--type", choices=["player", "team", "coach", "competition", "season"])
     p_lookup.set_defaults(func=cmd_lookup)
 
     # translate
@@ -289,7 +289,7 @@ def main():
     # local
     p_local = sub.add_parser("local", help="Search local CSV files (offline)")
     p_local.add_argument("name", help="Name to search for")
-    p_local.add_argument("--type", choices=["player", "team", "coach"])
+    p_local.add_argument("--type", choices=["player", "team", "coach", "competition", "season"])
     p_local.add_argument("--limit", type=int, default=10)
     p_local.add_argument("-v", "--verbose", action="store_true")
     p_local.set_defaults(func=cmd_local_search)

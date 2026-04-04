@@ -82,9 +82,12 @@ jobs:
           from pathlib import Path
           data_dir = Path('data/json')
           total = 0
-          for name in ['players', 'teams', 'coachs']:
+          for name in ['players', 'teams', 'coachs', 'competitions', 'seasons']:
               path = data_dir / f'{name}.json'
               if not path.exists():
+                  if name in ('competitions', 'seasons'):
+                      print(f'  {name}: not found (optional)')
+                      continue
                   print(f'MISSING: {path}')
                   exit(1)
               count = len(json.load(open(path)))
@@ -141,9 +144,11 @@ jobs:
 
       - name: Regenerate sample CSVs
         run: |
-          for f in data/people.csv data/teams.csv data/names.csv; do
+          for f in data/people.csv data/teams.csv data/names.csv data/competitions.csv data/seasons.csv; do
             base=$(basename "$f")
-            (head -1 "$f"; tail -n +2 "$f" | awk 'BEGIN{srand(42)} {print rand() "\t" $0}' | sort -n | head -50 | cut -f2-) > "data/samples/$base"
+            if [ -f "$f" ]; then
+              (head -1 "$f"; tail -n +2 "$f" | awk 'BEGIN{srand(42)} {print rand() "\t" $0}' | sort -n | head -50 | cut -f2-) > "data/samples/$base"
+            fi
           done
 
       - name: Commit updated data

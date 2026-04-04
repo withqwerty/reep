@@ -116,6 +116,24 @@ NAME_COLUMNS = [
     "alias",
 ]
 
+COMPETITION_COLUMNS = [
+    "reep_id",
+    "key_wikidata",
+    "name",
+    "country",
+    # Provider IDs
+    "key_transfermarkt",
+    "key_fbref",
+    "key_opta",
+]
+
+SEASON_COLUMNS = [
+    "reep_id",
+    "key_wikidata",
+    "name",
+    "competition_reep_id",
+]
+
 
 def load_json(path: Path) -> list[dict]:
     with open(path) as f:
@@ -261,6 +279,76 @@ def export_names(all_entities: list[dict], out_path: Path):
     return len(rows)
 
 
+def export_competitions(competitions: list[dict], out_path: Path,
+                        custom_ids: dict[str, dict[str, str]] | None = None,
+                        reep_id_map: dict[str, str] | None = None):
+    """Export competitions to competitions.csv."""
+    custom_ids = custom_ids or {}
+    reep_id_map = reep_id_map or {}
+    with open(out_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=COMPETITION_COLUMNS, extrasaction="ignore")
+        writer.writeheader()
+
+        for entity in sorted(competitions, key=lambda e: e.get("name_en", "")):
+            reep_id = reep_id_map.get(f"{entity['qid']}:competition", "")
+            row = {
+                "reep_id": reep_id,
+                "key_wikidata": entity["qid"],
+                "name": entity.get("name_en", ""),
+                "country": entity.get("country") or "",
+            }
+
+            ids = entity.get("external_ids", {})
+            for provider, ext_id in ids.items():
+                col = f"key_{provider}"
+                if col in COMPETITION_COLUMNS:
+                    row[col] = ext_id
+
+            custom_key = reep_id or f"{entity['qid']}:competition"
+            for provider, ext_id in custom_ids.get(custom_key, {}).items():
+                col = f"key_{provider}"
+                if col in COMPETITION_COLUMNS and col not in row:
+                    row[col] = ext_id
+
+            writer.writerow(row)
+
+    return len(competitions)
+
+
+def export_seasons(seasons: list[dict], out_path: Path,
+                   custom_ids: dict[str, dict[str, str]] | None = None,
+                   reep_id_map: dict[str, str] | None = None):
+    """Export seasons to seasons.csv."""
+    custom_ids = custom_ids or {}
+    reep_id_map = reep_id_map or {}
+    with open(out_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=SEASON_COLUMNS, extrasaction="ignore")
+        writer.writeheader()
+
+        for entity in sorted(seasons, key=lambda e: e.get("name_en", "")):
+            reep_id = reep_id_map.get(f"{entity['qid']}:season", "")
+            row = {
+                "reep_id": reep_id,
+                "key_wikidata": entity["qid"],
+                "name": entity.get("name_en", ""),
+                # TODO(#9): competition_reep_id is blank in CSV because the QID->reep_id
+                # mapping requires reep_id_map.json (generated from D1). Could resolve via
+                # reep_id_map.get(f"{entity.get('competition_qid')}:competition", "")
+                # but adds ordering dependency on fetch-custom-ids.py running first.
+                "competition_reep_id": "",
+            }
+
+            custom_key = reep_id or f"{entity['qid']}:season"
+            for provider, ext_id in custom_ids.get(custom_key, {}).items():
+                col = f"key_{provider}"
+                if col in SEASON_COLUMNS and col not in row:
+                    row[col] = ext_id
+
+            writer.writerow(row)
+
+    return len(seasons)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Export Wikidata entities to CSV register")
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE, help="Source JSON directory")
@@ -282,6 +370,16 @@ def main():
     coaches = load_json(source / "coachs.json")
     print(f"Loaded: {len(players)} players, {len(teams)} teams, {len(coaches)} coaches")
 
+    # Load competition and season entities (if available)
+    comp_path = source / "competitions.json"
+    season_path = source / "seasons.json"
+    competitions = load_json(comp_path) if comp_path.exists() else []
+    seasons = load_json(season_path) if season_path.exists() else []
+    if competitions:
+        print(f"Loaded: {len(competitions)} competitions")
+    if seasons:
+        print(f"Loaded: {len(seasons)} seasons")
+
     # Load custom IDs (if available)
     custom_ids = load_custom_ids(CUSTOM_IDS_PATH)
 
@@ -295,7 +393,16 @@ def main():
     n_teams = export_teams(teams, OUTPUT_DIR / "teams.csv", custom_ids, reep_id_map)
     print(f"Exported {n_teams} teams to data/teams.csv")
 
-    n_names = export_names(players + teams + coaches, OUTPUT_DIR / "names.csv")
+    if competitions:
+        n_comp = export_competitions(competitions, OUTPUT_DIR / "competitions.csv", custom_ids, reep_id_map)
+        print(f"Exported {n_comp} competitions to data/competitions.csv")
+
+    if seasons:
+        n_seasons = export_seasons(seasons, OUTPUT_DIR / "seasons.csv", custom_ids, reep_id_map)
+        print(f"Exported {n_seasons} seasons to data/seasons.csv")
+
+    all_entities = players + teams + coaches + competitions + seasons
+    n_names = export_names(all_entities, OUTPUT_DIR / "names.csv")
     print(f"Exported {n_names} aliases to data/names.csv")
 
     # Write metadata
@@ -305,6 +412,8 @@ def main():
         "counts": {
             "people": n_people,
             "teams": n_teams,
+            "competitions": len(competitions),
+            "seasons": len(seasons),
             "aliases": n_names,
             "custom_ids": sum(len(v) for v in custom_ids.values()),
         },

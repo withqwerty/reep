@@ -31,14 +31,11 @@ OUTPUT_DIR = Path(__file__).parent.parent / "data" / "json"
 #   P12924  365scores player ID          — only 200 entities, too small
 #   P12939  365scores team ID            — only 6 entities
 #   P13901  Foot Mercato player ID       — only 296 entities, too small
-#   P12758  Transfermarkt competition ID — only 13, competition entity type not supported
 #   P13665  FBref match ID              — only 4 entities, match entity type not supported
 #   P7455   Transfermarkt match ID      — 26K but match entity type not supported yet
 #   P7460   Flashscore match ID         — only 22 entities
 #   P8736   Opta player ID              — numeric IDs, replaced by alphanumeric Opta IDs via custom matching
 #   P8737   Opta team ID               — numeric IDs, replaced by alphanumeric Opta IDs via custom matching
-#   P8735   Opta competition ID         — only 53 entities
-#   P13664  FBref competition ID        — 148 entities, competition entity type not supported yet
 #   P5628   Football.it female player   — redundant with Soccerdonna (P4381)
 #   P7878   Soccerdonna team ID         — not checked, women's team coverage TBD
 PLAYER_IDS = {
@@ -94,6 +91,16 @@ COACH_IDS = {
     "soccerbase": "P2195",
     "soccerdonna": "P8134",
 }
+
+COMPETITION_IDS = {
+    "transfermarkt": "P12758",
+    "fbref": "P13664",
+    "opta": "P8735",
+}
+
+# Season provider IDs — may be empty if Wikidata has no dedicated season properties.
+# Season cross-referencing will rely on custom_ids (derived from competition ID + year).
+SEASON_IDS: dict[str, str] = {}
 
 BIO_BATCH_SIZE = 200  # QIDs per bio-detail batch
 PAGE_SIZE = 50000  # SPARQL pagination size
@@ -312,6 +319,67 @@ WHERE {{
 """
 
 
+def build_competition_ids_query(limit: int = 0, offset: int = 0) -> str:
+    id_optionals = "\n".join(
+        f"  OPTIONAL {{ ?e wdt:{prop} ?id_{name} . }}"
+        for name, prop in COMPETITION_IDS.items()
+    )
+    id_selects = " ".join(f"?id_{name}" for name in COMPETITION_IDS)
+    limit_clause = f"LIMIT {limit}" if limit else ""
+    offset_clause = f"OFFSET {offset}" if offset else ""
+
+    # Union: class-based (Q15991290 subclasses) + property-based (items with competition IDs).
+    # Many competitions have FBref/Opta IDs but aren't typed as Q15991290 subclasses.
+    prop_unions = "\n      UNION\n".join(
+        f"      {{ ?e wdt:{prop} [] . }}" for prop in COMPETITION_IDS.values()
+    )
+    return f"""
+SELECT ?e ?eLabel {id_selects}
+WHERE {{
+  {{
+    SELECT DISTINCT ?e WHERE {{
+      {{ ?e wdt:P31/wdt:P279* wd:Q15991290 . }}
+      UNION
+{prop_unions}
+    }}
+    ORDER BY ?e
+    {limit_clause} {offset_clause}
+  }}
+{id_optionals}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+}}
+"""
+
+
+def build_season_ids_query(limit: int = 0, offset: int = 0) -> str:
+    # Seasons are items with P3450 (sports season of league) pointing to a football competition.
+    # SEASON_IDS may be empty — seasons often lack dedicated provider properties.
+    id_optionals = "\n".join(
+        f"  OPTIONAL {{ ?e wdt:{prop} ?id_{name} . }}"
+        for name, prop in SEASON_IDS.items()
+    )
+    id_selects = (" " + " ".join(f"?id_{name}" for name in SEASON_IDS)) if SEASON_IDS else ""
+    limit_clause = f"LIMIT {limit}" if limit else ""
+    offset_clause = f"OFFSET {offset}" if offset else ""
+
+    return f"""
+SELECT ?e ?eLabel ?competitionQid{id_selects}
+WHERE {{
+  {{
+    SELECT DISTINCT ?e ?competitionQid WHERE {{
+      ?e wdt:P3450 ?comp .
+      ?comp wdt:P31/wdt:P279* wd:Q15991290 .
+      BIND(?comp AS ?competitionQid)
+    }}
+    ORDER BY ?e
+    {limit_clause} {offset_clause}
+  }}
+{id_optionals}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+}}
+"""
+
+
 def parse_ids_phase(rows: list[dict], entity_type: str, id_props: dict) -> dict[str, dict]:
     """Parse Phase 1 results into entity dict keyed by QID."""
     entities: dict[str, dict] = {}
@@ -334,8 +402,15 @@ def parse_ids_phase(rows: list[dict], entity_type: str, id_props: dict) -> dict[
                 "country": None,
                 "founded": None,
                 "stadium": None,
+                "competition_qid": None,
                 "external_ids": {},
             }
+        # Capture competition QID for seasons (from SPARQL result)
+        comp_qid_uri = row.get("competitionQid")
+        if comp_qid_uri and entity_type == "season":
+            comp_qid = extract_qid(comp_qid_uri)
+            if comp_qid.startswith("Q"):
+                entities[qid]["competition_qid"] = comp_qid
         for name in id_props:
             val = row.get(f"id_{name}")
             if val and name not in entities[qid]["external_ids"]:
@@ -403,6 +478,31 @@ WHERE {{
 """
 
 
+def build_competition_bio_query(qids: list[str]) -> str:
+    values = " ".join(f"wd:{q}" for q in qids)
+    return f"""
+SELECT ?e ?altLabels ?countryLabel
+WHERE {{
+  VALUES ?e {{ {values} }}
+  OPTIONAL {{ ?e skos:altLabel ?altLabels . FILTER(LANG(?altLabels) = "en") }}
+  OPTIONAL {{ ?e wdt:P17 ?country . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+}}
+"""
+
+
+def build_season_bio_query(qids: list[str]) -> str:
+    values = " ".join(f"wd:{q}" for q in qids)
+    return f"""
+SELECT ?e ?altLabels ?competitionQid
+WHERE {{
+  VALUES ?e {{ {values} }}
+  OPTIONAL {{ ?e skos:altLabel ?altLabels . FILTER(LANG(?altLabels) = "en") }}
+  OPTIONAL {{ ?e wdt:P3450 ?competitionQid . }}
+}}
+"""
+
+
 def merge_bio(entities: dict[str, dict], bio_rows: list[dict], entity_type: str):
     """Merge Phase 2 bio results into entity dicts."""
     # Collect aliases per QID
@@ -448,6 +548,18 @@ def merge_bio(entities: dict[str, dict], bio_rows: list[dict], entity_type: str)
             if not e["stadium"] and row.get("stadiumLabel"):
                 e["stadium"] = row["stadiumLabel"]
 
+        if entity_type == "competition":
+            if not e.get("country") and row.get("countryLabel"):
+                e["country"] = row["countryLabel"]
+
+        if entity_type == "season":
+            # Competition QID from bio query (backup — primary source is IDs phase)
+            if not e.get("competition_qid") and row.get("competitionQid"):
+                comp_uri = row["competitionQid"]
+                comp_qid = comp_uri.split("/")[-1] if "/" in comp_uri else comp_uri
+                if comp_qid.startswith("Q"):
+                    e["competition_qid"] = comp_qid
+
     # Apply aliases
     for qid, alias_set in aliases.items():
         if qid in entities:
@@ -471,7 +583,7 @@ def fetch_bio_batched(entities: dict[str, dict], entity_type: str, bio_query_fn)
 def main():
     parser = argparse.ArgumentParser(description="Extract football entities from Wikidata")
     parser.add_argument("--test", type=int, default=0, help="Limit per entity type (0 = all)")
-    parser.add_argument("--type", choices=["player", "team", "coach"], help="Single entity type")
+    parser.add_argument("--type", choices=["player", "team", "coach", "competition", "season"], help="Single entity type")
     parser.add_argument("--ids-only", action="store_true", help="Skip bio details phase")
     args = parser.parse_args()
 
@@ -481,6 +593,8 @@ def main():
         "player": (build_player_ids_query, PLAYER_IDS, build_player_bio_query),
         "team": (build_team_ids_query, TEAM_IDS, build_team_bio_query),
         "coach": (build_coach_ids_query, COACH_IDS, build_coach_bio_query),
+        "competition": (build_competition_ids_query, COMPETITION_IDS, build_competition_bio_query),
+        "season": (build_season_ids_query, SEASON_IDS, build_season_bio_query),
     }
 
     if args.type:

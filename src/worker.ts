@@ -210,6 +210,11 @@ async function handleSearch(
   if (type) {
     query += " AND e.type = ?";
     binds.push(type);
+  } else {
+    // Exclude seasons from default search — they pollute results with
+    // "2024-25 Premier League", "2023-24 Premier League" etc.
+    // Use ?type=season explicitly to search seasons.
+    query += " AND e.type != 'season'";
   }
 
   query += " ORDER BY score LIMIT ?";
@@ -309,7 +314,7 @@ async function handleResolve(
   return json({ results: [entity], count: 1 });
 }
 
-const ENTITY_COLS = "reep_id, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_reep_id, height_cm, country, founded, stadium, source";
+const ENTITY_COLS = "reep_id, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_reep_id, height_cm, country, founded, stadium, source, competition_reep_id";
 
 // Helper: look up entity by reep_id, attach provider IDs and qid convenience field
 async function lookupByReepId(db: D1Database, reepId: string): Promise<Record<string, unknown> | null> {

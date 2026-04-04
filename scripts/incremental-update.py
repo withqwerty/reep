@@ -38,6 +38,8 @@ _spec.loader.exec_module(_mod)
 PLAYER_IDS = _mod.PLAYER_IDS
 TEAM_IDS = _mod.TEAM_IDS
 COACH_IDS = _mod.COACH_IDS
+COMPETITION_IDS = _mod.COMPETITION_IDS
+SEASON_IDS = _mod.SEASON_IDS
 BIO_BATCH_SIZE = _mod.BIO_BATCH_SIZE
 sparql_query = _mod.sparql_query
 parse_ids_phase = _mod.parse_ids_phase
@@ -45,6 +47,8 @@ merge_bio = _mod.merge_bio
 build_player_bio_query = _mod.build_player_bio_query
 build_team_bio_query = _mod.build_team_bio_query
 build_coach_bio_query = _mod.build_coach_bio_query
+build_competition_bio_query = _mod.build_competition_bio_query
+build_season_bio_query = _mod.build_season_bio_query
 
 DB_NAME = "football-entities"
 CIRCUIT_BREAKER_THRESHOLD = 20_000
@@ -116,6 +120,25 @@ def fetch_changed_qids(since: str) -> dict[str, list[str]]:
               FILTER(?mod > "{since}T00:00:00Z"^^xsd:dateTime)
               FILTER NOT EXISTS {{ ?e wdt:P31 wd:Q95074 }}
               FILTER NOT EXISTS {{ ?e wdt:P31 wd:Q15632617 }}
+            }}""",
+        "competition": f"""
+            SELECT DISTINCT ?e WHERE {{
+              {{ ?e wdt:P31/wdt:P279* wd:Q15991290 . }}
+              UNION
+              {{ ?e wdt:P12758 [] . }}
+              UNION
+              {{ ?e wdt:P13664 [] . }}
+              UNION
+              {{ ?e wdt:P8735 [] . }}
+              ?e schema:dateModified ?mod .
+              FILTER(?mod > "{since}T00:00:00Z"^^xsd:dateTime)
+            }}""",
+        "season": f"""
+            SELECT DISTINCT ?e WHERE {{
+              ?e wdt:P3450 ?comp .
+              ?comp wdt:P31/wdt:P279* wd:Q15991290 .
+              ?e schema:dateModified ?mod .
+              FILTER(?mod > "{since}T00:00:00Z"^^xsd:dateTime)
             }}""",
     }
 
@@ -207,6 +230,8 @@ TYPE_CONFIGS = {
     "player": (PLAYER_IDS, build_player_bio_query),
     "team": (TEAM_IDS, build_team_bio_query),
     "coach": (COACH_IDS, build_coach_bio_query),
+    "competition": (COMPETITION_IDS, build_competition_bio_query),
+    "season": (SEASON_IDS, build_season_bio_query),
 }
 
 
@@ -277,18 +302,23 @@ STMTS_PER_FILE = 5000
 ENTITY_COLS = ("reep_id", "type", "name_en", "aliases_en", "full_name",
                "date_of_birth", "nationality", "position", "current_team_reep_id",
                "height_cm", "country", "founded", "stadium", "source",
-               "updated_at")
+               "competition_reep_id", "updated_at")
 
-TYPE_PREFIXES = {"player": "p", "team": "t", "coach": "c"}
+TYPE_PREFIXES = {"player": "p", "team": "t", "coach": "c", "competition": "l", "season": "s"}
+
+# Processing order matters: competitions must be seeded before seasons (FK dependency).
+TYPE_ORDER = ["player", "team", "coach", "competition", "season"]
 
 
 def generate_update_sql(entities: dict[str, dict], entity_type: str,
                         existing_reep_ids: dict[str, str] | None = None,
-                        team_qid_to_reep: dict[str, str] | None = None) -> list[str]:
+                        team_qid_to_reep: dict[str, str] | None = None,
+                        comp_qid_to_reep: dict[str, str] | None = None) -> list[str]:
     """Generate SQL: DELETE stale provider_ids + INSERT OR REPLACE entities + provider_ids.
 
     existing_reep_ids: map of qid -> reep_id for entities already in D1.
     team_qid_to_reep: map of team QID -> reep_id for current_team resolution.
+    comp_qid_to_reep: map of competition QID -> reep_id for season FK resolution.
     New entities get a freshly minted reep_id.
     """
     stmts = []
@@ -322,6 +352,13 @@ def generate_update_sql(entities: dict[str, dict], entity_type: str,
             if team_qid and team_qid_to_reep:
                 team_reep = team_qid_to_reep.get(team_qid)
 
+            # Resolve competition QID to reep_id for seasons
+            comp_reep = None
+            if entity_type == "season":
+                comp_qid = e.get("competition_qid")
+                if comp_qid and comp_qid_to_reep:
+                    comp_reep = comp_qid_to_reep.get(comp_qid)
+
             vals = (
                 escape_sql(e["reep_id"]),
                 escape_sql(e["type"]),
@@ -337,6 +374,7 @@ def generate_update_sql(entities: dict[str, dict], entity_type: str,
                 escape_sql(e.get("founded")),
                 escape_sql(e.get("stadium")),
                 "'wikidata'",
+                escape_sql(comp_reep),
                 "datetime('now')",
             )
             rows.append(f"({', '.join(vals)})")
@@ -476,7 +514,10 @@ def main():
     check_fts_triggers(remote)
 
     # Step 4-5: Fetch + update per type
-    for entity_type, qids in changed.items():
+    unmapped = set(changed.keys()) - set(TYPE_ORDER)
+    assert not unmapped, f"Unhandled entity types in changed but not in TYPE_ORDER: {unmapped}"
+    for entity_type in TYPE_ORDER:
+        qids = changed.get(entity_type, [])
         if not qids:
             print(f"\n  {entity_type}: no changes, skipping")
             continue
@@ -523,9 +564,27 @@ def main():
             if team_qids:
                 print(f"  Resolved {len(team_qid_to_reep):,}/{len(team_qids):,} team QIDs to reep_ids")
 
+        # Look up competition reep_ids for season FK resolution
+        comp_qid_to_reep: dict[str, str] = {}
+        if entity_type == "season":
+            comp_qids = {e.get("competition_qid") for e in entities.values() if e.get("competition_qid")}
+            comp_qids_list = list(comp_qids - {None})
+            for i in range(0, len(comp_qids_list), 200):
+                batch = comp_qids_list[i:i + 200]
+                qid_sql = ", ".join(escape_sql(q) for q in batch)
+                rows = query_d1(
+                    f"SELECT external_id AS qid, reep_id FROM provider_ids "
+                    f"WHERE provider = 'wikidata' AND external_id IN ({qid_sql});",
+                    remote=remote,
+                )
+                for r in rows:
+                    comp_qid_to_reep[r["qid"]] = r["reep_id"]
+            if comp_qids_list:
+                print(f"  Resolved {len(comp_qid_to_reep):,}/{len(comp_qids_list):,} competition QIDs to reep_ids")
+
         # Step 5: Update D1
         print(f"  Generating SQL...")
-        stmts = generate_update_sql(entities, entity_type, existing_reep_ids, team_qid_to_reep)
+        stmts = generate_update_sql(entities, entity_type, existing_reep_ids, team_qid_to_reep, comp_qid_to_reep)
         print(f"  {len(stmts)} statements")
 
         if not execute_stmts(stmts, remote, entity_type):

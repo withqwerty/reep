@@ -36,9 +36,9 @@ Every entity has a self-minted `reep_id` as its canonical primary key: `reep_<ty
 | `reep_p` | player | `reep_p2804f5db` |
 | `reep_t` | team | `reep_t0871097b` |
 | `reep_c` | coach | `reep_c9103de59` |
+| `reep_l` | competition | `reep_l3a8f01bc` |
+| `reep_s` | season | `reep_s7d2e49a0` |
 | `reep_m` | match | reserved |
-| `reep_l` | league | reserved |
-| `reep_s` | season | reserved |
 
 Wikidata QIDs are a provider mapping (`provider=wikidata` in `provider_ids`), not the identity backbone. Entities can exist without a Wikidata QID (e.g. lower-league players sourced from Opta).
 
@@ -46,7 +46,7 @@ Design document: `docs/plan-reep-id.md`
 
 ## D1 Tables
 
-- `entities` - 488K players/teams/coaches with bio data, PK `reep_id`
+- `entities` - 488K+ players/teams/coaches/competitions/seasons with bio data, PK `reep_id`. Seasons have `competition_reep_id` FK to their competition.
 - `provider_ids` - 1.7M Wikidata-sourced provider ID mappings (including `provider=wikidata` for QIDs), PK `(reep_id, provider, external_id)`. Dropped and recreated on weekly refresh.
 - `custom_ids` - ~353K verified mappings, PK `(reep_id, provider, external_id)` (Opta, FotMob, Understat, WhoScored, Club Elo, SportMonks, API-Football, FBref verified, Impect, Wyscout, SkillCorner, heim:spiel, TheSportsDB, ESPN). Never bulk-dropped.
 - `entities_fts` - FTS5 virtual table for full-text search on entity names (synced from entities via triggers, rebuilt after each seed)
@@ -69,6 +69,7 @@ Design document: `docs/plan-reep-id.md`
 | `scripts/resolve-dupes.py` | Merge duplicate entities from dedup report |
 | `scripts/cutover-reep-id.py` | Phase 4 cutover: make reep_id the PK (one-time migration) |
 | `scripts/clone-to-staging.py` | Clone production D1 to staging for rehearsal |
+| `scripts/research-competitions.py` | SPARQL exploration for competition/season coverage |
 
 ## Adding a new provider
 
