@@ -2,10 +2,10 @@ openapi: 3.0.3
 info:
   title: The Reep Register
   description: |
-    The football entity register. Resolve player, team, and coach IDs across
+    The football entity register. Resolve player, team, coach, competition, and season IDs across
     Transfermarkt, FBref, Sofascore, Understat, WhoScored, and 40+ data providers.
 
-    488,000+ entities with cross-provider ID mappings sourced from Wikidata
+    492,000+ entities with cross-provider ID mappings sourced from Wikidata
     and custom verified sources. Updated weekly.
 
     Every entity has a stable Reep ID (`reep_<type_prefix><8hex>`) as the canonical
@@ -30,7 +30,8 @@ paths:
       operationId: searchEntities
       summary: Search entities by name
       description: |
-        Full-text search across players, teams, and coaches by name or alias.
+        Full-text search across players, teams, coaches, and competitions by name or alias.
+        Seasons are excluded from default search to avoid noise; use `type=season` to search seasons explicitly.
         Uses prefix matching with BM25 relevance ranking (e.g. "Cole Palm" matches "Cole Palmer").
         Diacritics-insensitive ("Muller" matches "Müller").
       parameters:
@@ -46,7 +47,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [player, team, coach]
+            enum: [player, team, coach, competition, season]
           description: Filter by entity type
         - name: limit
           in: query
@@ -93,7 +94,7 @@ paths:
       summary: Look up entity by Reep ID or Wikidata QID
       description: |
         Exact lookup by Reep ID or Wikidata QID. The ID type is auto-detected:
-        - `reep_p...` / `reep_t...` / `reep_c...` → Reep ID lookup
+        - `reep_p...` / `reep_t...` / `reep_c...` / `reep_l...` / `reep_s...` → Reep ID lookup
         - `Q...` → Wikidata QID lookup (may return multiple records for dual-role people)
 
         Also accepts the legacy `?qid=` parameter for backwards compatibility.
@@ -110,7 +111,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [player, team, coach]
+            enum: [player, team, coach, competition, season]
           description: Filter by entity type (only needed for QID lookups with dual-role people)
       responses:
         "200":
@@ -354,6 +355,10 @@ components:
           type: string
           nullable: true
           description: For teams only
+        competition_reep_id:
+          type: string
+          nullable: true
+          description: For seasons only — Reep ID of the parent competition
         source:
           type: string
           description: Provenance (wikidata, opta, etc.)

@@ -4,13 +4,13 @@
 
 ![Charles Reep's match notations from 1953](https://ichef.bbci.co.uk/ace/standard/624/cpsprodpb/FC93/production/_124995646_bbc1953notations.jpg)
 
-The football entity register. Maps player, team, and coach identities across Transfermarkt, FBref, UEFA, Sofascore, and 30+ data providers.
+The football entity register. Maps player, team, coach, competition, and season identities across Transfermarkt, FBref, UEFA, Sofascore, and 30+ data providers.
 
 Named after [Charles Reep](https://en.wikipedia.org/wiki/Charles_Reep) (1904--2002), an RAF wing commander who hand-recorded every action in over 2,200 football matches starting in the 1950s. He's considered the grandfather of football analytics -- decades before expected goals or tracking data, Reep was tallying passes, shots, and sequences with pen and paper, pioneering the idea that football could be understood through data.
 
 ## What is this?
 
-A canonical identity file for football. Every person, club, and entity gets a stable Reep ID (`reep_<type_prefix><8hex>`), linked to their IDs on other platforms. If you have a Transfermarkt ID and need the FBref ID for the same player, this register gives you the answer.
+A canonical identity file for football. Every person, club, competition, and season gets a stable Reep ID (`reep_<type_prefix><8hex>`), linked to their IDs on other platforms. If you have a Transfermarkt ID and need the FBref ID for the same player — or want to resolve an Opta competition ID to its FBref equivalent — this register gives you the answer.
 
 The unique key is `reep_id`. Wikidata QIDs are available as a provider mapping where the entity exists in Wikidata, but entities can exist independently (e.g. lower-league players sourced from Opta).
 
@@ -24,6 +24,8 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 |------|---------|-------------|
 | [`data/people.csv`](data/people.csv) | ~488K | Players and coaches with provider IDs and bio |
 | [`data/teams.csv`](data/teams.csv) | ~45K | Clubs with provider IDs and metadata |
+| [`data/competitions.csv`](data/competitions.csv) | ~336 | Leagues, cups, and tournaments with provider IDs |
+| [`data/seasons.csv`](data/seasons.csv) | ~3.8K | Season editions of competitions |
 | [`data/names.csv`](data/names.csv) | varies | Alternate names and aliases |
 | [`data/meta.json`](data/meta.json) | — | Generation timestamp and counts |
 
@@ -108,6 +110,27 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_api_football` | API-Football team ID | `42` |
 | `key_sofifa` | SoFIFA / EA FC team ID | `1` |
 | `key_fotmob` | FotMob team ID | `9825` |
+
+### Competitions schema
+
+| Column | Description | Example |
+|--------|-------------|---------|
+| `reep_id` | Reep ID (canonical key) | `reep_lb3d230cb` |
+| `key_wikidata` | Wikidata QID | `Q9448` |
+| `name` | Competition name | `Premier League` |
+| `country` | Country | `United Kingdom` |
+| `key_transfermarkt` | Transfermarkt competition ID | `GB1` |
+| `key_fbref` | FBref competition ID | `9` |
+| `key_opta` | Opta competition ID | `8` |
+
+### Seasons schema
+
+| Column | Description | Example |
+|--------|-------------|---------|
+| `reep_id` | Reep ID (canonical key) | `reep_sa7f63ba6` |
+| `key_wikidata` | Wikidata QID | `Q124371422` |
+| `name` | Season name | `2024–25 Premier League` |
+| `competition_reep_id` | Reep ID of parent competition | `reep_lb3d230cb` |
 
 ### Names schema
 
@@ -198,6 +221,8 @@ sqlite3 reep.db <<EOF
 .mode csv
 .import data/people.csv people
 .import data/teams.csv teams
+.import data/competitions.csv competitions
+.import data/seasons.csv seasons
 .import data/names.csv names
 EOF
 ```
@@ -228,7 +253,7 @@ The Reep API provides the same data as the CSVs via a convenient REST interface.
 
 The `/lookup` endpoint auto-detects the ID type: Reep IDs start with `reep_`, Wikidata QIDs start with `Q`. The legacy `?qid=` parameter is still supported.
 
-All endpoints that return entities accept an optional `type` parameter (`player`, `team`, `coach`). For dual-role people, `/lookup` without `type` returns all records.
+All endpoints that return entities accept an optional `type` parameter (`player`, `team`, `coach`, `competition`, `season`). For dual-role people, `/lookup` without `type` returns all records. Default search excludes seasons to avoid noise — use `type=season` to search seasons explicitly.
 
 ## Reep IDs
 
@@ -239,6 +264,8 @@ Every entity in the register has a self-minted Reep ID as its canonical identifi
 | `reep_p` | Player | `reep_p2804f5db` (Cole Palmer) |
 | `reep_t` | Team | `reep_t0871097b` (Arsenal F.C.) |
 | `reep_c` | Coach | `reep_c9103de59` (A. H. Albut) |
+| `reep_l` | Competition | `reep_lb3d230cb` (Premier League) |
+| `reep_s` | Season | `reep_sa7f63ba6` (2024–25 Premier League) |
 
 Reep IDs are stable — they never change, even if a player's Wikidata QID is merged or deleted. Wikidata QIDs are available as a provider mapping (`key_wikidata` in CSVs, `qid` in API responses) but are not the identity backbone.
 
@@ -313,6 +340,9 @@ Entities not in Wikidata (e.g. lower-league players) are sourced from authoritat
 | [P8134](https://www.wikidata.org/wiki/Property:P8134) | Soccerdonna coach ID |
 | [P11379](https://www.wikidata.org/wiki/Property:P11379) | Dongqiudi player ID |
 | [P7280](https://www.wikidata.org/wiki/Property:P7280) | PlaymakerStats team ID |
+| [P12758](https://www.wikidata.org/wiki/Property:P12758) | Transfermarkt competition ID |
+| [P13664](https://www.wikidata.org/wiki/Property:P13664) | FBref competition ID |
+| [P8735](https://www.wikidata.org/wiki/Property:P8735) | Opta competition ID |
 
 ### Provider notes
 
