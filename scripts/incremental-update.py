@@ -268,24 +268,27 @@ def fetch_scoped(qids: list[str], entity_type: str) -> dict[str, dict]:
 
 
 # ---------------------------------------------------------------------------
-# Step 5: Update D1 (DELETE stale external_ids + INSERT OR REPLACE)
+# Step 5: Update D1 (DELETE stale provider_ids + INSERT OR REPLACE entities)
 # ---------------------------------------------------------------------------
 
 ROWS_PER_INSERT = 200
 STMTS_PER_FILE = 5000
 
-ENTITY_COLS = ("qid", "type", "name_en", "aliases_en", "full_name",
-               "date_of_birth", "nationality", "position", "current_team_qid",
-               "height_cm", "country", "founded", "stadium", "reep_id")
+ENTITY_COLS = ("reep_id", "type", "name_en", "aliases_en", "full_name",
+               "date_of_birth", "nationality", "position", "current_team_reep_id",
+               "height_cm", "country", "founded", "stadium", "source",
+               "updated_at")
 
 TYPE_PREFIXES = {"player": "p", "team": "t", "coach": "c"}
 
 
 def generate_update_sql(entities: dict[str, dict], entity_type: str,
-                        existing_reep_ids: dict[tuple[str, str], str] | None = None) -> list[str]:
-    """Generate SQL: DELETE stale IDs + INSERT OR REPLACE entities + external_ids + provider_ids.
+                        existing_reep_ids: dict[str, str] | None = None,
+                        team_qid_to_reep: dict[str, str] | None = None) -> list[str]:
+    """Generate SQL: DELETE stale provider_ids + INSERT OR REPLACE entities + provider_ids.
 
-    existing_reep_ids: map of (qid, type) -> reep_id for entities already in D1.
+    existing_reep_ids: map of qid -> reep_id for entities already in D1.
+    team_qid_to_reep: map of team QID -> reep_id for current_team resolution.
     New entities get a freshly minted reep_id.
     """
     stmts = []
@@ -293,42 +296,34 @@ def generate_update_sql(entities: dict[str, dict], entity_type: str,
 
     # Assign reep_ids: look up existing or mint new
     for e in entity_list:
-        key = (e["qid"], e["type"])
-        if existing_reep_ids and key in existing_reep_ids:
-            e["reep_id"] = existing_reep_ids[key]
+        qid = e["qid"]
+        if existing_reep_ids and qid in existing_reep_ids:
+            e["reep_id"] = existing_reep_ids[qid]
         elif not e.get("reep_id"):
             prefix = TYPE_PREFIXES.get(e["type"], "p")
             e["reep_id"] = f"reep_{prefix}{uuid.uuid4().hex[:8]}"
 
-    # DELETE external_ids for changed entities (Wikidata-sourced only)
-    for i in range(0, len(entity_list), ROWS_PER_INSERT):
-        batch = entity_list[i : i + ROWS_PER_INSERT]
-        qid_type_pairs = ", ".join(
-            f"({escape_sql(e['qid'])}, {escape_sql(e['type'])})"
-            for e in batch
-        )
-        stmts.append(
-            f"DELETE FROM external_ids WHERE (qid, type) IN ({qid_type_pairs}) "
-            f"AND provider NOT IN ("
-            f"SELECT provider FROM custom_ids WHERE reep_id IN ("
-            f"SELECT reep_id FROM entities WHERE (qid, type) IN ({qid_type_pairs})"
-            f"));"
-        )
-
     # DELETE provider_ids for changed entities (will be re-inserted)
+    # Only delete Wikidata-sourced IDs, not custom_ids
     for i in range(0, len(entity_list), ROWS_PER_INSERT):
         batch = entity_list[i : i + ROWS_PER_INSERT]
         reep_ids = ", ".join(escape_sql(e["reep_id"]) for e in batch)
         stmts.append(f"DELETE FROM provider_ids WHERE reep_id IN ({reep_ids});")
 
-    # INSERT OR REPLACE entities (now includes reep_id)
+    # INSERT OR REPLACE entities (reep_id PK schema)
     col_str = ", ".join(ENTITY_COLS)
     for i in range(0, len(entity_list), ROWS_PER_INSERT):
         batch = entity_list[i : i + ROWS_PER_INSERT]
         rows = []
         for e in batch:
+            # Resolve current_team QID to reep_id
+            team_qid = e.get("current_team_qid")
+            team_reep = None
+            if team_qid and team_qid_to_reep:
+                team_reep = team_qid_to_reep.get(team_qid)
+
             vals = (
-                escape_sql(e["qid"]),
+                escape_sql(e["reep_id"]),
                 escape_sql(e["type"]),
                 escape_sql(e["name_en"]),
                 escape_sql(e.get("aliases_en")),
@@ -336,12 +331,13 @@ def generate_update_sql(entities: dict[str, dict], entity_type: str,
                 escape_sql(e.get("date_of_birth")),
                 escape_sql(e.get("nationality")),
                 escape_sql(e.get("position")),
-                escape_sql(e.get("current_team_qid")),
+                escape_sql(team_reep),
                 str(e.get("height_cm")) if e.get("height_cm") is not None else "NULL",
                 escape_sql(e.get("country")),
                 escape_sql(e.get("founded")),
                 escape_sql(e.get("stadium")),
-                escape_sql(e.get("reep_id")),
+                "'wikidata'",
+                "datetime('now')",
             )
             rows.append(f"({', '.join(vals)})")
         stmts.append(
@@ -349,26 +345,7 @@ def generate_update_sql(entities: dict[str, dict], entity_type: str,
             + ",\n".join(rows) + ";"
         )
 
-    # INSERT external_ids (after DELETE, so no conflicts)
-    all_id_rows = []
-    for e in entity_list:
-        for provider, ext_id in e.get("external_ids", {}).items():
-            all_id_rows.append((e["qid"], e["type"], provider, ext_id))
-
-    for i in range(0, len(all_id_rows), ROWS_PER_INSERT):
-        batch = all_id_rows[i : i + ROWS_PER_INSERT]
-        rows = []
-        for qid, etype, provider, ext_id in batch:
-            rows.append(
-                f"({escape_sql(qid)}, {escape_sql(etype)}, "
-                f"{escape_sql(provider)}, {escape_sql(ext_id)})"
-            )
-        stmts.append(
-            "INSERT OR REPLACE INTO external_ids (qid, type, provider, external_id) VALUES\n"
-            + ",\n".join(rows) + ";"
-        )
-
-    # INSERT provider_ids (dual-write: same data as external_ids, keyed by reep_id)
+    # INSERT provider_ids (wikidata QID + all provider IDs)
     all_provider_rows = []
     for e in entity_list:
         reep_id = e.get("reep_id")
@@ -513,24 +490,42 @@ def main():
         entities = fetch_scoped(qids, entity_type)
         print(f"  Parsed {len(entities):,} entities")
 
-        # Look up existing reep_ids for changed entities so we don't lose them on INSERT OR REPLACE
-        existing_reep_ids: dict[tuple[str, str], str] = {}
+        # Look up existing reep_ids for changed entities via provider_ids
+        existing_reep_ids: dict[str, str] = {}  # qid -> reep_id
         qid_list_for_lookup = list(entities.keys())
         for i in range(0, len(qid_list_for_lookup), 200):
             batch_qids = qid_list_for_lookup[i:i + 200]
             qid_sql = ", ".join(escape_sql(q) for q in batch_qids)
             rows = query_d1(
-                f"SELECT qid, type, reep_id FROM entities "
-                f"WHERE qid IN ({qid_sql}) AND reep_id IS NOT NULL;",
+                f"SELECT external_id AS qid, reep_id FROM provider_ids "
+                f"WHERE provider = 'wikidata' AND external_id IN ({qid_sql});",
                 remote=remote,
             )
             for r in rows:
-                existing_reep_ids[(r["qid"], r["type"])] = r["reep_id"]
+                existing_reep_ids[r["qid"]] = r["reep_id"]
         print(f"  Found {len(existing_reep_ids):,} existing reep_ids")
+
+        # Look up team reep_ids for current_team resolution (players/coaches only)
+        team_qid_to_reep: dict[str, str] = {}
+        if entity_type in ("player", "coach"):
+            team_qids = {e.get("current_team_qid") for e in entities.values() if e.get("current_team_qid")}
+            team_qids = list(team_qids - {None})
+            for i in range(0, len(team_qids), 200):
+                batch = team_qids[i:i + 200]
+                qid_sql = ", ".join(escape_sql(q) for q in batch)
+                rows = query_d1(
+                    f"SELECT external_id AS qid, reep_id FROM provider_ids "
+                    f"WHERE provider = 'wikidata' AND external_id IN ({qid_sql});",
+                    remote=remote,
+                )
+                for r in rows:
+                    team_qid_to_reep[r["qid"]] = r["reep_id"]
+            if team_qids:
+                print(f"  Resolved {len(team_qid_to_reep):,}/{len(team_qids):,} team QIDs to reep_ids")
 
         # Step 5: Update D1
         print(f"  Generating SQL...")
-        stmts = generate_update_sql(entities, entity_type, existing_reep_ids)
+        stmts = generate_update_sql(entities, entity_type, existing_reep_ids, team_qid_to_reep)
         print(f"  {len(stmts)} statements")
 
         if not execute_stmts(stmts, remote, entity_type):
