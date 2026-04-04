@@ -338,7 +338,7 @@ A new Wikidata property for the new format has been proposed but not yet approve
 
 ## Updates
 
-The register is refreshed weekly from Wikidata every Monday. Incremental updates fetch only changed entities (~1-2K/day); a full refresh runs monthly. Each update picks up new entities, updated IDs, and corrections made by the Wikidata community. Custom provider mappings persist across updates.
+The register is refreshed weekly from Wikidata every Monday. Incremental updates fetch only changed entities (~1-2K/day). Monthly dump reconciliation against the full Wikidata dump catches drift (deleted entities, lost occupations, missed IDs). Each update picks up new entities, updated IDs, and corrections made by the Wikidata community. Custom provider mappings persist across all updates.
 
 ## Contributing
 
