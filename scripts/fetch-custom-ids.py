@@ -83,12 +83,16 @@ def main():
         print(f"  {p}: {count}")
 
     # Also export reep_id map: {qid+type -> reep_id} for use by export-csv.py
+    # Production schema has no qid column on entities — join via provider_ids
     print("\nFetching reep_id map...")
     reep_map: dict[str, str] = {}
     offset = 0
     while True:
         rows = query_d1(
-            f"SELECT qid, type, reep_id FROM entities WHERE reep_id IS NOT NULL "
+            f"SELECT p.external_id AS qid, e.type, e.reep_id "
+            f"FROM provider_ids p "
+            f"JOIN entities e ON e.reep_id = p.reep_id "
+            f"WHERE p.provider = 'wikidata' "
             f"LIMIT {BATCH_SIZE} OFFSET {offset};",
             args.local,
         )
