@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.0 - 2026-04-05
+
+### API
+- Add `GET /health` endpoint (public, no auth) for uptime monitoring. Returns 200 with `{status, version, db, timestamp}` when healthy, 503 if D1 is unreachable. Responses are not cached (`Cache-Control: no-store`).
+
 ## v2.0.0 - 2026-04-05
 
 The initial public release of the Reep Register as a versioned product.

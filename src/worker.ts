@@ -4,7 +4,7 @@ export interface Env {
   BYPASS_KEY?: string;
 }
 
-const API_VERSION = "2.0.0";
+const API_VERSION = "2.1.0";
 
 const VALID_PROVIDERS = new Set([
   "wikidata",
@@ -77,6 +77,29 @@ export default {
       return json({ error: "Method not allowed" }, 405);
     }
 
+    // Public health check (no auth). Returns 200 if the worker is reachable
+    // and can query D1; 503 if the DB ping fails.
+    if (method === "GET" && path === "/health") {
+      let dbOk = true;
+      try {
+        await env.DB.prepare("SELECT 1").first();
+      } catch {
+        dbOk = false;
+      }
+      const status = dbOk ? 200 : 503;
+      const body = {
+        status: dbOk ? "ok" : "degraded",
+        version: API_VERSION,
+        db: dbOk ? "ok" : "error",
+        timestamp: new Date().toISOString(),
+      };
+      console.log(JSON.stringify({ method, path, params, status, ms: Date.now() - start }));
+      return new Response(JSON.stringify(body), {
+        status,
+        headers: { ...JSON_HEADERS, "Cache-Control": "no-store" },
+      });
+    }
+
     // Auth: RapidAPI proxy secret or bypass key for internal use
     // Fail closed: if RAPIDAPI_PROXY_SECRET is not configured, reject all requests
     if (!env.RAPIDAPI_PROXY_SECRET) {
@@ -101,6 +124,7 @@ export default {
         version: API_VERSION,
         docs: "https://github.com/withqwerty/reep",
         endpoints: {
+          "GET /health": "Public health check (no auth). Returns 200 if worker + D1 are reachable",
           "GET /lookup": "Look up an entity by Reep ID or Wikidata QID (?id=reep_p... or ?id=Q...)",
           "GET /search": "Search entities by name (prefix matching, e.g. 'Cole Palm')",
           "GET /resolve": "Resolve a provider ID to all other provider IDs",
