@@ -1,10 +1,12 @@
 {
-  "generated_at": "2026-04-04T12:55:36.866613+00:00",
+  "generated_at": "2026-04-05T01:17:06.398972+00:00",
   "source": "Wikidata SPARQL + custom verified mappings",
   "counts": {
     "people": 429789,
     "teams": 45353,
+    "competitions": 194,
+    "seasons": 1200,
     "aliases": 0,
-    "custom_ids": 352625
+    "custom_ids": 353099
   }
 }

@@ -73,11 +73,25 @@ Design document: `docs/plan-reep-id.md`
 
 ## Adding a new provider
 
-After running a new match script that writes a new provider to custom_ids:
-1. `python scripts/fetch-custom-ids.py` - update custom_ids.json + reep_id_map.json
-2. `python scripts/export-csv.py` - regenerate CSVs
-3. Add provider to: worker.ts /resolve provider list, openapi.yaml resolve enum, cli/reep.py PROVIDERS list, README.md coverage table
-4. Redeploy worker if code changed
+Order matters — the worker validates provider names against `VALID_PROVIDERS` in `src/worker.ts`, so IDs written to D1 for an unknown provider are not queryable until the worker is redeployed.
+
+**reep (this repo) — do first:**
+1. Add provider to `VALID_PROVIDERS` Set in `src/worker.ts`
+2. Add to: openapi.yaml resolve enum, cli/reep.py PROVIDERS list, README.md coverage table
+3. Bump `API_VERSION` const in `src/worker.ts` (minor) + `package.json` version to match
+4. Add CHANGELOG.md entry
+5. Commit: `release: v2.x.y — add <provider> provider`
+6. `git tag v2.x.y` + GitHub Release
+7. `pnpm exec wrangler deploy`
+
+**reep-custom — do second:**
+8. Write and run the match script (IDs go live in API immediately)
+9. Update reep-custom `CLAUDE.md` provider table + scripts table
+
+**reep (this repo) — finalize:**
+10. `python scripts/fetch-custom-ids.py` — pull new custom_ids from D1
+11. `python scripts/export-csv.py` — regenerate CSVs with new column
+12. Commit data changes
 
 ## Worker (src/worker.ts)
 
@@ -88,7 +102,8 @@ After running a new match script that writes a new provider to custom_ids:
 - /resolve searches provider_ids first, then custom_ids
 - All responses include `reep_id` as the canonical identifier and `qid` as a convenience field (null if not in Wikidata)
 - Endpoints: GET /search, /resolve, /lookup, /stats + POST /batch/lookup, /batch/resolve
-- Version: 2.0.0
+- Version: `API_VERSION` const at top of file (currently 2.0.0)
+- Provider validation: `VALID_PROVIDERS` Set at top of file — `/resolve` and `/batch/resolve` reject unknown providers with 400
 
 ## Secrets (Cloudflare Worker)
 
@@ -100,9 +115,31 @@ After running a new match script that writes a new provider to custom_ids:
 - `CLOUDFLARE_API_TOKEN` - for wrangler D1 access
 - `CLOUDFLARE_ACCOUNT_ID` - Cloudflare account
 
+## Release Management
+
+Two version tracks: API (semver) and Data (calver). Full plan: `../reep-custom/docs/plans/release-management.md`.
+
+### API versioning (semver)
+
+- **Source of truth**: `API_VERSION` const in `src/worker.ts` + `package.json` version (kept in sync, same commit)
+- **Major**: breaking response shape, removed endpoint, auth change
+- **Minor**: new endpoint, new query param, new provider
+- **Patch**: bug fix, no response change
+- **Process**: bump both versions → CHANGELOG.md entry → commit `release: v2.x.y` → git tag → deploy → GitHub Release
+
+### Data versioning (calver)
+
+- **Format**: `YYYY.WW` (ISO year.week), auto-stamped in `data/meta.json` by `export-csv.py`
+- **Notable data releases** (new provider, bulk reconciliation, >1% entity count change) get a `data-YYYY.WW` GitHub Release tag
+- **Routine weekly refreshes** are just commits, no tag
+
+### CHANGELOG.md
+
+In repo root. API bumps get `## v2.x.y` headings, data-only weeks get `## YYYY.WW` headings. Newest first.
+
 ## Deployment
 
-The Worker reads from D1 at runtime. New data (weekly refresh, custom_ids) is available instantly without redeploying. Only redeploy when `src/worker.ts` changes:
+The Worker reads from D1 at runtime. For existing providers, new data is available instantly without redeploying. New providers require a redeploy (worker validates against `VALID_PROVIDERS`). Only redeploy when `src/worker.ts` changes:
 
 ```bash
 cd /Users/rahulkeerthi/Work/reep && pnpm exec wrangler deploy

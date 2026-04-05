@@ -1,0 +1,3692 @@
+[
+  {
+    "qid": "Q150880",
+    "type": "competition",
+    "name_en": "DFB-Pokal",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "521",
+      "opta": "231"
+    }
+  },
+  {
+    "qid": "Q152665",
+    "type": "competition",
+    "name_en": "2. Bundesliga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "33"
+    }
+  },
+  {
+    "qid": "Q154069",
+    "type": "competition",
+    "name_en": "3. Liga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "59"
+    }
+  },
+  {
+    "qid": "Q156973",
+    "type": "competition",
+    "name_en": "Franz Beckenbauer Supercup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "606"
+    }
+  },
+  {
+    "qid": "Q157894",
+    "type": "competition",
+    "name_en": "AFC Asian Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "664"
+    }
+  },
+  {
+    "qid": "Q162604",
+    "type": "competition",
+    "name_en": "Croatian Football League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "63"
+    }
+  },
+  {
+    "qid": "Q167541",
+    "type": "competition",
+    "name_en": "Eredivisie",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "23"
+    }
+  },
+  {
+    "qid": "Q169918",
+    "type": "competition",
+    "name_en": "Coppa Italia",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "529"
+    }
+  },
+  {
+    "qid": "Q171789",
+    "type": "competition",
+    "name_en": "FIFA Confederations Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "666"
+    }
+  },
+  {
+    "qid": "Q178750",
+    "type": "competition",
+    "name_en": "Copa América",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "685",
+      "opta": "128"
+    }
+  },
+  {
+    "qid": "Q182165",
+    "type": "competition",
+    "name_en": "Russian Premier League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "30"
+    }
+  },
+  {
+    "qid": "Q184795",
+    "type": "competition",
+    "name_en": "Copa Libertadores",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "CLI",
+      "fbref": "14",
+      "opta": "420"
+    }
+  },
+  {
+    "qid": "Q189188",
+    "type": "competition",
+    "name_en": "FA Community Shield",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "602"
+    }
+  },
+  {
+    "qid": "Q189327",
+    "type": "competition",
+    "name_en": "CONCACAF Gold Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "681",
+      "opta": "380"
+    }
+  },
+  {
+    "qid": "Q194052",
+    "type": "competition",
+    "name_en": "Serie B",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "18",
+      "opta": "105"
+    }
+  },
+  {
+    "qid": "Q194641",
+    "type": "competition",
+    "name_en": "Persian Gulf Pro League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "64"
+    }
+  },
+  {
+    "qid": "Q194796",
+    "type": "competition",
+    "name_en": "MLS All-Star Game",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "355"
+    }
+  },
+  {
+    "qid": "Q201671",
+    "type": "competition",
+    "name_en": "Eliteserien",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "28"
+    }
+  },
+  {
+    "qid": "Q202243",
+    "type": "competition",
+    "name_en": "Allsvenskan",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "29"
+    }
+  },
+  {
+    "qid": "Q202699",
+    "type": "competition",
+    "name_en": "Swiss Super League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "57"
+    }
+  },
+  {
+    "qid": "Q204752",
+    "type": "competition",
+    "name_en": "Danish Superliga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "50"
+    }
+  },
+  {
+    "qid": "Q206073",
+    "type": "competition",
+    "name_en": "Premier League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "UKR1"
+    }
+  },
+  {
+    "qid": "Q206813",
+    "type": "competition",
+    "name_en": "Campeonato Brasileiro Série A",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "24",
+      "opta": "363"
+    }
+  },
+  {
+    "qid": "Q209318",
+    "type": "competition",
+    "name_en": "Chinese Super League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "62"
+    }
+  },
+  {
+    "qid": "Q212412",
+    "type": "competition",
+    "name_en": "Coupe de France",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "518",
+      "opta": "361"
+    }
+  },
+  {
+    "qid": "Q213070",
+    "type": "competition",
+    "name_en": "OFC Nations Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "257"
+    }
+  },
+  {
+    "qid": "Q216022",
+    "type": "competition",
+    "name_en": "Belgian Pro League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "37"
+    }
+  },
+  {
+    "qid": "Q217016",
+    "type": "competition",
+    "name_en": "Czech First League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "66"
+    }
+  },
+  {
+    "qid": "Q217374",
+    "type": "competition",
+    "name_en": "Ligue 2",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "60"
+    }
+  },
+  {
+    "qid": "Q219261",
+    "type": "competition",
+    "name_en": "CAF Champions League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "741"
+    }
+  },
+  {
+    "qid": "Q219586",
+    "type": "competition",
+    "name_en": "A-League Men",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "65"
+    }
+  },
+  {
+    "qid": "Q219592",
+    "type": "competition",
+    "name_en": "Bundesliga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "56"
+    }
+  },
+  {
+    "qid": "Q220875",
+    "type": "competition",
+    "name_en": "Veikkausliiga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "43"
+    }
+  },
+  {
+    "qid": "Q223170",
+    "type": "competition",
+    "name_en": "Argentine Primera División",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "21"
+    }
+  },
+  {
+    "qid": "Q1032086",
+    "type": "competition",
+    "name_en": "Canadian Championship",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "552"
+    }
+  },
+  {
+    "qid": "Q1033339",
+    "type": "competition",
+    "name_en": "Venezuelan Primera División",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "105"
+    }
+  },
+  {
+    "qid": "Q1033349",
+    "type": "competition",
+    "name_en": "Categoría Primera A",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "41"
+    }
+  },
+  {
+    "qid": "Q1092612",
+    "type": "competition",
+    "name_en": "Lega Nazionale Professionisti",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q1101443",
+    "type": "competition",
+    "name_en": "National Women's Soccer League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "182",
+      "opta": "832"
+    }
+  },
+  {
+    "qid": "Q1122820",
+    "type": "competition",
+    "name_en": "Greek Football Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "399"
+    }
+  },
+  {
+    "qid": "Q1140581",
+    "type": "competition",
+    "name_en": "J2 League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "49"
+    }
+  },
+  {
+    "qid": "Q1158138",
+    "type": "competition",
+    "name_en": "Damallsvenskan",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "187"
+    }
+  },
+  {
+    "qid": "Q1188284",
+    "type": "competition",
+    "name_en": "Senegal Premier League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "SEN1"
+    }
+  },
+  {
+    "qid": "Q1197790",
+    "type": "competition",
+    "name_en": "North American Soccer League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "76"
+    }
+  },
+  {
+    "qid": "Q1231102",
+    "type": "competition",
+    "name_en": "Première Ligue",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "193"
+    }
+  },
+  {
+    "qid": "Q1351438",
+    "type": "competition",
+    "name_en": "Women's Professional Soccer",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "878"
+    }
+  },
+  {
+    "qid": "Q1351694",
+    "type": "competition",
+    "name_en": "USL First Division",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "68"
+    }
+  },
+  {
+    "qid": "Q1362411",
+    "type": "competition",
+    "name_en": "USL Championship",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "73",
+      "opta": "807"
+    }
+  },
+  {
+    "qid": "Q1386684",
+    "type": "competition",
+    "name_en": "Women's FA Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "10082"
+    }
+  },
+  {
+    "qid": "Q1422042",
+    "type": "competition",
+    "name_en": "Africa Women Cup of Nations",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "156"
+    }
+  },
+  {
+    "qid": "Q1476938",
+    "type": "competition",
+    "name_en": "OFC Women's Nations Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "159"
+    }
+  },
+  {
+    "qid": "Q1520528",
+    "type": "competition",
+    "name_en": "Fiji National Football League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "FIJ1"
+    }
+  },
+  {
+    "qid": "Q1561244",
+    "type": "competition",
+    "name_en": "Ukrainian First League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "UKR2"
+    }
+  },
+  {
+    "qid": "Q1622667",
+    "type": "competition",
+    "name_en": "Primera División de Bolivia",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "74"
+    }
+  },
+  {
+    "qid": "Q1774339",
+    "type": "competition",
+    "name_en": "Women's United Soccer Association",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "877"
+    }
+  },
+  {
+    "qid": "Q1785497",
+    "type": "competition",
+    "name_en": "Vrouwen Eredivisie",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "195"
+    }
+  },
+  {
+    "qid": "Q1852873",
+    "type": "competition",
+    "name_en": "USSF Division 2 Professional League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "79"
+    }
+  },
+  {
+    "qid": "Q12169436",
+    "type": "competition",
+    "name_en": "Ukrainian National League U-19",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "UA19"
+    }
+  },
+  {
+    "qid": "Q12837728",
+    "type": "competition",
+    "name_en": "First Professional Football League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "67"
+    }
+  },
+  {
+    "qid": "Q14377162",
+    "type": "competition",
+    "name_en": "Scottish Premiership",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "40"
+    }
+  },
+  {
+    "qid": "Q14468438",
+    "type": "competition",
+    "name_en": "Scottish Championship",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "72"
+    }
+  },
+  {
+    "qid": "Q15141004",
+    "type": "competition",
+    "name_en": "Nationalliga A",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "894"
+    }
+  },
+  {
+    "qid": "Q15938614",
+    "type": "competition",
+    "name_en": "I-League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "378"
+    }
+  },
+  {
+    "qid": "Q15980635",
+    "type": "competition",
+    "name_en": "UEFA Nations League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "677",
+      "opta": "941"
+    }
+  },
+  {
+    "qid": "Q16056350",
+    "type": "competition",
+    "name_en": "Indian Super League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "82"
+    }
+  },
+  {
+    "qid": "Q16056559",
+    "type": "competition",
+    "name_en": "South African Premier Division",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "52"
+    }
+  },
+  {
+    "qid": "Q16848281",
+    "type": "competition",
+    "name_en": "UEFA European Championship qualifying",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "678"
+    }
+  },
+  {
+    "qid": "Q20655841",
+    "type": "competition",
+    "name_en": "Super League Vrouwenvoetbal",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "296"
+    }
+  },
+  {
+    "qid": "Q20807484",
+    "type": "competition",
+    "name_en": "Women's Super League 2",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "9294"
+    }
+  },
+  {
+    "qid": "Q21281602",
+    "type": "competition",
+    "name_en": "Q21281602",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q21929716",
+    "type": "competition",
+    "name_en": "Primeira Liga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "32"
+    }
+  },
+  {
+    "qid": "Q100258079",
+    "type": "competition",
+    "name_en": "Africa Cup of Nations qualification",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "657"
+    }
+  },
+  {
+    "qid": "Q100793578",
+    "type": "competition",
+    "name_en": "NWSL Fall Series",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "884",
+      "opta": "1103"
+    }
+  },
+  {
+    "qid": "Q102227732",
+    "type": "competition",
+    "name_en": "NWSL Challenge Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "881"
+    }
+  },
+  {
+    "qid": "Q105071625",
+    "type": "competition",
+    "name_en": "Copa de la Liga Profesional",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "905"
+    }
+  },
+  {
+    "qid": "Q105492335",
+    "type": "competition",
+    "name_en": "football at the Summer Olympics – women's tournament",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "180"
+    }
+  },
+  {
+    "qid": "Q106548888",
+    "type": "competition",
+    "name_en": "European Super League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q109423710",
+    "type": "competition",
+    "name_en": "FIFA World Cup qualification (CAF)",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "2"
+    }
+  },
+  {
+    "qid": "Q113465678",
+    "type": "competition",
+    "name_en": "UEFA Women's Championship qualification",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "675"
+    }
+  },
+  {
+    "qid": "Q115938880",
+    "type": "competition",
+    "name_en": "Busoga Masaza Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q116781867",
+    "type": "competition",
+    "name_en": "Premier League 2",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "852"
+    }
+  },
+  {
+    "qid": "Q118954137",
+    "type": "competition",
+    "name_en": "Big Five",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "Big5"
+    }
+  },
+  {
+    "qid": "Q120288476",
+    "type": "competition",
+    "name_en": "Major League Indoor Soccer",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q130272037",
+    "type": "competition",
+    "name_en": "Buganda Masaza Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q130272380",
+    "type": "competition",
+    "name_en": "Copa Coca-Cola secondary schools tournament (Uganda)",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q130284738",
+    "type": "competition",
+    "name_en": "FUFA Super 8 Tournament",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q130284837",
+    "type": "competition",
+    "name_en": "FUFA Drum",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q130285064",
+    "type": "competition",
+    "name_en": "FUFA Juniors League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q130302344",
+    "type": "competition",
+    "name_en": "WPSL Pro",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q133530684",
+    "type": "competition",
+    "name_en": "Saudi eLeague",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q135496126",
+    "type": "competition",
+    "name_en": "FIFA Women's World Cup qualification (UEFA)",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "160"
+    }
+  },
+  {
+    "qid": "Q135496140",
+    "type": "competition",
+    "name_en": "FIFA World Cup qualification inter-confederation play-offs",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "255"
+    }
+  },
+  {
+    "qid": "Q135496163",
+    "type": "competition",
+    "name_en": "Premier League 2 Division 2",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "853"
+    }
+  },
+  {
+    "qid": "Q136340655",
+    "type": "competition",
+    "name_en": "2025–26 Senegal Ligue 1",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "SEN1"
+    }
+  },
+  {
+    "qid": "Q96210090",
+    "type": "competition",
+    "name_en": "MLS is Back Tournament",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "1096"
+    }
+  },
+  {
+    "qid": "Q9448",
+    "type": "competition",
+    "name_en": "Premier League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "9",
+      "opta": "8"
+    }
+  },
+  {
+    "qid": "Q11151",
+    "type": "competition",
+    "name_en": "FA Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "FAC",
+      "fbref": "514",
+      "opta": "1"
+    }
+  },
+  {
+    "qid": "Q11152",
+    "type": "competition",
+    "name_en": "EFL Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "690",
+      "opta": "2"
+    }
+  },
+  {
+    "qid": "Q13394",
+    "type": "competition",
+    "name_en": "Ligue 1",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "13",
+      "opta": "24"
+    }
+  },
+  {
+    "qid": "Q15804",
+    "type": "competition",
+    "name_en": "Q15804",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "11",
+      "opta": "21"
+    }
+  },
+  {
+    "qid": "Q18543",
+    "type": "competition",
+    "name_en": "Major League Soccer",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "22",
+      "opta": "98"
+    }
+  },
+  {
+    "qid": "Q18756",
+    "type": "competition",
+    "name_en": "UEFA Champions League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "8",
+      "opta": "5"
+    }
+  },
+  {
+    "qid": "Q18760",
+    "type": "competition",
+    "name_en": "UEFA Europa League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "19",
+      "opta": "6"
+    }
+  },
+  {
+    "qid": "Q19317",
+    "type": "competition",
+    "name_en": "FIFA World Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "1",
+      "opta": "4"
+    }
+  },
+  {
+    "qid": "Q19323",
+    "type": "competition",
+    "name_en": "FIFA Women's World Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "106",
+      "opta": "408"
+    }
+  },
+  {
+    "qid": "Q19510",
+    "type": "competition",
+    "name_en": "EFL Championship",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "10",
+      "opta": "10"
+    }
+  },
+  {
+    "qid": "Q19565",
+    "type": "competition",
+    "name_en": "EFL League One",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "15",
+      "opta": "11"
+    }
+  },
+  {
+    "qid": "Q19618",
+    "type": "competition",
+    "name_en": "Supercoppa Italiana",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "612"
+    }
+  },
+  {
+    "qid": "Q27192",
+    "type": "competition",
+    "name_en": "U.S. Open Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "577",
+      "opta": "557"
+    }
+  },
+  {
+    "qid": "Q29224",
+    "type": "competition",
+    "name_en": "Taça de Portugal",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "POPO"
+    }
+  },
+  {
+    "qid": "Q35615",
+    "type": "competition",
+    "name_en": "LaLiga 2",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "17"
+    }
+  },
+  {
+    "qid": "Q40068",
+    "type": "competition",
+    "name_en": "Primera División Femenina",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "230"
+    }
+  },
+  {
+    "qid": "Q44763",
+    "type": "competition",
+    "name_en": "Ekstraklasa",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "36"
+    }
+  },
+  {
+    "qid": "Q48837",
+    "type": "competition",
+    "name_en": "EFL League Two",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "16",
+      "opta": "12"
+    }
+  },
+  {
+    "qid": "Q58305",
+    "type": "competition",
+    "name_en": "Maltese First Division",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "MAL2"
+    }
+  },
+  {
+    "qid": "Q58916",
+    "type": "competition",
+    "name_en": "National League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "34"
+    }
+  },
+  {
+    "qid": "Q60585",
+    "type": "competition",
+    "name_en": "Copa Sudamericana",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "205"
+    }
+  },
+  {
+    "qid": "Q82595",
+    "type": "competition",
+    "name_en": "Q82595",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "20",
+      "opta": "22"
+    }
+  },
+  {
+    "qid": "Q83145",
+    "type": "competition",
+    "name_en": "Afrique corrompu fédération",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "AFCN",
+      "fbref": "656",
+      "opta": "190"
+    }
+  },
+  {
+    "qid": "Q83335",
+    "type": "competition",
+    "name_en": "CONCACAF Champions Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "549"
+    }
+  },
+  {
+    "qid": "Q223366",
+    "type": "competition",
+    "name_en": "FIFA Club World Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "719"
+    }
+  },
+  {
+    "qid": "Q229458",
+    "type": "competition",
+    "name_en": "A-Liga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "340"
+    }
+  },
+  {
+    "qid": "Q235114",
+    "type": "competition",
+    "name_en": "Super League Greece",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "27"
+    }
+  },
+  {
+    "qid": "Q235307",
+    "type": "competition",
+    "name_en": "Serbian SuperLiga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "54"
+    }
+  },
+  {
+    "qid": "Q237753",
+    "type": "competition",
+    "name_en": "Liga I",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "47"
+    }
+  },
+  {
+    "qid": "Q244464",
+    "type": "competition",
+    "name_en": "Belarusian Premier League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "WER1"
+    }
+  },
+  {
+    "qid": "Q255633",
+    "type": "competition",
+    "name_en": "Saudi Pro League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "70"
+    }
+  },
+  {
+    "qid": "Q260858",
+    "type": "competition",
+    "name_en": "UEFA European Championship",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "676"
+    }
+  },
+  {
+    "qid": "Q276085",
+    "type": "competition",
+    "name_en": "Nemzeti Bajnokság I",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "46"
+    }
+  },
+  {
+    "qid": "Q276445",
+    "type": "competition",
+    "name_en": "J1 League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "25"
+    }
+  },
+  {
+    "qid": "Q283414",
+    "type": "competition",
+    "name_en": "Frauen DFB Pokal",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "520"
+    }
+  },
+  {
+    "qid": "Q287453",
+    "type": "competition",
+    "name_en": "Uruguayan Primera División",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "45"
+    }
+  },
+  {
+    "qid": "Q315673",
+    "type": "competition",
+    "name_en": "Under 19 Bundesliga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "850"
+    }
+  },
+  {
+    "qid": "Q324867",
+    "type": "competition",
+    "name_en": "La Liga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "12",
+      "opta": "23"
+    }
+  },
+  {
+    "qid": "Q459459",
+    "type": "competition",
+    "name_en": "UEFA Women's Championship",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "162"
+    }
+  },
+  {
+    "qid": "Q476539",
+    "type": "competition",
+    "name_en": "Coupe de la Ligue",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "693",
+      "opta": "362"
+    }
+  },
+  {
+    "qid": "Q483794",
+    "type": "competition",
+    "name_en": "Copa del Rey",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "569"
+    }
+  },
+  {
+    "qid": "Q484028",
+    "type": "competition",
+    "name_en": "UEFA Super Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "122"
+    }
+  },
+  {
+    "qid": "Q485568",
+    "type": "competition",
+    "name_en": "Süper Lig",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "26"
+    }
+  },
+  {
+    "qid": "Q485997",
+    "type": "competition",
+    "name_en": "Supercopa de España",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "646"
+    }
+  },
+  {
+    "qid": "Q493386",
+    "type": "competition",
+    "name_en": "friendly match",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "34"
+    }
+  },
+  {
+    "qid": "Q518802",
+    "type": "competition",
+    "name_en": "A-League Women",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "196"
+    }
+  },
+  {
+    "qid": "Q568793",
+    "type": "competition",
+    "name_en": "Copa América Femenina",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "158"
+    }
+  },
+  {
+    "qid": "Q575453",
+    "type": "competition",
+    "name_en": "J.League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "20"
+    }
+  },
+  {
+    "qid": "Q606652",
+    "type": "competition",
+    "name_en": "Peruvian Primera División",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "44"
+    }
+  },
+  {
+    "qid": "Q606832",
+    "type": "competition",
+    "name_en": "Chilean Primera División",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "35"
+    }
+  },
+  {
+    "qid": "Q607965",
+    "type": "competition",
+    "name_en": "Serie C",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "167"
+    }
+  },
+  {
+    "qid": "Q609757",
+    "type": "competition",
+    "name_en": "Frauen-Bundesliga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "183"
+    }
+  },
+  {
+    "qid": "Q610175",
+    "type": "competition",
+    "name_en": "Campeonato Brasileiro Série B",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "38"
+    }
+  },
+  {
+    "qid": "Q610823",
+    "type": "competition",
+    "name_en": "Eerste Divisie",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "51"
+    }
+  },
+  {
+    "qid": "Q611490",
+    "type": "competition",
+    "name_en": "CONCACAF W Championship",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "157"
+    }
+  },
+  {
+    "qid": "Q646110",
+    "type": "competition",
+    "name_en": "Algarve Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "214"
+    }
+  },
+  {
+    "qid": "Q647746",
+    "type": "competition",
+    "name_en": "Algerian Ligue Professionnelle 1",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "transfermarkt": "ALG1"
+    }
+  },
+  {
+    "qid": "Q653544",
+    "type": "competition",
+    "name_en": "Trophée des Champions",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "604"
+    }
+  },
+  {
+    "qid": "Q687207",
+    "type": "competition",
+    "name_en": "ÖFB-Frauenliga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "286"
+    }
+  },
+  {
+    "qid": "Q692009",
+    "type": "competition",
+    "name_en": "Superettan",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "48"
+    }
+  },
+  {
+    "qid": "Q748389",
+    "type": "competition",
+    "name_en": "UEFA Women's Champions League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "181"
+    }
+  },
+  {
+    "qid": "Q764690",
+    "type": "competition",
+    "name_en": "Liga MX",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "31"
+    }
+  },
+  {
+    "qid": "Q830320",
+    "type": "competition",
+    "name_en": "AFC Women's Asian Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "161"
+    }
+  },
+  {
+    "qid": "Q835989",
+    "type": "competition",
+    "name_en": "Under 17 Bundesliga",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "851"
+    }
+  },
+  {
+    "qid": "Q843159",
+    "type": "competition",
+    "name_en": "EFL Trophy",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "7"
+    }
+  },
+  {
+    "qid": "Q922935",
+    "type": "competition",
+    "name_en": "Serie A",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "208"
+    }
+  },
+  {
+    "qid": "Q950844",
+    "type": "competition",
+    "name_en": "Women's Super League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "189",
+      "opta": "9227"
+    }
+  },
+  {
+    "qid": "Q954911",
+    "type": "competition",
+    "name_en": "Paraguayan Primera División",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "61"
+    }
+  },
+  {
+    "qid": "Q2289847",
+    "type": "competition",
+    "name_en": "Ecuador Serie A",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "58"
+    }
+  },
+  {
+    "qid": "Q2299810",
+    "type": "competition",
+    "name_en": "Armenian First League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q2301428",
+    "type": "competition",
+    "name_en": "Toppserien",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "185"
+    }
+  },
+  {
+    "qid": "Q2386334",
+    "type": "competition",
+    "name_en": "K League 1",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "55"
+    }
+  },
+  {
+    "qid": "Q2563597",
+    "type": "competition",
+    "name_en": "World Football Challenge",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "555"
+    }
+  },
+  {
+    "qid": "Q3063027",
+    "type": "competition",
+    "name_en": "Women's League Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "9717"
+    }
+  },
+  {
+    "qid": "Q4470534",
+    "type": "competition",
+    "name_en": "Ukrainian Premier League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "39"
+    }
+  },
+  {
+    "qid": "Q5028272",
+    "type": "competition",
+    "name_en": "Campeonato Brasileiro de Futebol Feminino",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "206"
+    }
+  },
+  {
+    "qid": "Q5771462",
+    "type": "competition",
+    "name_en": "FIFA World Cup qualification (AFC)",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "7"
+    }
+  },
+  {
+    "qid": "Q5771478",
+    "type": "competition",
+    "name_en": "FIFA World Cup qualification (CONCACAF)",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "3"
+    }
+  },
+  {
+    "qid": "Q5771500",
+    "type": "competition",
+    "name_en": "FIFA World Cup qualification (CONMEBOL)",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "4"
+    }
+  },
+  {
+    "qid": "Q5771516",
+    "type": "competition",
+    "name_en": "FIFA World Cup qualification (OFC)",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "5"
+    }
+  },
+  {
+    "qid": "Q6716630",
+    "type": "competition",
+    "name_en": "MLS Combine",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "572"
+    }
+  },
+  {
+    "qid": "Q23925620",
+    "type": "competition",
+    "name_en": "Challenger Pro League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "69"
+    }
+  },
+  {
+    "qid": "Q25000566",
+    "type": "competition",
+    "name_en": "Canadian Premier League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "211"
+    }
+  },
+  {
+    "qid": "Q28457541",
+    "type": "competition",
+    "name_en": "Hexagonal",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "339"
+    }
+  },
+  {
+    "qid": "Q28473086",
+    "type": "competition",
+    "name_en": "SheBelieves Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "212"
+    }
+  },
+  {
+    "qid": "Q29000951",
+    "type": "competition",
+    "name_en": "CONCACAF Nations League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "974"
+    }
+  },
+  {
+    "qid": "Q30636616",
+    "type": "competition",
+    "name_en": "USL League One",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "137"
+    }
+  },
+  {
+    "qid": "Q30891779",
+    "type": "competition",
+    "name_en": "TCL",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q50378554",
+    "type": "competition",
+    "name_en": "2019–20 CONCACAF Nations League qualifying",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "975"
+    }
+  },
+  {
+    "qid": "Q54810034",
+    "type": "competition",
+    "name_en": "2022 FIFA World Cup qualification (UEFA)",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "336"
+    }
+  },
+  {
+    "qid": "Q54913816",
+    "type": "competition",
+    "name_en": "AFC Asian Cup qualification",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "665"
+    }
+  },
+  {
+    "qid": "Q55074683",
+    "type": "competition",
+    "name_en": "Campeones Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "957"
+    }
+  },
+  {
+    "qid": "Q55576359",
+    "type": "competition",
+    "name_en": "FIFA World Cup qualification (UEFA)",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "6"
+    }
+  },
+  {
+    "qid": "Q59365764",
+    "type": "competition",
+    "name_en": "UEFA Conference League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "882",
+      "opta": "1125"
+    }
+  },
+  {
+    "qid": "Q64162670",
+    "type": "competition",
+    "name_en": "Leagues Cup",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "opta": "1045"
+    }
+  },
+  {
+    "qid": "Q84497979",
+    "type": "competition",
+    "name_en": "Bangladesh Women's Football League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {}
+  },
+  {
+    "qid": "Q85738895",
+    "type": "competition",
+    "name_en": "AFC Women's Asian Cup qualification",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "662"
+    }
+  },
+  {
+    "qid": "Q96142578",
+    "type": "competition",
+    "name_en": "WE League",
+    "aliases_en": null,
+    "full_name": null,
+    "date_of_birth": null,
+    "nationality": null,
+    "position": null,
+    "current_team_qid": null,
+    "height_cm": null,
+    "country": null,
+    "founded": null,
+    "stadium": null,
+    "competition_qid": null,
+    "external_ids": {
+      "fbref": "893"
+    }
+  }
+]

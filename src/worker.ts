@@ -4,6 +4,53 @@ export interface Env {
   BYPASS_KEY?: string;
 }
 
+const API_VERSION = "2.0.0";
+
+const VALID_PROVIDERS = new Set([
+  "wikidata",
+  "transfermarkt",
+  "transfermarkt_manager",
+  "fbref",
+  "fbref_verified",
+  "soccerway",
+  "sofascore",
+  "flashscore",
+  "opta",
+  "premier_league",
+  "11v11",
+  "espn",
+  "national_football_teams",
+  "worldfootball",
+  "soccerbase",
+  "kicker",
+  "uefa",
+  "lequipe",
+  "fff_fr",
+  "serie_a",
+  "besoccer",
+  "footballdatabase_eu",
+  "eu_football_info",
+  "hugman",
+  "german_fa",
+  "statmuse_pl",
+  "sofifa",
+  "soccerdonna",
+  "dongqiudi",
+  "playmakerstats",
+  "understat",
+  "whoscored",
+  "clubelo",
+  "sportmonks",
+  "api_football",
+  "fotmob",
+  "fpl_code",
+  "thesportsdb",
+  "impect",
+  "wyscout",
+  "skillcorner",
+  "heimspiel",
+]);
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -51,7 +98,7 @@ export default {
     if (path === "/" || path === "") {
       response = json({
         name: "Reep — The Football Entity Register",
-        version: "2.0.0",
+        version: API_VERSION,
         docs: "https://github.com/withqwerty/reep",
         endpoints: {
           "GET /lookup": "Look up an entity by Reep ID or Wikidata QID (?id=reep_p... or ?id=Q...)",
@@ -259,50 +306,17 @@ async function handleResolve(
     return json(
       {
         error: "Required: ?provider=transfermarkt&id=568177",
-        providers: [
-          "wikidata",
-          "transfermarkt",
-          "transfermarkt_manager",
-          "fbref",
-          "fbref_verified",
-          "soccerway",
-          "sofascore",
-          "flashscore",
-          "opta",
-          "premier_league",
-          "11v11",
-          "espn",
-          "national_football_teams",
-          "worldfootball",
-          "soccerbase",
-          "kicker",
-          "uefa",
-          "lequipe",
-          "fff_fr",
-          "serie_a",
-          "besoccer",
-          "footballdatabase_eu",
-          "eu_football_info",
-          "hugman",
-          "german_fa",
-          "statmuse_pl",
-          "sofifa",
-          "soccerdonna",
-          "dongqiudi",
-          "playmakerstats",
-          "understat",
-          "whoscored",
-          "clubelo",
-          "sportmonks",
-          "api_football",
-          "fotmob",
-          "fpl_code",
-          "thesportsdb",
-          "impect",
-          "wyscout",
-          "skillcorner",
-          "heimspiel",
-        ],
+        providers: [...VALID_PROVIDERS],
+      },
+      400,
+    );
+  }
+
+  if (!VALID_PROVIDERS.has(provider)) {
+    return json(
+      {
+        error: `Unknown provider: ${provider}`,
+        providers: [...VALID_PROVIDERS],
       },
       400,
     );
@@ -414,6 +428,7 @@ async function handleBatchResolve(request: Request, db: D1Database): Promise<Res
   const results = await Promise.all(
     items.map(async ({ provider, id }) => {
       if (!provider || !id) return { provider, id, error: "missing_fields" };
+      if (!VALID_PROVIDERS.has(provider)) return { provider, id, error: "unknown_provider" };
       const entity = await resolveEntity(db, provider, id);
       return entity ?? { provider, id, error: "not_found" };
     }),
