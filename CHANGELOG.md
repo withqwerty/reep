@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026.14 - 2026-04-05 (data-only)
+
+### Data quality
+- Backfilled `name_en` for **24,149 entities** that had broken `Q12345`-format names (99.96% of 24,157). The Wikidata `wikibase:label` service returns the QID as a fallback when no English label exists, and those fallbacks had been stored as entity names. Fix used a 3-pass approach: local Wikidata dump scan (23,498 entities), live API pass for post-dump additions (648), extended fallback chain (P1448/P1705/P1559 claims + sitelinks) for stubborn cases (1), and deletion of the 8 remaining entities which had no labels in any Wikidata language AND no provider coverage beyond Wikidata itself. Full methodology in #10.
+- Top restored names: Bundesliga (Q82595), Serie A (Q15804), ~11K German/Dutch/Spanish/Arabic football clubs, and thousands of Ukrainian/Russian/Korean players. Unlocks name-based matching on FotMob/TheSportsDB/Opta/Understat for previously invisible entities.
+
+### Scripts
+- `reep-custom/scripts/backfill-broken-names.py`: re-runnable Wikidata dump scanner for future Q-label cleanup
+
 ## v2.2.0 - 2026-04-05
 
 ### API
