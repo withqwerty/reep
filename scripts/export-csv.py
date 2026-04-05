@@ -18,6 +18,10 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 
+# Read API version from package.json (single source of truth)
+_PKG = json.loads((Path(__file__).parent.parent / "package.json").read_text())
+API_VERSION = _PKG["version"]
+
 DEFAULT_SOURCE = Path(__file__).parent.parent / "data" / "json"
 CUSTOM_IDS_PATH = Path(__file__).parent.parent / "data" / "custom_ids.json"
 REEP_ID_MAP_PATH = Path(__file__).parent.parent / "data" / "reep_id_map.json"
@@ -406,8 +410,12 @@ def main():
     print(f"Exported {n_names} aliases to data/names.csv")
 
     # Write metadata
+    now = datetime.now(timezone.utc)
+    data_version = f"{now.isocalendar().year}.{now.isocalendar().week:02d}"
     meta = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "data_version": data_version,
+        "api_version": API_VERSION,
+        "generated_at": now.isoformat(),
         "source": "Wikidata SPARQL + custom verified mappings",
         "counts": {
             "people": n_people,

@@ -159,6 +159,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No data changes"
           else
-            git commit -m "data: weekly register update"
+            DATA_VERSION=$(python3 -c "from datetime import datetime, timezone; now=datetime.now(timezone.utc); print(f'{now.isocalendar().year}.{now.isocalendar().week:02d}')")
+            git commit -m "data: ${DATA_VERSION} weekly register update"
             git push
           fi
