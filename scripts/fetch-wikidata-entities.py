@@ -330,6 +330,9 @@ def build_competition_ids_query(limit: int = 0, offset: int = 0) -> str:
 
     # Union: class-based (Q15991290 subclasses) + property-based (items with competition IDs).
     # Many competitions have FBref/Opta IDs but aren't typed as Q15991290 subclasses.
+    # Filter: only items whose sport (P641) is association football (Q2736) or unspecified.
+    # This is a positive filter (allow football) rather than a negative one (block non-football),
+    # because Wikidata's non-football sport taxonomy is too fragmented to enumerate reliably.
     prop_unions = "\n      UNION\n".join(
         f"      {{ ?e wdt:{prop} [] . }}" for prop in COMPETITION_IDS.values()
     )
@@ -341,6 +344,11 @@ WHERE {{
       {{ ?e wdt:P31/wdt:P279* wd:Q15991290 . }}
       UNION
 {prop_unions}
+      # Only allow association football (Q2736) or items with no sport specified
+      FILTER NOT EXISTS {{
+        ?e wdt:P641 ?sport .
+        FILTER(?sport != wd:Q2736)
+      }}
     }}
     ORDER BY ?e
     {limit_clause} {offset_clause}
@@ -362,6 +370,7 @@ def build_season_ids_query(limit: int = 0, offset: int = 0) -> str:
     limit_clause = f"LIMIT {limit}" if limit else ""
     offset_clause = f"OFFSET {offset}" if offset else ""
 
+    # Only allow seasons of football competitions (P641 = Q2736 or no sport specified)
     return f"""
 SELECT ?e ?eLabel ?competitionQid{id_selects}
 WHERE {{
@@ -370,6 +379,10 @@ WHERE {{
       ?e wdt:P3450 ?comp .
       ?comp wdt:P31/wdt:P279* wd:Q15991290 .
       BIND(?comp AS ?competitionQid)
+      FILTER NOT EXISTS {{
+        ?comp wdt:P641 ?sport .
+        FILTER(?sport != wd:Q2736)
+      }}
     }}
     ORDER BY ?e
     {limit_clause} {offset_clause}

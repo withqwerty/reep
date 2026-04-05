@@ -139,6 +139,10 @@ def fetch_changed_qids(since: str) -> dict[str, list[str]]:
               ?comp wdt:P31/wdt:P279* wd:Q15991290 .
               ?e schema:dateModified ?mod .
               FILTER(?mod > "{since}T00:00:00Z"^^xsd:dateTime)
+              FILTER NOT EXISTS {{
+                ?comp wdt:P641 ?sport .
+                FILTER(?sport != wd:Q2736)
+              }}
             }}""",
     }
 
