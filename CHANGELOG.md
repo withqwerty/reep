@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.0.0 — 2026-04-05
+## v2.0.0 - 2026-04-05
 
 The initial public release of the Reep Register as a versioned product.
 

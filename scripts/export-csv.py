@@ -18,9 +18,14 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 
-# Read API version from package.json (single source of truth)
-_PKG = json.loads((Path(__file__).parent.parent / "package.json").read_text())
-API_VERSION = _PKG["version"]
+def _read_api_version() -> str:
+    """Read API version from package.json (single source of truth)."""
+    pkg_path = Path(__file__).parent.parent / "package.json"
+    if pkg_path.exists():
+        return json.loads(pkg_path.read_text())["version"]
+    return "unknown"
+
+API_VERSION = _read_api_version()
 
 DEFAULT_SOURCE = Path(__file__).parent.parent / "data" / "json"
 CUSTOM_IDS_PATH = Path(__file__).parent.parent / "data" / "custom_ids.json"
