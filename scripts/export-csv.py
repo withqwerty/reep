@@ -118,7 +118,7 @@ TEAM_COLUMNS = [
     "key_fotmob",
     "key_thesportsdb",
     "key_understat",
-    "key_opta_analytics",
+    "key_opta_numeric",
 ]
 
 # Column order for names.csv
@@ -136,7 +136,9 @@ COMPETITION_COLUMNS = [
     # Provider IDs
     "key_transfermarkt",
     "key_fbref",
-    "key_opta",
+    "key_opta",          # UUID format
+    "key_opta_numeric",  # Legacy numeric
+    "key_fotmob",
 ]
 
 SEASON_COLUMNS = [

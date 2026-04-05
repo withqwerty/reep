@@ -8,6 +8,11 @@ The football entity register. Maps player, team, and coach IDs across 30+ data p
 - RapidAPI listing: rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register
 - D1 database: `football-entities` (52cf53a2-7453-4ae5-a149-f43c360514ad, WEUR)
 
+## Sibling repos
+
+- `../reep-custom` — private match scripts that populate `custom_ids` in D1. See `../reep-custom/CLAUDE.md`.
+- `../football-docs` — MCP server serving provider documentation (StatsBomb, Opta, Wyscout, kloppy, SportMonks, etc.). When you need to understand a provider's data model, event types, qualifier IDs, or API surface, use `mcp__plugin_nutmeg_football-docs__search_docs` instead of guessing. See `../football-docs/CLAUDE.md` (gitignored, local only).
+
 ## Architecture
 
 ```
@@ -162,6 +167,27 @@ npx wrangler d1 time-travel restore football-entities --bookmark <bookmark_id>
 ```
 
 No `--remote` flag. Time Travel commands always act on the remote database.
+
+## Opta / Stats Perform ID systems
+
+Stats Perform (Opta's parent) operates **multiple distinct ID systems** that are not interchangeable. Reep splits them into separate providers:
+
+| Provider | Format | Source | Coverage |
+|----------|--------|--------|----------|
+| `opta` | Alphanumeric UUID (e.g. `2kwbbcootiqqgmrzs6o5inle5`) | Stats Perform F1 data products, The Analyst, `/Volumes/WQ/projects/www/src/data/opta-*` | Players (50K), PL teams (34 historical), competitions (33), PL seasons (14 historical) |
+| `opta_numeric` | Integer (e.g. `8` for PL) | Wikidata P8735 | Competitions only (52), legacy but still used by Opta Stats Centre |
+| `premier_league` | Integer (e.g. `49293`) | premierleague.com player page URLs (Wikidata P12539) | Players (4.9K PL-registered) |
+| `fpl_code` | Integer (e.g. `244851`) | FPL / The Analyst `sc-{code}` URLs (ChrisMusson/FPL-ID-Map) | Players (2.5K PL players) |
+
+**`opta` is always UUID format.** Never mix numeric codes under `opta`. The numeric competition codes from P8735 go under `opta_numeric`.
+
+**Wikidata P8736 (player numeric) and P8737 (team numeric) are excluded from ingest** — both superseded by the Stats Perform F1 UUIDs and would duplicate/conflict with the canonical `opta` player IDs. See excluded list in `scripts/fetch-wikidata-entities.py`.
+
+Three different vendor ID systems exist within "Opta" because the codes were designed for different products:
+- UUIDs are used internally in Stats Perform's modern data products (F1, Opta Platform, The Analyst)
+- Opta numeric competition codes are still referenced by Opta Stats Centre and some legacy feeds
+- `sc-{code}` is used by The Analyst URL scheme for player pages and FPL's internal player codes
+- premierleague.com uses its own player page numbering
 
 ## Wikidata property mapping (source of truth)
 

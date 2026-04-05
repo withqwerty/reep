@@ -95,7 +95,10 @@ COACH_IDS = {
 COMPETITION_IDS = {
     "transfermarkt": "P12758",
     "fbref": "P13664",
-    "opta": "P8735",
+    # P8735 is Opta's legacy numeric competition codes (e.g. 8 = PL). Ingested under
+    # 'opta_numeric' to preserve the distinction from canonical 'opta' UUIDs (Stats
+    # Perform F1 / The Analyst). Two separate provider names for two distinct ID systems.
+    "opta_numeric": "P8735",
 }
 
 # Season provider IDs — may be empty if Wikidata has no dedicated season properties.

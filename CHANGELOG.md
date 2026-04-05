@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.2.0 - 2026-04-05
+
+### API
+- Add `opta_numeric` to `VALID_PROVIDERS`. Splits Opta's two distinct ID systems into separate providers:
+  - **`opta`** — alphanumeric UUID format (Stats Perform F1 / The Analyst). Used across players (50K), teams (34 PL historical), competitions (33), and seasons (14). This is the canonical Opta provider.
+  - **`opta_numeric`** — legacy numeric codes from Wikidata P8735 (52 competitions, e.g. PL=8, La Liga=23). Separate because the two ID systems are not interchangeable and both remain in use.
+- Migrated previously misfiled data: 52 numeric competition codes moved from `opta` → `opta_numeric`; 34 The Analyst competition UUIDs + 4 calendar UUIDs moved from provisional `opta_analytics` → `opta`.
+
+### Data
+- 2,225 TheSportsDB team IDs added (strict country+name matching, reserves/women/youth filtered)
+- 147 Understat competition/team/season IDs added from Kaggle dataset (6 leagues, 100 teams, 41 seasons)
+- 98 FotMob competition IDs (FBref-bridged country-aware matching + tier-3 manual review)
+- 41 Opta UUID mappings added (31 historical PL teams + 10 historical PL seasons from `/Volumes/WQ/projects/www/src/data/opta-*`)
+- 34 Opta competition UUIDs (from The Analyst power rankings)
+- 19 Transfermarkt competition IDs (curated from dcaribou/transfermarkt-datasets)
+- 466 FBref season IDs (derived from worldfootballR season URLs)
+- teams.csv: add `key_thesportsdb`, `key_understat` columns (removed provisional `key_opta_analytics`)
+
 ## v2.1.0 - 2026-04-05
 
 ### API

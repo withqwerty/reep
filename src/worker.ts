@@ -4,7 +4,7 @@ export interface Env {
   BYPASS_KEY?: string;
 }
 
-const API_VERSION = "2.1.0";
+const API_VERSION = "2.2.0";
 
 const VALID_PROVIDERS = new Set([
   "wikidata",
@@ -16,6 +16,7 @@ const VALID_PROVIDERS = new Set([
   "sofascore",
   "flashscore",
   "opta",
+  "opta_numeric",
   "premier_league",
   "11v11",
   "espn",
