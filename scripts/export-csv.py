@@ -116,6 +116,9 @@ TEAM_COLUMNS = [
     "key_api_football",
     "key_sofifa",
     "key_fotmob",
+    "key_thesportsdb",
+    "key_understat",
+    "key_opta_analytics",
 ]
 
 # Column order for names.csv
