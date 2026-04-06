@@ -106,7 +106,7 @@ async function main() {
   // --- 2. Showcase lookups ---
   const SHOWCASE_IDS = [
     { id: "reep_p2804f5db", label: "Cole Palmer (player)" },
-    { id: "reep_t446c4371", label: "Arsenal (team)" },
+    { id: "reep_t8596499a", label: "Arsenal (team)" },
     { id: "reep_lb3d230cb", label: "Premier League (competition)" },
     { id: "reep_sa7f63ba6", label: "2024-25 Premier League (season)" },
   ];
@@ -122,7 +122,7 @@ async function main() {
         console.log(`[build-data]   -> ${entity.name_en} (${entity.type})`);
 
         // Sanity-check the Arsenal ID
-        if (id === "reep_t446c4371") {
+        if (id === "reep_t8596499a") {
           if (!entity.name_en?.toLowerCase().includes("arsenal")) {
             console.warn(
               `[build-data] WARNING: Expected Arsenal but got "${entity.name_en}" for ${id}`
