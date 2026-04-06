@@ -1,0 +1,39 @@
+name: Contribute mapping data
+description: Share a dataset of cross-provider football ID mappings
+title: "[Data] "
+labels: ["data-contribution"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for contributing! We'll review your data and merge any verified mappings.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What's in the dataset?
+      description: Which providers, how many entities, how the data was collected
+      placeholder: "e.g. 500 player mappings between Transfermarkt and WhoScored, matched by DOB + name"
+    validations:
+      required: true
+
+  - type: textarea
+    id: format
+    attributes:
+      label: CSV format
+      description: |
+        Preferred columns: `provider`, `external_id`, `name`, `date_of_birth`, `transfermarkt_id`, `type`, `nationality`
+        But any format with provider IDs and names works — we'll adapt.
+      placeholder: |
+        provider,external_id,name,date_of_birth,type
+        fotmob,1096353,Cole Palmer,2002-05-06,player
+    validations:
+      required: false
+
+  - type: textarea
+    id: file
+    attributes:
+      label: Data file
+      description: Drag and drop a CSV or paste a link to the data
+    validations:
+      required: true
