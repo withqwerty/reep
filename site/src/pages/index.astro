@@ -1,6 +1,393 @@
 ---
+import { PROVIDERS, providerUrl } from '../lib/providers';
+
+let siteData: any = { stats: { total_entities: 0, by_type: {}, by_provider: {}, custom_ids_count: 0 }, examples: [], generatedAt: '' };
+try {
+  siteData = await import('../lib/examples.json');
+} catch {}
+
+const { stats, examples } = siteData;
+
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M+`;
+  if (n >= 1_000) return `${Math.floor(n / 1_000)}K+`;
+  return n.toLocaleString();
+}
+
+const chipColors = ['', 'blue', 'pink'] as const;
+
+const providerCount = Object.keys(stats.by_provider).length;
+
+// Sort providers for coverage table: by number of true entity type flags, descending
+// Exclude wikidata
+const coverageProviders = Object.entries(PROVIDERS)
+  .filter(([key]) => key !== 'wikidata')
+  .map(([key, meta]) => ({
+    key,
+    ...meta,
+    breadth: [meta.players, meta.teams, meta.coaches, meta.competitions, meta.seasons].filter(Boolean).length,
+  }))
+  .sort((a, b) => b.breadth - a.breadth || a.name.localeCompare(b.name));
 ---
+
 <html lang="en">
-<head><meta charset="utf-8" /><title>Reep</title></head>
-<body><h1>Reep — coming soon</h1></body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reep — The Football Entity Register</title>
+  <meta name="description" content="Resolve player, team, competition, and season IDs across 40+ football data providers." />
+  <link rel="stylesheet" href="/src/styles/global.css" />
+</head>
+<body>
+
+  <!-- Hero -->
+  <header style="text-align: center; padding: 2rem 0 1rem;">
+    <h1 style="font-size: 2.2rem; font-weight: 700; margin-bottom: 0.25rem;">Reep</h1>
+    <p style="font-size: 1.15rem; color: var(--fg-muted); margin-bottom: 0.5rem;">The Football Entity Register</p>
+    <p style="font-size: 0.95rem; color: var(--fg-muted); margin-bottom: 1.5rem;">
+      Resolve player, team, competition, and season IDs across {providerCount}+ data providers.
+    </p>
+    <div class="search-wrapper">
+      <input
+        type="text"
+        class="search-input"
+        id="search-input"
+        placeholder="Search by name, Reep ID, QID, or provider ID..."
+        autocomplete="off"
+      />
+      <div class="search-results" id="search-results"></div>
+    </div>
+  </header>
+
+  <!-- Examples -->
+  <p class="section-title green" style="margin-top: 1.5rem;">Try these</p>
+  <div class="examples-grid" id="examples-grid">
+    {examples.map((entity: any) => {
+      const ids = Object.entries(entity.external_ids || {}) as [string, string][];
+      return (
+        <div class="card" data-reep-id={entity.reep_id}>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+            <span style="font-size: 1.05rem; font-weight: 600;">{entity.name_en}</span>
+            <span class={`badge ${entity.type === 'player' ? '' : entity.type}`}>{entity.type}</span>
+          </div>
+          {entity.type === 'player' && (entity.nationality || entity.position || entity.date_of_birth) && (
+            <p style="font-size: 0.82rem; color: var(--fg-muted); margin-bottom: 0.6rem;">
+              {[entity.nationality, entity.position, entity.date_of_birth ? `Born ${entity.date_of_birth}` : null].filter(Boolean).join(' \u00B7 ')}
+            </p>
+          )}
+          {entity.type !== 'player' && entity.country && (
+            <p style="font-size: 0.82rem; color: var(--fg-muted); margin-bottom: 0.6rem;">
+              {entity.country}
+            </p>
+          )}
+          <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem;">
+            {ids.map(([provider, id], i) => {
+              const url = providerUrl(provider, id as string);
+              const colorClass = chipColors[i % 3];
+              return url
+                ? <a href={url} target="_blank" rel="noopener" class={`chip ${colorClass}`} style="text-decoration: none;">{provider}:{id}</a>
+                : <span class={`chip ${colorClass}`}>{provider}:{id}</span>;
+            })}
+          </div>
+          <p style="font-size: 0.75rem; color: var(--fg-muted);">Mapped across {ids.length} providers</p>
+        </div>
+      );
+    })}
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" style="margin-top: 2.5rem;">
+    <div class="stat">
+      <span class="stat-value">{formatNumber(stats.total_entities)}</span>
+      <span class="stat-label">entities</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{providerCount}+</span>
+      <span class="stat-label">providers</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{formatNumber(stats.custom_ids_count)}</span>
+      <span class="stat-label">custom verified IDs</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{Object.keys(stats.by_type).length}</span>
+      <span class="stat-label">entity types</span>
+    </div>
+  </div>
+
+  <!-- API docs -->
+  <p class="section-title blue">API</p>
+  <p style="font-size: 0.95rem; color: var(--fg-muted); margin-bottom: 1rem;">
+    All endpoints require a RapidAPI key or bypass token via the <code>X-RapidAPI-Proxy-Secret</code> or <code>X-Reep-Key</code> header.
+  </p>
+  <table class="endpoint-table">
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Endpoint</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>GET</code></td><td><code>/search</code></td><td>Full-text search by name or alias</td></tr>
+      <tr><td><code>GET</code></td><td><code>/lookup</code></td><td>Look up by Reep ID or Wikidata QID</td></tr>
+      <tr><td><code>GET</code></td><td><code>/resolve</code></td><td>Resolve a provider ID to all others</td></tr>
+      <tr><td><code>GET</code></td><td><code>/stats</code></td><td>Entity and provider coverage counts</td></tr>
+      <tr><td><code>POST</code></td><td><code>/batch/lookup</code></td><td>Look up multiple IDs (max 100)</td></tr>
+      <tr><td><code>POST</code></td><td><code>/batch/resolve</code></td><td>Resolve multiple provider IDs (max 100)</td></tr>
+    </tbody>
+  </table>
+
+  <pre style="margin-top: 1rem;"><code>curl "https://reep-api.rahulkeerthi2-95d.workers.dev/resolve?provider=transfermarkt&id=568177" \
+  -H "X-RapidAPI-Proxy-Secret: YOUR_KEY"</code></pre>
+
+  <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+    <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" target="_blank" rel="noopener" class="cta">Get API key</a>
+    <a href="https://github.com/withqwerty/reep" target="_blank" rel="noopener" class="cta outline">GitHub</a>
+  </div>
+
+  <!-- Provider coverage -->
+  <p class="section-title pink">Provider coverage</p>
+  <div style="overflow-x: auto;">
+    <table class="coverage-table">
+      <thead>
+        <tr>
+          <th>Provider</th>
+          <th>Players</th>
+          <th>Teams</th>
+          <th>Coaches</th>
+          <th>Comps</th>
+          <th>Seasons</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {coverageProviders.map((p) => (
+          <tr>
+            <td style="font-weight: 500;">{p.name}</td>
+            <td>{p.players ? '\u2713' : ''}</td>
+            <td>{p.teams ? '\u2713' : ''}</td>
+            <td>{p.coaches ? '\u2713' : ''}</td>
+            <td>{p.competitions ? '\u2713' : ''}</td>
+            <td>{p.seasons ? '\u2713' : ''}</td>
+            <td style="font-size: 0.8rem; color: var(--fg-muted);">{p.source}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Contribute -->
+  <p class="section-title muted">Contribute mapping data</p>
+  <div class="card" style="max-width: 600px;">
+    <p style="font-size: 0.95rem; margin-bottom: 0.75rem;">
+      Have verified ID mappings between football data providers? Contributions are welcome.
+      Submit a CSV with columns: <code>reep_id</code> (or <code>qid</code>), <code>provider</code>, <code>external_id</code>.
+    </p>
+    <p style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 1rem;">
+      Mappings should be verified (not fuzzy-matched). Include your source and methodology in the issue.
+    </p>
+    <a href="https://github.com/withqwerty/reep/issues/new?template=contribute-data.yml" target="_blank" rel="noopener" class="cta outline">Open a contribution issue</a>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p style="margin-bottom: 0.5rem;">Named after Charles Reep, the first football analyst (1950).</p>
+    <div>
+      <a href="https://github.com/withqwerty/reep" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" target="_blank" rel="noopener">RapidAPI</a>
+      <a href="https://github.com/withqwerty/reep/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+    </div>
+  </footer>
+
+  <!-- Client-side search -->
+  <script>
+    import Fuse from 'fuse.js';
+    import { detectInput } from '../lib/detect';
+
+    type IndexEntity = {
+      reep_id: string;
+      qid: string | null;
+      name_en: string;
+      aliases_en: string | null;
+      type: string;
+      date_of_birth: string | null;
+      nationality: string | null;
+      country: string | null;
+      position: string | null;
+      provider_count: number;
+      external_ids: Record<string, string>;
+    };
+
+    let index: IndexEntity[] | null = null;
+    let fuse: Fuse<IndexEntity> | null = null;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const input = document.getElementById('search-input') as HTMLInputElement;
+    const resultsEl = document.getElementById('search-results') as HTMLDivElement;
+    const grid = document.getElementById('examples-grid') as HTMLDivElement;
+
+    async function loadIndex() {
+      if (index) return;
+      const resp = await fetch('/src/lib/search-index.json');
+      index = await resp.json() as IndexEntity[];
+      fuse = new Fuse(index, {
+        keys: ['name_en', 'aliases_en'],
+        threshold: 0.3,
+        limit: 20,
+      });
+    }
+
+    input.addEventListener('focus', loadIndex);
+
+    input.addEventListener('input', () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(doSearch, 200);
+    });
+
+    function doSearch() {
+      const raw = input.value;
+      if (!raw.trim() || !index || !fuse) {
+        resultsEl.classList.remove('open');
+        return;
+      }
+
+      const detected = detectInput(raw);
+      let results: IndexEntity[] = [];
+
+      if (detected.kind === 'name') {
+        results = fuse.search(detected.query, { limit: 20 }).map(r => r.item);
+      } else if (detected.kind === 'reep_id') {
+        const match = index.find(e => e.reep_id === detected.id);
+        if (match) results = [match];
+      } else if (detected.kind === 'qid') {
+        const match = index.find(e => e.qid === detected.id);
+        if (match) results = [match];
+      } else if (detected.kind === 'numeric') {
+        results = index.filter(e => {
+          return Object.values(e.external_ids).some(v => v === detected.id);
+        }).slice(0, 20);
+      }
+
+      renderResults(results);
+    }
+
+    function renderResults(results: IndexEntity[]) {
+      resultsEl.textContent = '';
+      if (results.length === 0) {
+        resultsEl.classList.remove('open');
+        return;
+      }
+
+      for (const entity of results) {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.style.fontWeight = '600';
+        nameSpan.textContent = entity.name_en;
+
+        const badge = document.createElement('span');
+        badge.className = `badge ${entity.type === 'player' ? '' : entity.type}`;
+        badge.textContent = entity.type;
+        badge.style.marginLeft = '0.4rem';
+
+        const countSpan = document.createElement('span');
+        countSpan.style.cssText = 'float: right; font-size: 0.8rem; color: var(--fg-muted); margin-top: 0.15rem;';
+        countSpan.textContent = `${entity.provider_count} providers`;
+
+        item.appendChild(nameSpan);
+        item.appendChild(badge);
+        item.appendChild(countSpan);
+
+        item.addEventListener('click', () => selectResult(entity));
+        resultsEl.appendChild(item);
+      }
+
+      resultsEl.classList.add('open');
+    }
+
+    function selectResult(entity: IndexEntity) {
+      resultsEl.classList.remove('open');
+      input.value = entity.name_en;
+
+      // Check if it exists as a pre-loaded example
+      const existing = grid.querySelector(`[data-reep-id="${entity.reep_id}"]`) as HTMLElement | null;
+      if (existing) {
+        existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        existing.classList.add('highlight');
+        setTimeout(() => existing.classList.remove('highlight'), 2000);
+        return;
+      }
+
+      // Create a new card dynamically
+      const card = document.createElement('div');
+      card.className = 'card highlight';
+      card.dataset.reepId = entity.reep_id;
+      card.style.borderColor = 'var(--green)';
+
+      const header = document.createElement('div');
+      header.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;';
+
+      const name = document.createElement('span');
+      name.style.cssText = 'font-size: 1.05rem; font-weight: 600;';
+      name.textContent = entity.name_en;
+
+      const typeBadge = document.createElement('span');
+      typeBadge.className = `badge ${entity.type === 'player' ? '' : entity.type}`;
+      typeBadge.textContent = entity.type;
+
+      header.appendChild(name);
+      header.appendChild(typeBadge);
+      card.appendChild(header);
+
+      // Bio line
+      if (entity.type === 'player') {
+        const parts = [entity.nationality, entity.position, entity.date_of_birth ? `Born ${entity.date_of_birth}` : null].filter(Boolean);
+        if (parts.length > 0) {
+          const bio = document.createElement('p');
+          bio.style.cssText = 'font-size: 0.82rem; color: var(--fg-muted); margin-bottom: 0.6rem;';
+          bio.textContent = parts.join(' \u00B7 ');
+          card.appendChild(bio);
+        }
+      } else if (entity.country) {
+        const bio = document.createElement('p');
+        bio.style.cssText = 'font-size: 0.82rem; color: var(--fg-muted); margin-bottom: 0.6rem;';
+        bio.textContent = entity.country;
+        card.appendChild(bio);
+      }
+
+      // Provider chips
+      const chipColors = ['', 'blue', 'pink'];
+      const chipsDiv = document.createElement('div');
+      chipsDiv.style.cssText = 'display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem;';
+
+      const ids = Object.entries(entity.external_ids);
+      ids.forEach(([provider, id], i) => {
+        const chip = document.createElement('span');
+        chip.className = `chip ${chipColors[i % 3]}`;
+        chip.textContent = `${provider}:${id}`;
+        chipsDiv.appendChild(chip);
+      });
+
+      card.appendChild(chipsDiv);
+
+      const count = document.createElement('p');
+      count.style.cssText = 'font-size: 0.75rem; color: var(--fg-muted);';
+      count.textContent = `Mapped across ${ids.length} providers`;
+      card.appendChild(count);
+
+      grid.insertBefore(card, grid.firstChild);
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      if (!resultsEl.contains(e.target as Node) && e.target !== input) {
+        resultsEl.classList.remove('open');
+      }
+    });
+  </script>
+
+</body>
 </html>
