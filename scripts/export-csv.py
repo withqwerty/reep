@@ -139,6 +139,7 @@ COMPETITION_COLUMNS = [
     "key_opta",          # UUID format
     "key_opta_numeric",  # Legacy numeric
     "key_fotmob",
+    "key_whoscored",
 ]
 
 SEASON_COLUMNS = [
