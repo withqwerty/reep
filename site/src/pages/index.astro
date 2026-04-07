@@ -237,11 +237,20 @@ const coverageProviders = Object.entries(PROVIDERS)
     <p class="section-title muted">Share data</p>
     <div class="card" style="max-width: 600px;">
       <p style="font-size: 0.95rem; margin-bottom: 0.75rem;">
-        Anonymous. No account, no tracking.
+        Help us map the world's football data. Anonymous — no account, no tracking.
       </p>
-      <p style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 1rem;">
-        CSV preferred. Any format with provider IDs works.
-      </p>
+      <details style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 1rem;">
+        <summary style="cursor: pointer; margin-bottom: 0.5rem;">What we're looking for</summary>
+        <div style="padding-left: 0.25rem; line-height: 1.6;">
+          <p style="margin: 0.5rem 0;"><strong>ID mappings</strong> — provider-to-provider (e.g. Transfermarkt ID → Opta ID), ideally with name or DOB for cross-referencing.</p>
+          <p style="margin: 0.5rem 0;"><strong>Player data</strong> — IDs with bio info: date of birth, nationality, current team, position. Also useful: alternate name spellings, height, shirt number. We strip all proprietary stats.</p>
+          <p style="margin: 0.5rem 0;"><strong>Teams</strong> — IDs with league, country, division, or historical/alternate names (e.g. "Spurs"), stadium, founding year.</p>
+          <p style="margin: 0.5rem 0;"><strong>Coaches</strong> — IDs with playing career IDs from the same provider, since many coaches have separate player entities.</p>
+          <p style="margin: 0.5rem 0;"><strong>Competitions</strong> — IDs with country, aliases, or tier.</p>
+          <p style="margin: 0.5rem 0;"><strong>Seasons</strong> — IDs with competition and human-readable label (e.g. "24-25").</p>
+          <p style="margin: 0.5rem 0;">CSV preferred. Any format with provider IDs works.</p>
+        </div>
+      </details>
       <div id="drop-zone" style="border: 2px dashed var(--border); border-radius: var(--radius); padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.15s;">
         <p style="font-size: 0.95rem; color: var(--fg-muted);" id="drop-text">Drop a file here</p>
         <input type="file" id="file-input" style="display: none;" />
