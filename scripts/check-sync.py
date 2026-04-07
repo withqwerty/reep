@@ -141,10 +141,15 @@ for fname, etype in [("players.json", "player"), ("teams.json", "team"), ("coach
                 for p in entity.get("external_ids", {}).keys():
                     provider_types.setdefault(p, set()).add(etype)
 
+reep_prefix_to_type = {"reep_p": "player", "reep_t": "team", "reep_c": "coach",
+                       "reep_l": "competition", "reep_s": "season"}
+
 if custom_path.exists():
     with open(custom_path) as f:
         for entry in json.load(f):
-            provider_types.setdefault(entry["provider"], set()).add(entry["type"])
+            etype = reep_prefix_to_type.get(entry["reep_id"][:6])
+            if etype:
+                provider_types.setdefault(entry["provider"], set()).add(etype)
 
 csv_type_map = {"people.csv": {"player", "coach"}, "teams.csv": {"team"}}
 
@@ -194,6 +199,51 @@ if readme_path.exists():
         warn("Providers not in README", str(sorted(missing_readme)))
     else:
         check("All providers in README", True)
+
+# ---------------------------------------------------------------------------
+# 8. Check site provider coverage flags match actual data
+# ---------------------------------------------------------------------------
+
+print("\nSite provider coverage (providers.ts):")
+site_providers_path = ROOT / "site" / "src" / "lib" / "providers.ts"
+if site_providers_path.exists():
+    site_text = site_providers_path.read_text()
+    # Parse each provider block: key, then boolean flags
+    type_flag_map = {
+        "players": "player",
+        "teams": "team",
+        "coaches": "coach",
+        "competitions": "competition",
+        "seasons": "season",
+    }
+    # Match provider blocks like:  key: { ... players: true, ... }
+    block_pattern = re.compile(
+        r'^\s+(\w+):\s*\{(.*?)\}',
+        re.MULTILINE | re.DOTALL,
+    )
+    site_issues_found = False
+    for m in block_pattern.finditer(site_text):
+        prov = m.group(1)
+        if prov == "name":
+            continue
+        block = m.group(2)
+        for flag_name, etype in type_flag_map.items():
+            flag_match = re.search(rf'{flag_name}:\s*(true|false)', block)
+            if not flag_match:
+                continue
+            site_says = flag_match.group(1) == "true"
+            data_has = etype in provider_types.get(prov, set())
+            if data_has and not site_says:
+                site_issues_found = True
+                check(f"{prov}.{flag_name}", False,
+                      f"data has {etype} but site says false")
+            elif site_says and not data_has:
+                warn(f"{prov}.{flag_name}",
+                     f"site says true but no {etype} data found locally")
+    if not site_issues_found:
+        check("Site coverage flags match data", True)
+else:
+    warn("providers.ts", "not found")
 
 # ---------------------------------------------------------------------------
 # Summary

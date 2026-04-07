@@ -17,3 +17,8 @@ database_id = "52cf53a2-7453-4ae5-a149-f43c360514ad"
 [[r2_buckets]]
 binding = "CONTRIBUTIONS"
 bucket_name = "reep-contributions"
+
+[[queues.consumers]]
+queue = "reep-contributions-notifications"
+max_batch_size = 5
+max_batch_timeout = 30

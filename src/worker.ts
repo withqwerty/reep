@@ -3,6 +3,15 @@ export interface Env {
   CONTRIBUTIONS?: R2Bucket;
   RAPIDAPI_PROXY_SECRET?: string;
   BYPASS_KEY?: string;
+  RESEND_API_KEY?: string;
+  NOTIFICATION_EMAIL?: string;
+}
+
+interface R2EventNotification {
+  account: string;
+  bucket: string;
+  action: string;
+  object?: { key: string; size: number; eTag: string };
 }
 
 const API_VERSION = "2.3.0";
@@ -194,7 +203,43 @@ export default {
     console.log(JSON.stringify({ method, path, params, status: response.status, ms: Date.now() - start }));
     return response;
   },
-} satisfies ExportedHandler<Env>;
+  async queue(batch: MessageBatch<R2EventNotification>, env: Env): Promise<void> {
+    for (const msg of batch.messages) {
+      if (!env.RESEND_API_KEY || !env.NOTIFICATION_EMAIL) {
+        msg.ack();
+        continue;
+      }
+
+      try {
+        const event = msg.body;
+        const key = event.object?.key ?? "unknown";
+        const size = event.object?.size ?? 0;
+        const action = event.action ?? "unknown";
+
+        const subject = `New contribution: ${key.split("_").slice(1).join("_") || key}`;
+        const html = formatEmailBody(key, size, action);
+
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${env.RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: "Reep <notifications@withqwerty.com>",
+            to: [env.NOTIFICATION_EMAIL],
+            subject,
+            html,
+          }),
+        });
+      } catch (e) {
+        console.log(JSON.stringify({ handler: "queue", error: String(e) }));
+      }
+
+      msg.ack();
+    }
+  },
+} satisfies ExportedHandler<Env, R2EventNotification>;
 
 /** Constant-time string comparison to prevent timing side-channels on auth secrets. */
 async function safeCompare(a: string, b: string): Promise<boolean> {
@@ -529,4 +574,28 @@ async function handleStats(db: D1Database): Promise<Response> {
     ),
     custom_ids_count: customTotal?.total ?? 0,
   });
+}
+
+// Format the notification email body for a new R2 contribution upload.
+// Parameters:
+//   key   — the R2 object key (e.g. "2026-04-07T12-45-31-952Z_Sassuolo_Scouting_2025_26.xlsx")
+//   size  — file size in bytes
+//   action — the R2 action (e.g. "PutObject")
+// Return an HTML string for the email body.
+function formatEmailBody(key: string, size: number, _action: string): string {
+  const parts = key.split("_");
+  const timestamp = parts[0].replace(/T/, " ").replace(/-/g, (m, i) => (i > 9 ? ":" : m));
+  const filename = parts.slice(1).join("_") || key;
+  const sizeStr = size < 1024 ? `${size} B`
+    : size < 1024 * 1024 ? `${(size / 1024).toFixed(1)} KB`
+    : `${(size / (1024 * 1024)).toFixed(1)} MB`;
+
+  return `<div style="font-family:system-ui,sans-serif;max-width:480px;padding:20px">
+    <h2 style="margin:0 0 16px">New file uploaded to Reep</h2>
+    <table style="border-collapse:collapse;width:100%">
+      <tr><td style="padding:6px 12px;color:#666">File</td><td style="padding:6px 12px"><strong>${filename}</strong></td></tr>
+      <tr><td style="padding:6px 12px;color:#666">Size</td><td style="padding:6px 12px">${sizeStr}</td></tr>
+      <tr><td style="padding:6px 12px;color:#666">Time</td><td style="padding:6px 12px">${timestamp}</td></tr>
+    </table>
+  </div>`;
 }
