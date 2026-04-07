@@ -42,18 +42,20 @@ const coverageProviders = Object.entries(PROVIDERS)
   <!-- Hero -->
   <header style="text-align: center; padding: 2rem 0 0.5rem;">
     <h1 style="font-size: 2.4rem; font-weight: 700; margin-bottom: 0.15rem;">Reep</h1>
-    <p style="font-size: 1.1rem; color: var(--fg-muted); margin-bottom: 0.75rem;">The Football Entity Register</p>
+    <p style="font-size: 1.05rem; color: var(--fg-muted); margin-bottom: 0.35rem;">The football identity crosswalk</p>
+    <p style="font-size: 1.3rem; font-weight: 600; margin-bottom: 0.5rem;">One lookup, every ID.</p>
 
-    <p style="font-size: 2rem; font-weight: 700; color: var(--green); margin-bottom: 0.25rem;">
-      {formatNumber(stats.total_entities)} entities &middot; {providerCount}+ providers
+    <p style="font-size: 1.6rem; font-weight: 700; color: var(--green); margin-bottom: 0.5rem;">
+      {formatNumber(stats.total_entities)} entities &middot; {providerCount} providers
     </p>
 
-    <p style="font-size: 0.95rem; color: var(--fg-muted); max-width: 560px; margin: 0 auto 0.75rem;">
-      Open-source register mapping football player, team, coach, competition, and season
-      identities across {providerCount}+ data providers. Available as
-      <a href="https://github.com/withqwerty/reep#data">downloadable CSVs</a> and a
+    <p style="font-size: 0.95rem; color: var(--fg-muted); max-width: 540px; margin: 0 auto 0.75rem;">
+      Every player, team, and competition gets a stable <strong>Reep&nbsp;ID</strong>
+      that never changes &mdash; linked to Transfermarkt, FBref, Opta, FotMob, and {providerCount - 4}+
+      other providers. Open-source.
+      <a href="https://github.com/withqwerty/reep#data">CSVs</a> and
       <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register">REST API</a>.
-      Crowdsourced from <a href="https://www.wikidata.org/">Wikidata</a> and custom verified sources.
+      Cross-referenced and community-verified.
     </p>
 
     <p style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 1.25rem;">
@@ -65,7 +67,7 @@ const coverageProviders = Object.entries(PROVIDERS)
         type="text"
         class="search-input"
         id="search-input"
-        placeholder="Search by name, Reep ID, QID, or provider ID..."
+        placeholder="Search by name or paste any provider ID..."
         autocomplete="off"
       />
       <div class="search-results" id="search-results"></div>
@@ -73,7 +75,7 @@ const coverageProviders = Object.entries(PROVIDERS)
   </header>
 
   <!-- Examples -->
-  <p class="section-title green" style="margin-top: 1.5rem;">Try these</p>
+  <p class="section-title green" style="margin-top: 1.5rem;">See it work</p>
   <div class="examples-grid" id="examples-grid">
     {examples.map((entity: any) => {
       const ids = Object.entries(entity.external_ids || {}) as [string, string][];
@@ -112,7 +114,7 @@ const coverageProviders = Object.entries(PROVIDERS)
   <div class="content-narrow">
     <p class="section-title blue">API</p>
     <p style="font-size: 0.95rem; color: var(--fg-muted); margin-bottom: 1rem;">
-      All endpoints require authentication via
+      Six endpoints. Full response on every call. Get a key via
       <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register">RapidAPI</a>.
     </p>
     <table class="endpoint-table">
@@ -178,17 +180,16 @@ const coverageProviders = Object.entries(PROVIDERS)
 
   <!-- Contribute -->
   <div class="content-narrow">
-    <p class="section-title muted">Contribute data</p>
+    <p class="section-title muted">Share data</p>
     <div class="card" style="max-width: 600px;">
       <p style="font-size: 0.95rem; margin-bottom: 0.75rem;">
-        Have verified ID mappings between football data providers? Drop a file anonymously.
-        CSV preferred, but any format with provider IDs and entity names works.
+        Anonymous. No account, no tracking.
       </p>
       <p style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 1rem;">
-        No account required. Files are reviewed manually before merging.
+        CSV preferred. Any format with provider IDs works.
       </p>
       <div id="drop-zone" style="border: 2px dashed var(--border); border-radius: var(--radius); padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.15s;">
-        <p style="font-size: 0.95rem; color: var(--fg-muted);" id="drop-text">Drop a file here, or click to browse</p>
+        <p style="font-size: 0.95rem; color: var(--fg-muted);" id="drop-text">Drop a file here</p>
         <input type="file" id="file-input" style="display: none;" />
       </div>
       <p id="upload-status" style="font-size: 0.85rem; margin-top: 0.5rem; display: none;"></p>
@@ -199,7 +200,7 @@ const coverageProviders = Object.entries(PROVIDERS)
   <footer class="content-narrow">
     <p style="margin-bottom: 0.5rem;">
       Named after <a href="https://en.wikipedia.org/wiki/Charles_Reep" target="_blank" rel="noopener">Charles Reep</a>
-      (1904&ndash;2002), who hand-recorded every action in over 2,200 football matches.
+      (1904&ndash;2002), who hand-recorded every action in 2,200+ matches &mdash; football analytics before data existed.
     </p>
     <div>
       <a href="https://github.com/withqwerty/reep" target="_blank" rel="noopener">GitHub</a>
@@ -445,15 +446,15 @@ const coverageProviders = Object.entries(PROVIDERS)
         });
 
         if (resp.ok) {
-          dropText.textContent = 'Drop a file here, or click to browse';
+          dropText.textContent = 'Drop a file here';
           showStatus('Thanks! We\'ll review your data.', 'var(--green)');
         } else {
           const msg = await resp.text().catch(() => 'Upload failed');
-          dropText.textContent = 'Drop a file here, or click to browse';
+          dropText.textContent = 'Drop a file here';
           showStatus(msg, 'var(--pink)');
         }
       } catch {
-        dropText.textContent = 'Drop a file here, or click to browse';
+        dropText.textContent = 'Drop a file here';
         showStatus('Upload failed. Try again later.', 'var(--pink)');
       }
     }
