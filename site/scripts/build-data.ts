@@ -209,8 +209,10 @@ async function main() {
     `[build-data] Raw search pool: ${allEntities.size.toLocaleString()} unique entities`
   );
 
-  // Sort by provider count descending, take top 10,000
+  // Filter: only entities with 2+ provider IDs (entities with just a Wikidata QID
+  // aren't useful for a crosswalk demo). Sort by provider count descending, take top 10,000.
   const sortedEntities = Array.from(allEntities.values())
+    .filter((e) => Object.keys(e.external_ids ?? {}).length >= 2)
     .sort((a, b) => {
       const aCount = Object.keys(a.external_ids ?? {}).length;
       const bCount = Object.keys(b.external_ids ?? {}).length;

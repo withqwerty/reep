@@ -16,7 +16,7 @@ info:
     records with type-specific Reep IDs. The unique key is `reep_id`.
 
     All data is open source: https://github.com/withqwerty/reep
-  version: 2.0.0
+  version: 2.3.0
   contact:
     name: withqwerty
     url: https://github.com/withqwerty/reep
@@ -73,7 +73,8 @@ paths:
                     aliases_en: Cole Jermaine Palmer
                     date_of_birth: "2002-05-06"
                     nationality: United Kingdom
-                    position: attacking midfielder
+                    position: midfielder
+                    position_detail: Attacking Midfield
                     external_ids:
                       wikidata: Q99760796
                       transfermarkt: "568177"
@@ -184,6 +185,7 @@ paths:
               - wyscout
               - skillcorner
               - heimspiel
+              - capology
           example: transfermarkt
           description: Source provider name
         - name: id
@@ -335,7 +337,11 @@ components:
         position:
           type: string
           nullable: true
-          description: For players only
+          description: Coarse position (forward, midfielder, defender, goalkeeper). Players only.
+        position_detail:
+          type: string
+          nullable: true
+          description: Granular position from Transfermarkt (e.g. Centre-Back, Attacking Midfield, Right Winger). Players only.
         current_team_reep_id:
           type: string
           nullable: true

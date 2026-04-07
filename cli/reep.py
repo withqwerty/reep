@@ -35,7 +35,7 @@ PROVIDERS = [
     "statmuse_pl", "sofifa", "soccerdonna", "dongqiudi", "playmakerstats",
     "understat", "whoscored", "clubelo", "sportmonks",
     "api_football", "fotmob", "fpl_code",
-    "thesportsdb", "impect", "wyscout", "skillcorner", "heimspiel",
+    "thesportsdb", "impect", "wyscout", "skillcorner", "heimspiel", "capology",
 ]
 
 
@@ -73,7 +73,9 @@ def format_entity(e: dict, verbose: bool = False) -> str:
             bio_parts.append(f"DOB: {e['date_of_birth']}")
         if e.get("nationality"):
             bio_parts.append(f"Nationality: {e['nationality']}")
-        if e.get("position"):
+        if e.get("position_detail"):
+            bio_parts.append(f"Position: {e['position_detail']}")
+        elif e.get("position"):
             bio_parts.append(f"Position: {e['position']}")
         if e.get("height_cm"):
             bio_parts.append(f"Height: {e['height_cm']}cm")

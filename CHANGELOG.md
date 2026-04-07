@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.3.0 - 2026-04-07
+
+### API
+- Add `capology` to `VALID_PROVIDERS` — salary/wage data provider. 1,044 team IDs (country-verified name matching). Player IDs pending crowdsourced validation.
+- Add `position_detail` field to all entity responses (`/search`, `/lookup`, `/resolve`, `/batch/*`). Contains Transfermarkt's granular sub-position (e.g. `Centre-Back`, `Attacking Midfield`, `Right Winger`). Null for entities without TM position data. The existing `position` field remains unchanged as the coarse category.
+
+### Data
+- **1,044 Capology team IDs** added (country-verified name matching)
+- **42,377 `position_detail` values** backfilled from [dcaribou/transfermarkt-datasets](https://github.com/dcaribou/transfermarkt-datasets) across 13 TM sub-positions
+- **2,023 new player entities** from transfermarkt-datasets (active 2024-25 squad players not in Wikidata)
+- **1,756 Transfermarkt player IDs** added as custom_ids (DOB+name matching)
+- **30 Transfermarkt competition codes** matched to Reep competitions (alpha codes like GB1, ES1, L1)
+- **5 Transfermarkt club IDs** matched
+
+### Scripts
+- `reep-custom/scripts/sync-transfermarkt-datasets.py`: weekly sync from TM DuckDB. Downloads from R2, matches players (DOB+name), competitions (alias+country), clubs (name). Creates new entities for unmatched active players. Backfills `position_detail` for all entities with TM IDs.
+- `reep-custom/scripts/match-capology.py`: matches Capology player/team slugs to Reep entities. Teams write directly; players export CSV for validator.
+
 ## 2026.14 - 2026-04-05 (data-only)
 
 ### Data quality

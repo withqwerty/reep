@@ -106,6 +106,28 @@ def main():
         json.dump(reep_map, f)
     print(f"Wrote {len(reep_map):,} reep_id mappings to {REEP_ID_MAP_OUTPUT}")
 
+    # Export position_detail for all entities that have it
+    POSITION_DETAIL_OUTPUT = Path(__file__).parent.parent / "data" / "position_detail.json"
+    print("\nFetching position_detail...")
+    pos_map: dict[str, str] = {}
+    offset = 0
+    while True:
+        rows = query_d1(
+            f"SELECT reep_id, position_detail FROM entities "
+            f"WHERE position_detail IS NOT NULL "
+            f"LIMIT {BATCH_SIZE} OFFSET {offset};",
+            args.local,
+        )
+        if not rows:
+            break
+        for r in rows:
+            pos_map[r["reep_id"]] = r["position_detail"]
+        offset += len(rows)
+
+    with open(POSITION_DETAIL_OUTPUT, "w") as f:
+        json.dump(pos_map, f)
+    print(f"Wrote {len(pos_map):,} position_detail values to {POSITION_DETAIL_OUTPUT}")
+
 
 if __name__ == "__main__":
     main()

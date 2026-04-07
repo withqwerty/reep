@@ -5,7 +5,7 @@ export interface Env {
   BYPASS_KEY?: string;
 }
 
-const API_VERSION = "2.2.0";
+const API_VERSION = "2.3.0";
 
 const VALID_PROVIDERS = new Set([
   "wikidata",
@@ -51,6 +51,7 @@ const VALID_PROVIDERS = new Set([
   "wyscout",
   "skillcorner",
   "heimspiel",
+  "capology",
 ]);
 
 const CORS = {
@@ -312,7 +313,7 @@ async function handleSearch(
 
   let query = `
     SELECT e.reep_id, e.type, e.name_en, e.aliases_en,
-           e.date_of_birth, e.nationality, e.position,
+           e.date_of_birth, e.nationality, e.position, e.position_detail,
            bm25(entities_fts, 10.0, 1.0) AS score
     FROM entities_fts
     JOIN entities e ON e.rowid = entities_fts.rowid
@@ -351,6 +352,7 @@ async function handleSearch(
         date_of_birth: e.date_of_birth,
         nationality: e.nationality,
         position: e.position,
+        position_detail: e.position_detail,
         external_ids: ids,
       };
     }),
@@ -393,7 +395,7 @@ async function handleResolve(
   return json({ results: [entity], count: 1 });
 }
 
-const ENTITY_COLS = "reep_id, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, current_team_reep_id, height_cm, country, founded, stadium, source, competition_reep_id";
+const ENTITY_COLS = "reep_id, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, position_detail, current_team_reep_id, height_cm, country, founded, stadium, source, competition_reep_id";
 
 // Helper: look up entity by reep_id, attach provider IDs and qid convenience field
 async function lookupByReepId(db: D1Database, reepId: string): Promise<Record<string, unknown> | null> {

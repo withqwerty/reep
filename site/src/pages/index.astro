@@ -140,6 +140,17 @@ const coverageProviders = Object.entries(PROVIDERS)
     })}
   </div>
 
+  <!-- Recent updates -->
+  <div class="content-narrow">
+    <p class="section-title muted">Recent updates</p>
+    <div style="font-size: 0.88rem; color: var(--fg-muted); line-height: 1.7;">
+      <p><strong>v2.3</strong> &mdash; Added <code>position_detail</code> field (42K players backfilled from Transfermarkt). 2,023 new player entities from active 2024-25 squads. 1,756 new Transfermarkt player IDs.</p>
+      <p style="margin-top: 0.4rem;"><strong>v2.2</strong> &mdash; Split Opta into <code>opta</code> (UUID) and <code>opta_numeric</code>. Added 2,225 TheSportsDB team IDs, 466 FBref season IDs, 98 FotMob competition IDs, 147 Understat comp/team/season IDs.</p>
+      <p style="margin-top: 0.4rem;"><strong>v2.1</strong> &mdash; Competition and season entity types. 24K broken entity names backfilled from Wikidata dump. Non-football filter.</p>
+      <p style="margin-top: 0.5rem;"><a href="https://github.com/withqwerty/reep/blob/main/CHANGELOG.md" style="font-size: 0.82rem;">Full changelog &rarr;</a></p>
+    </div>
+  </div>
+
   <!-- API docs -->
   <div class="content-narrow">
     <p class="section-title blue">API</p>
@@ -165,8 +176,10 @@ const coverageProviders = Object.entries(PROVIDERS)
       </tbody>
     </table>
 
-    <pre style="margin-top: 1rem;"><code>curl "https://reep-api.rahulkeerthi2-95d.workers.dev/resolve?provider=transfermarkt&id=568177" \
-  -H "X-RapidAPI-Proxy-Secret: YOUR_KEY"</code></pre>
+    <pre style="margin-top: 1rem;"><code>curl --request GET \
+  --url 'https://the-reep-register.p.rapidapi.com/search?name=Cole%20Palmer&type=player&limit=25' \
+  --header 'x-rapidapi-host: the-reep-register.p.rapidapi.com' \
+  --header 'x-rapidapi-key: YOUR_KEY'</code></pre>
 
     <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
       <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" target="_blank" rel="noopener" class="cta">Get API key</a>
@@ -342,12 +355,23 @@ const coverageProviders = Object.entries(PROVIDERS)
         badge.textContent = entity.type;
         badge.style.marginLeft = '0.4rem';
 
+        item.appendChild(nameSpan);
+        item.appendChild(badge);
+
+        // Disambiguation: nationality + DOB for players, country for teams/comps
+        const meta = entity.type === 'player'
+          ? [entity.nationality, entity.date_of_birth].filter(Boolean).join(' · ')
+          : (entity.country || '');
+        if (meta) {
+          const metaSpan = document.createElement('span');
+          metaSpan.style.cssText = 'font-size: 0.78rem; color: var(--fg-muted); margin-left: 0.4rem;';
+          metaSpan.textContent = meta;
+          item.appendChild(metaSpan);
+        }
+
         const countSpan = document.createElement('span');
         countSpan.style.cssText = 'float: right; font-size: 0.8rem; color: var(--fg-muted); margin-top: 0.15rem;';
         countSpan.textContent = `${entity.provider_count} providers`;
-
-        item.appendChild(nameSpan);
-        item.appendChild(badge);
         item.appendChild(countSpan);
 
         item.addEventListener('click', () => selectResult(entity));
@@ -429,7 +453,8 @@ const coverageProviders = Object.entries(PROVIDERS)
 
     // Hint buttons — click to populate search
     document.querySelectorAll('.hint-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation(); // Prevent document click handler from closing the dropdown
         await loadIndex();
         const query = (btn as HTMLElement).dataset.query || '';
         input.value = query;

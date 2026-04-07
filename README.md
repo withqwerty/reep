@@ -81,6 +81,8 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_wyscout` | [Wyscout](https://wyscout.com/) player ID | `234966` |
 | `key_impect` | [Impect](https://www.impect.com/) player ID | `52615` |
 | `key_heimspiel` | [heim:spiel](https://heimspiel.de/) player ID | `361032` |
+| `key_capology` | [Capology](https://www.capology.com/) player slug | `cole-palmer-36271` |
+| `position_detail` | Granular position from Transfermarkt | `Attacking Midfield` |
 
 ### Teams schema
 
@@ -110,6 +112,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_api_football` | API-Football team ID | `42` |
 | `key_sofifa` | SoFIFA / EA FC team ID | `1` |
 | `key_fotmob` | FotMob team ID | `9825` |
+| `key_capology` | Capology team slug | `arsenal` |
 
 ### Competitions schema
 
