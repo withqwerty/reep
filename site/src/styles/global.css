@@ -310,13 +310,73 @@ pre code {
 }
 
 /* Footer */
+/* Hero layout */
+.hero {
+	text-align: center;
+	padding: 2rem 0 0.5rem;
+}
+
+.hero-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 2.5rem;
+}
+
+.hero-text {
+	text-align: left;
+	flex: 1;
+	max-width: 640px;
+}
+
+.hero-image img {
+	width: 240px;
+	height: auto;
+	border-radius: var(--radius);
+	opacity: 0.85;
+}
+
+@media (max-width: 768px) {
+	.hero-content {
+		flex-direction: column-reverse;
+		gap: 1rem;
+	}
+	.hero-text { text-align: center; }
+	.hero-image img { width: 160px; }
+}
+
+/* Footer */
 footer {
 	margin-top: 4rem;
 	padding-top: 1.5rem;
 	border-top: 1px solid var(--border);
-	text-align: center;
 	color: var(--fg-muted);
 	font-size: 0.85rem;
+}
+
+.footer-reep {
+	display: flex;
+	align-items: center;
+	gap: 1.5rem;
+	justify-content: center;
+}
+
+.footer-reep > div { text-align: left; }
+
+.footer-writing {
+	width: 200px;
+	height: auto;
+	border-radius: 8px;
+	opacity: 0.6;
+	transition: opacity 0.2s;
+}
+
+.footer-writing:hover { opacity: 1; }
+
+@media (max-width: 600px) {
+	.footer-reep { flex-direction: column; text-align: center; }
+	.footer-reep > div { text-align: center; }
+	.footer-writing { width: 160px; }
 }
 
 footer a {

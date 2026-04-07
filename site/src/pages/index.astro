@@ -35,34 +35,55 @@ const coverageProviders = Object.entries(PROVIDERS)
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reep — The Football Entity Register</title>
   <meta name="description" content="Open-source football entity register. Resolve player, team, and competition IDs across Transfermarkt, FBref, Opta, FotMob, and 40+ providers." />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta property="og:title" content="Reep — The Football Identity Crosswalk" />
+  <meta property="og:description" content="One lookup, every ID. 490K+ entities across 44 providers." />
+  <meta property="og:image" content="/og-image.jpg" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Reep — The Football Identity Crosswalk" />
+  <meta name="twitter:description" content="One lookup, every ID. 490K+ entities across 44 providers." />
+  <meta name="twitter:image" content="/og-image.jpg" />
+  <meta name="twitter:creator" content="@withqwerty" />
 </head>
 <body>
 
   <!-- Hero -->
-  <header style="text-align: center; padding: 2rem 0 0.5rem;">
-    <h1 style="font-size: 2.4rem; font-weight: 700; margin-bottom: 0.15rem;">Reep</h1>
-    <p style="font-size: 1.05rem; color: var(--fg-muted); margin-bottom: 0.35rem;">The football identity crosswalk</p>
-    <p style="font-size: 1.3rem; font-weight: 600; margin-bottom: 0.5rem;">One lookup, every ID.</p>
+  <header class="hero">
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1 style="font-size: 2.4rem; font-weight: 700; margin-bottom: 0.15rem;">Reep</h1>
+        <p style="font-size: 1.05rem; color: var(--fg-muted); margin-bottom: 0.35rem;">The football identity crosswalk</p>
+        <p style="font-size: 1.3rem; font-weight: 600; margin-bottom: 0.5rem;">One lookup, every ID.</p>
 
-    <p style="font-size: 1.6rem; font-weight: 700; color: var(--green); margin-bottom: 0.5rem;">
-      {formatNumber(stats.total_entities)} entities &middot; {providerCount} providers
-    </p>
+        <p style="font-size: 1.6rem; font-weight: 700; color: var(--green); margin-bottom: 0.5rem;">
+          {formatNumber(stats.total_entities)} entities &middot; {providerCount} providers
+        </p>
 
-    <p style="font-size: 0.95rem; color: var(--fg-muted); max-width: 540px; margin: 0 auto 0.75rem;">
-      Every player, team, and competition gets a stable <strong>Reep&nbsp;ID</strong>
-      that never changes &mdash; linked to Transfermarkt, FBref, Opta, FotMob, and {providerCount - 4}+
-      other providers. Open-source.
-      <a href="https://github.com/withqwerty/reep#data">CSVs</a> and
-      <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register">REST API</a>.
-      Cross-referenced and community-verified.
-    </p>
+        <p style="font-size: 0.95rem; color: var(--fg-muted); max-width: 720px; margin-bottom: 0.75rem;">
+          Every player, team, and competition gets a stable <strong>Reep&nbsp;ID</strong>
+          that never changes &mdash; linked to Transfermarkt, FBref, Opta, FotMob, and {providerCount - 4}+
+          other providers. Open-source.
+          <a href="https://github.com/withqwerty/reep#data">CSVs</a> and
+          <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register">REST API</a>.
+          Cross-referenced and community-verified.
+        </p>
 
-    <p style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 1.25rem;">
-      Built by <a href="https://x.com/withqwerty" target="_blank" rel="noopener">@withqwerty</a>
-    </p>
+        <p style="font-size: 0.85rem; color: var(--fg-muted);">
+          Built by <a href="https://x.com/withqwerty" target="_blank" rel="noopener">@withqwerty</a>
+        </p>
+      </div>
 
-    <div class="search-wrapper">
+      <div class="hero-image">
+        <picture>
+          <source srcset="/reep-drawing.webp" type="image/webp" />
+          <img src="/reep-drawing-opt.jpg" alt="Illustration of Charles Reep" width="300" height="200" loading="eager" />
+        </picture>
+      </div>
+    </div>
+
+    <div class="search-wrapper" style="margin-top: 1.25rem;">
       <input
         type="text"
         class="search-input"
@@ -198,15 +219,23 @@ const coverageProviders = Object.entries(PROVIDERS)
 
   <!-- Footer -->
   <footer class="content-narrow">
-    <p style="margin-bottom: 0.5rem;">
-      Named after <a href="https://en.wikipedia.org/wiki/Charles_Reep" target="_blank" rel="noopener">Charles Reep</a>
-      (1904&ndash;2002), who hand-recorded every action in 2,200+ matches &mdash; football analytics before data existed.
-    </p>
-    <div>
-      <a href="https://github.com/withqwerty/reep" target="_blank" rel="noopener">GitHub</a>
-      <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" target="_blank" rel="noopener">RapidAPI</a>
-      <a href="https://x.com/withqwerty" target="_blank" rel="noopener">@withqwerty</a>
-      <a href="https://github.com/withqwerty/reep/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
+    <div class="footer-reep">
+      <picture>
+        <source srcset="/reep-writing.webp" type="image/webp" />
+        <img src="/reep-writing.jpg" alt="Charles Reep's match notation from the 1953 FA Cup Final" class="footer-writing" width="280" height="157" loading="lazy" />
+      </picture>
+      <div>
+        <p style="margin-bottom: 0.5rem;">
+          Named after <a href="https://en.wikipedia.org/wiki/Charles_Reep" target="_blank" rel="noopener">Charles Reep</a>
+          (1904&ndash;2002), who hand-recorded every action in 2,200+ matches &mdash; football analytics before data existed.
+        </p>
+        <div>
+          <a href="https://github.com/withqwerty/reep" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" target="_blank" rel="noopener">RapidAPI</a>
+          <a href="https://x.com/withqwerty" target="_blank" rel="noopener">@withqwerty</a>
+          <a href="https://github.com/withqwerty/reep/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
+        </div>
+      </div>
     </div>
   </footer>
 
