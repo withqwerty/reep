@@ -156,6 +156,7 @@ async function main() {
   const letters = "abcdefghijklmnopqrstuvwxyz".split("");
   const footballTerms = [
     "Real",
+    "Real Madrid",
     "FC",
     "United",
     "City",

@@ -193,8 +193,14 @@ const coverageProviders = Object.entries(PROVIDERS)
   <!-- Provider coverage -->
   <div class="content-narrow">
     <p class="section-title pink">Provider coverage</p>
+    <input
+      type="text"
+      id="provider-filter"
+      placeholder="Filter providers..."
+      style="width: 100%; max-width: 300px; padding: 0.4rem 0.6rem; margin-bottom: 0.75rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); color: var(--fg); font-size: 0.85rem;"
+    />
     <div style="overflow-x: auto;">
-      <table class="coverage-table">
+      <table class="coverage-table" id="coverage-table">
         <thead>
           <tr>
             <th>Provider</th>
@@ -207,8 +213,8 @@ const coverageProviders = Object.entries(PROVIDERS)
           </tr>
         </thead>
         <tbody>
-          {coverageProviders.map((p) => (
-            <tr>
+          {coverageProviders.map((p, i) => (
+            <tr class="coverage-row" data-provider={p.name.toLowerCase()} style={i >= 15 ? 'display: none;' : ''}>
               <td style="font-weight: 500;">{p.name}</td>
               <td>{p.players ? '\u2713' : ''}</td>
               <td>{p.teams ? '\u2713' : ''}</td>
@@ -221,6 +227,9 @@ const coverageProviders = Object.entries(PROVIDERS)
         </tbody>
       </table>
     </div>
+    <button id="toggle-providers" style="margin-top: 0.5rem; background: none; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.35rem 0.75rem; color: var(--fg-muted); font-size: 0.82rem; cursor: pointer;">
+      Show all {coverageProviders.length} providers
+    </button>
   </div>
 
   <!-- Contribute -->
@@ -470,6 +479,36 @@ const coverageProviders = Object.entries(PROVIDERS)
       if (!resultsEl.contains(e.target as Node) && e.target !== input) {
         resultsEl.classList.remove('open');
       }
+    });
+
+    // --- PROVIDER TABLE FILTER + COLLAPSE ---
+
+    const providerFilter = document.getElementById('provider-filter') as HTMLInputElement;
+    const toggleBtn = document.getElementById('toggle-providers') as HTMLButtonElement;
+    const coverageRows = document.querySelectorAll('.coverage-row') as NodeListOf<HTMLTableRowElement>;
+    let expanded = false;
+
+    toggleBtn.addEventListener('click', () => {
+      expanded = !expanded;
+      coverageRows.forEach((row, i) => {
+        if (i >= 15) row.style.display = expanded ? '' : 'none';
+      });
+      toggleBtn.textContent = expanded ? 'Show fewer' : `Show all ${coverageRows.length} providers`;
+    });
+
+    providerFilter.addEventListener('input', () => {
+      const q = providerFilter.value.toLowerCase().trim();
+      if (!q) {
+        coverageRows.forEach((row, i) => {
+          row.style.display = (!expanded && i >= 15) ? 'none' : '';
+        });
+        toggleBtn.style.display = '';
+        return;
+      }
+      toggleBtn.style.display = 'none';
+      coverageRows.forEach(row => {
+        row.style.display = row.dataset.provider!.includes(q) ? '' : 'none';
+      });
     });
 
     // --- FILE UPLOAD (anonymous dead drop to /contribute on the Worker) ---
