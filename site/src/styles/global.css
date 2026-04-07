@@ -187,9 +187,12 @@ pre code {
 }
 
 @media (max-width: 600px) {
+	body { padding: 2rem 1rem 3rem; }
 	.examples-grid { grid-template-columns: 1fr; }
 	.examples-grid .card { padding: 1rem; }
 	.examples-grid .chip { font-size: 0.65rem; padding: 0.15rem 0.35rem; }
+	pre { padding: 1rem; font-size: 0.75rem; word-break: break-all; white-space: pre-wrap; }
+	.cta { font-size: 0.85rem; padding: 0.55rem 1rem; }
 }
 
 /* Search */
