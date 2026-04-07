@@ -170,7 +170,7 @@ async function main() {
     "Cup",
   ];
   const playerNames = [
-    "Messi", "Ronaldo", "Haaland", "Mbappe", "Salah", "Palmer",
+    "Messi", "Ronaldo", "Haaland", "Mbappe", "Salah", "Mohamed Salah", "Palmer",
     "Bellingham", "Vinicius", "Saka", "Foden", "De Bruyne", "Modric",
     "Son", "Kane", "Lewandowski", "Neymar", "Pedri", "Gavi",
     "Osimhen", "Wirtz", "Yamal", "Odegaard", "Rice",
