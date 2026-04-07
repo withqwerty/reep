@@ -1,4 +1,5 @@
 ---
+import '../styles/global.css';
 import { PROVIDERS, providerUrl } from '../lib/providers';
 
 let siteData: any = { stats: { total_entities: 0, by_type: {}, by_provider: {}, custom_ids_count: 0 }, examples: [], generatedAt: '' };
@@ -36,7 +37,7 @@ const coverageProviders = Object.entries(PROVIDERS)
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reep — The Football Entity Register</title>
   <meta name="description" content="Resolve player, team, competition, and season IDs across 40+ football data providers." />
-  <link rel="stylesheet" href="/src/styles/global.css" />
+  <!-- CSS imported via Astro frontmatter -->
 </head>
 <body>
 
@@ -229,7 +230,7 @@ const coverageProviders = Object.entries(PROVIDERS)
 
     async function loadIndex() {
       if (index) return;
-      const resp = await fetch('/src/lib/search-index.json');
+      const resp = await fetch('/search-index.json');
       index = await resp.json() as IndexEntity[];
       fuse = new Fuse(index, {
         keys: ['name_en', 'aliases_en'],

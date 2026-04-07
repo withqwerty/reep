@@ -3,3 +3,4 @@ dist/
 .astro/
 src/lib/examples.json
 src/lib/search-index.json
+public/search-index.json

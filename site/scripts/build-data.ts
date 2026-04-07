@@ -228,6 +228,13 @@ async function main() {
   writeFileSync(searchIndexPath, JSON.stringify(searchIndex, null, 2));
   console.log(`[build-data] Wrote ${searchIndexPath}`);
 
+  // Also write to public/ so it's served as a static asset for client-side search
+  const publicDir = join(import.meta.dirname, "../public");
+  mkdirSync(publicDir, { recursive: true });
+  const publicSearchPath = join(publicDir, "search-index.json");
+  writeFileSync(publicSearchPath, JSON.stringify(searchIndex));
+  console.log(`[build-data] Wrote ${publicSearchPath}`);
+
   console.log("[build-data] Done.");
 }
 
