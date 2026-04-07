@@ -75,7 +75,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_sportmonks` | [SportMonks](https://www.sportmonks.com/) player ID | `12345` |
 | `key_api_football` | [API-Football](https://www.api-football.com/) player ID | `1100` |
 | `key_fotmob` | [FotMob](https://www.fotmob.com/) player ID | `292462` |
-| `key_fpl_code` | Opta Stats Centre / FPL player code (same as [The Analyst](https://theanalyst.com/) `sc-` IDs) | `244851` |
+| `key_opta_numeric` | Opta legacy numeric ID (same as FPL `code`, The Analyst `sc-` IDs) | `244851` |
 | `key_thesportsdb` | [TheSportsDB](https://www.thesportsdb.com/) player ID | `34146086` |
 | `key_skillcorner` | [SkillCorner](https://www.skillcorner.com/) player ID | `23959` |
 | `key_wyscout` | [Wyscout](https://wyscout.com/) player ID | `234966` |
@@ -112,6 +112,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `key_api_football` | API-Football team ID | `42` |
 | `key_sofifa` | SoFIFA / EA FC team ID | `1` |
 | `key_fotmob` | FotMob team ID | `9825` |
+| `key_opta_numeric` | Opta legacy numeric team ID | `3` |
 | `key_capology` | Capology team slug | `arsenal` |
 
 ### Competitions schema
@@ -124,7 +125,9 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 | `country` | Country | `United Kingdom` |
 | `key_transfermarkt` | Transfermarkt competition ID | `GB1` |
 | `key_fbref` | FBref competition ID | `9` |
-| `key_opta` | Opta competition ID | `8` |
+| `key_opta` | Opta competition ID (UUID) | `2kwbbcootiqqgmrzs6o5inle5` |
+| `key_opta_numeric` | Opta legacy numeric competition ID | `8` |
+| `key_optacore` | Opta core numeric competition ID | `1` |
 
 ### Seasons schema
 
@@ -349,7 +352,10 @@ Entities not in Wikidata (e.g. lower-league players) are sourced from authoritat
 
 ### Provider notes
 
-**Opta / Stats Perform** — Wikidata properties P8736/P8737 contain outdated numeric Opta IDs. Reep uses alphanumeric Opta IDs (e.g. `7cwgrmorsb42qaj5vrhp8fhzp`) sourced from Stats Perform's Opta F1 player database via proprietary matching. These are the IDs used in current Opta/Stats Perform data products. Separately, The Analyst (theanalyst.com, Opta's public stats site) uses numeric `sc-` codes in player URLs (e.g. `theanalyst.com/football/player/sc-244851/cole-palmer`) — these match the FPL player codes (`fpl_code`) in Reep, since the Premier League's FPL system also uses Opta data.
+**Opta / Stats Perform** — Three distinct ID systems exist within Stats Perform's ecosystem:
+- **`opta`** — 25-char alphanumeric UUIDs (e.g. `7cwgrmorsb42qaj5vrhp8fhzp`) from the current SD API / Stats Perform F1 database. Used for players (50K), teams, competitions, and seasons. This is the canonical Opta provider.
+- **`opta_numeric`** — Legacy numeric codes (e.g. `244851` for Cole Palmer). Same as FPL `code` field, The Analyst `sc-` URL IDs, and Wikidata P8735/P8736/P8737. Players (3.8K), teams (255), competitions (73), coaches (28). Sources: FPL data, Wikidata dump, Opta Web Archive feeds.
+- **`optacore`** — A separate numeric system with different numbers (e.g. FA Cup = 93 vs opta_numeric 1). Competitions only (47). From the SD API mapping file.
 
 **WorldFootball.net / heim:spiel** — WorldFootball.net (owned by heim:spiel) migrated from slug-based URLs (e.g. `cole-palmer`) to numeric IDs in November 2025. The old slugs still work via redirect. Wikidata P2020 contains the old slug format. The heim:spiel numeric IDs in Reep are the same as the new WorldFootball.net IDs — the URL prefix indicates entity type:
 

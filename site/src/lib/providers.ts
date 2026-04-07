@@ -84,12 +84,12 @@ export const PROVIDERS: Record<string, ProviderMeta> = {
   opta_numeric: {
     name: "Opta (numeric)",
     url: undefined,
-    players: false,
-    teams: false,
-    coaches: false,
+    players: true,
+    teams: true,
+    coaches: true,
     competitions: true,
     seasons: false,
-    source: "wikidata",
+    source: "custom",
   },
   fotmob: {
     name: "FotMob",
@@ -371,15 +371,15 @@ export const PROVIDERS: Record<string, ProviderMeta> = {
     seasons: false,
     source: "custom",
   },
-  fpl_code: {
-    name: "FPL",
+  optacore: {
+    name: "Opta (core numeric)",
     url: undefined,
-    players: true,
+    players: false,
     teams: false,
-    coaches: true,
-    competitions: false,
+    coaches: false,
+    competitions: true,
     seasons: false,
-    source: "wikidata",
+    source: "custom",
   },
   hugman: {
     name: "Hugman",

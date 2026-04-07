@@ -34,7 +34,7 @@ PROVIDERS = [
     "footballdatabase_eu", "eu_football_info", "hugman", "german_fa",
     "statmuse_pl", "sofifa", "soccerdonna", "dongqiudi", "playmakerstats",
     "understat", "whoscored", "clubelo", "sportmonks",
-    "api_football", "fotmob", "fpl_code",
+    "api_football", "fotmob", "opta_numeric", "optacore",
     "thesportsdb", "impect", "wyscout", "skillcorner", "heimspiel", "capology",
 ]
 

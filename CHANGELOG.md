@@ -1,5 +1,22 @@
 # Changelog
 
+## v2.4.0 - 2026-04-07
+
+### API (breaking)
+- **Remove `fpl_code` provider.** Replaced by `opta_numeric` in v2.2.0. Lookups with `provider=fpl_code` now return `unknown_provider`. Migrate to `provider=opta_numeric` — same IDs, same entities.
+- Add `optacore` to `VALID_PROVIDERS` — Opta's core numeric competition IDs (47 competitions). Separate numbering system from `opta_numeric`.
+
+### Data
+- **941 new `opta_numeric` player IDs** from Opta Web Archive packed feeds (2016–2025). Matched via DOB+position → Opta CSV → TM/FBref/UUID bridge. Total opta_numeric: 4,180 (was 3,239).
+- **63,436 anonymous opta_numeric IDs extracted** from 1,219 archived feeds (F1 match results, F40 squad rosters, F3 standings) across 217 competitions. Stored in `data/opta-numeric/` for future matching as more bridges become available.
+
+### Scripts
+- `reep-custom/scripts/decode_opta_packed.py`: TEA decryption + F1/F3/F40 binary parsers for Opta packed feeds
+- `reep-custom/scripts/batch-decode-f1.py`: batch decode 878 F1 packed feeds from CDX
+- `reep-custom/scripts/batch-decode-opta.py`: batch decode F3 (366) and F40 (141) packed feeds
+- `reep-custom/scripts/batch-decode-f1-json.py`: batch decode 52 non-packed F1 JSON feeds
+- `reep-custom/scripts/match-opta-archive.py`: match extracted IDs to Reep via CSV bridge
+
 ## v2.3.0 - 2026-04-07
 
 ### API

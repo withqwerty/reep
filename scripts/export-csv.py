@@ -80,7 +80,7 @@ PEOPLE_COLUMNS = [
     "key_sportmonks",
     "key_api_football",
     "key_fotmob",
-    "key_fpl_code",
+    "key_opta_numeric",
     "key_thesportsdb",
     "key_skillcorner",
     "key_wyscout",
@@ -141,6 +141,7 @@ COMPETITION_COLUMNS = [
     "key_fbref",
     "key_opta",          # UUID format
     "key_opta_numeric",  # Legacy numeric
+    "key_optacore",
     "key_fotmob",
     "key_whoscored",
 ]

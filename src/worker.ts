@@ -14,7 +14,7 @@ interface R2EventNotification {
   object?: { key: string; size: number; eTag: string };
 }
 
-const API_VERSION = "2.3.0";
+const API_VERSION = "2.4.0";
 
 const VALID_PROVIDERS = new Set([
   "wikidata",
@@ -27,6 +27,7 @@ const VALID_PROVIDERS = new Set([
   "flashscore",
   "opta",
   "opta_numeric",
+  "optacore",
   "premier_league",
   "11v11",
   "espn",
@@ -54,7 +55,6 @@ const VALID_PROVIDERS = new Set([
   "sportmonks",
   "api_football",
   "fotmob",
-  "fpl_code",
   "thesportsdb",
   "impect",
   "wyscout",
