@@ -147,7 +147,12 @@ async function main() {
   // --- 3. Build search index ---
   const allEntities = new Map<string, Entity>();
 
-  // a-z single-letter queries
+  // Seed the index with showcase entities so they're always searchable
+  for (const entity of examples) {
+    allEntities.set(entity.reep_id, entity);
+  }
+
+  // a-z single-letter queries + famous players/teams that users will try
   const letters = "abcdefghijklmnopqrstuvwxyz".split("");
   const footballTerms = [
     "Real",
@@ -163,7 +168,13 @@ async function main() {
     "Bundesliga",
     "Cup",
   ];
-  const queries = [...letters, ...footballTerms];
+  const playerNames = [
+    "Messi", "Ronaldo", "Haaland", "Mbappe", "Salah", "Palmer",
+    "Bellingham", "Vinicius", "Saka", "Foden", "De Bruyne", "Modric",
+    "Son", "Kane", "Lewandowski", "Neymar", "Pedri", "Gavi",
+    "Osimhen", "Wirtz", "Yamal", "Odegaard", "Rice",
+  ];
+  const queries = [...letters, ...footballTerms, ...playerNames];
 
   console.log(
     `[build-data] Building search index with ${queries.length} queries...`

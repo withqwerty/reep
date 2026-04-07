@@ -88,10 +88,19 @@ const coverageProviders = Object.entries(PROVIDERS)
         type="text"
         class="search-input"
         id="search-input"
-        placeholder="Search by name or paste any provider ID..."
+        placeholder="Try a name..."
         autocomplete="off"
       />
       <div class="search-results" id="search-results"></div>
+    </div>
+    <div class="search-hints" style="margin-top: 0.5rem; font-size: 0.82rem; color: var(--fg-muted);">
+      Try:
+      <button class="hint-btn" data-query="Salah">Salah</button>
+      <button class="hint-btn" data-query="Haaland">Haaland</button>
+      <button class="hint-btn" data-query="Real Madrid">Real Madrid</button>
+      <button class="hint-btn" data-query="Bundesliga">Bundesliga</button>
+      <button class="hint-btn" data-query="reep_p2804f5db">reep_p2804f5db</button>
+      <span style="margin-left: 0.25rem; opacity: 0.6;">· demo subset of <a href="https://github.com/withqwerty/reep#data" style="color: var(--fg-muted);">full dataset</a></span>
     </div>
   </header>
 
@@ -418,6 +427,18 @@ const coverageProviders = Object.entries(PROVIDERS)
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    // Hint buttons — click to populate search
+    document.querySelectorAll('.hint-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await loadIndex();
+        const query = (btn as HTMLElement).dataset.query || '';
+        input.value = query;
+        input.focus();
+        doSearch();
+      });
+    });
+
+    // Close dropdown on outside click
     document.addEventListener('click', (e) => {
       if (!resultsEl.contains(e.target as Node) && e.target !== input) {
         resultsEl.classList.remove('open');
