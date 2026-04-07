@@ -106,8 +106,17 @@ const coverageProviders = Object.entries(PROVIDERS)
     </div>
   </header>
 
+  <!-- Jump-to nav -->
+  <nav style="margin-top: 1rem; font-size: 0.82rem; color: var(--fg-muted); display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center;">
+    <a href="#examples" style="color: var(--fg-muted); text-decoration: none; border-bottom: 1px dotted var(--border);">See it work</a>
+    <a href="#updates" style="color: var(--fg-muted); text-decoration: none; border-bottom: 1px dotted var(--border);">Updates</a>
+    <a href="#api" style="color: var(--fg-muted); text-decoration: none; border-bottom: 1px dotted var(--border);">API</a>
+    <a href="#providers" style="color: var(--fg-muted); text-decoration: none; border-bottom: 1px dotted var(--border);">Providers</a>
+    <a href="#contribute" style="color: var(--fg-muted); text-decoration: none; border-bottom: 1px dotted var(--border);">Share data</a>
+  </nav>
+
   <!-- Examples -->
-  <p class="section-title green" style="margin-top: 1.5rem;">See it work</p>
+  <p class="section-title green" style="margin-top: 1.5rem;" id="examples">See it work</p>
   <div class="examples-grid" id="examples-grid">
     {examples.map((entity: any) => {
       const ids = Object.entries(entity.external_ids || {}) as [string, string][];
@@ -144,7 +153,7 @@ const coverageProviders = Object.entries(PROVIDERS)
 
   <!-- Recent updates -->
   <div class="content-narrow">
-    <p class="section-title muted">Recent updates</p>
+    <p class="section-title muted" id="updates">Recent updates</p>
     <div style="font-size: 0.88rem; color: var(--fg-muted); line-height: 1.7;">
       <p><strong>v2.3</strong> &mdash; Added <code>position_detail</code> field (42K players backfilled from Transfermarkt). 2,023 new player entities from active 2024-25 squads. 1,756 new Transfermarkt player IDs.</p>
       <p style="margin-top: 0.4rem;"><strong>v2.2</strong> &mdash; Split Opta into <code>opta</code> (UUID) and <code>opta_numeric</code>. Added 2,225 TheSportsDB team IDs, 466 FBref season IDs, 98 FotMob competition IDs, 147 Understat comp/team/season IDs.</p>
@@ -155,7 +164,7 @@ const coverageProviders = Object.entries(PROVIDERS)
 
   <!-- API docs -->
   <div class="content-narrow">
-    <p class="section-title blue">API</p>
+    <p class="section-title blue" id="api">API</p>
     <p style="font-size: 0.95rem; color: var(--fg-muted); margin-bottom: 1rem;">
       Six endpoints. Full response on every call. Get a key via
       <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register">RapidAPI</a>.
@@ -192,7 +201,7 @@ const coverageProviders = Object.entries(PROVIDERS)
 
   <!-- Provider coverage -->
   <div class="content-narrow">
-    <p class="section-title pink">Provider coverage</p>
+    <p class="section-title pink" id="providers">Provider coverage</p>
     <input
       type="text"
       id="provider-filter"
@@ -234,7 +243,7 @@ const coverageProviders = Object.entries(PROVIDERS)
 
   <!-- Contribute -->
   <div class="content-narrow">
-    <p class="section-title muted">Share data</p>
+    <p class="section-title muted" id="contribute">Share data</p>
     <div class="card" style="max-width: 600px;">
       <p style="font-size: 0.95rem; margin-bottom: 0.75rem;">
         Help us map the world's football data. Anonymous — no account, no tracking.
