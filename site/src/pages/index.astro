@@ -74,6 +74,7 @@ const coverageProviders = Object.entries(PROVIDERS)
 
         <p style="font-size: 0.85rem; color: var(--fg-muted);">
           Built by <a href="https://x.com/withqwerty" target="_blank" rel="noopener">@withqwerty</a>
+          · <a href="https://buymeacoffee.com/withqwerty" target="_blank" rel="noopener" style="color: var(--fg-muted);">Please support this work</a>
         </p>
       </div>
 
@@ -268,6 +269,11 @@ const coverageProviders = Object.entries(PROVIDERS)
     </div>
   </div>
 
+  <!-- Back to top -->
+  <div style="text-align: center; margin: 1.5rem 0 0;">
+    <a href="#" style="font-size: 0.82rem; color: var(--fg-muted); text-decoration: none; border-bottom: 1px dotted var(--border);">&uarr; Back to top</a>
+  </div>
+
   <!-- Footer -->
   <footer class="content-narrow">
     <div class="footer-reep">
@@ -289,6 +295,33 @@ const coverageProviders = Object.entries(PROVIDERS)
       </div>
     </div>
   </footer>
+
+  <!-- Buy Me a Coffee widget -->
+  <script is:inline>
+    (function() {
+      var s = document.createElement('script');
+      s.setAttribute('data-name', 'BMC-Widget');
+      s.setAttribute('data-cfasync', 'false');
+      s.setAttribute('data-id', 'withqwerty');
+      s.setAttribute('data-description', 'Support me on Buy me a coffee!');
+      s.setAttribute('data-message', 'If you find Reep useful, I\'d appreciate your support.');
+      s.setAttribute('data-color', '#FF813F');
+      s.setAttribute('data-position', 'Right');
+      s.setAttribute('data-x_margin', '18');
+      s.setAttribute('data-y_margin', '18');
+      var origAdd = window.addEventListener;
+      window.addEventListener = function(type, fn, opts) {
+        if (type === 'DOMContentLoaded') {
+          setTimeout(fn, 0);
+        } else {
+          origAdd.call(window, type, fn, opts);
+        }
+      };
+      s.onload = function() { window.addEventListener = origAdd; };
+      s.src = 'https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js';
+      document.body.appendChild(s);
+    })();
+  </script>
 
   <!-- Client-side search + file upload -->
   <script>
