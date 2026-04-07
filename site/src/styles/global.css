@@ -30,9 +30,16 @@ html {
 }
 
 body {
-	max-width: 960px;
+	max-width: 1200px;
 	margin: 0 auto;
 	padding: 3rem 2rem 4rem;
+}
+
+/* Content sections narrower than examples */
+.content-narrow {
+	max-width: 800px;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 a { color: inherit; }
@@ -168,11 +175,21 @@ pre code {
 	color: var(--fg-muted);
 }
 
-/* Examples grid */
+/* Examples grid — all 4 cards on one row on desktop, 2×2 on tablet, stack on phone */
 .examples-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-	gap: 1rem;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 0.75rem;
+}
+
+@media (max-width: 1100px) {
+	.examples-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+	.examples-grid { grid-template-columns: 1fr; }
+	.examples-grid .card { padding: 1rem; }
+	.examples-grid .chip { font-size: 0.65rem; padding: 0.15rem 0.35rem; }
 }
 
 /* Search */

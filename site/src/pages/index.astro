@@ -19,8 +19,6 @@ const chipColors = ['', 'blue', 'pink'] as const;
 
 const providerCount = Object.keys(stats.by_provider).length;
 
-// Sort providers for coverage table: by number of true entity type flags, descending
-// Exclude wikidata
 const coverageProviders = Object.entries(PROVIDERS)
   .filter(([key]) => key !== 'wikidata')
   .map(([key, meta]) => ({
@@ -36,18 +34,32 @@ const coverageProviders = Object.entries(PROVIDERS)
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reep — The Football Entity Register</title>
-  <meta name="description" content="Resolve player, team, competition, and season IDs across 40+ football data providers." />
-  <!-- CSS imported via Astro frontmatter -->
+  <meta name="description" content="Open-source football entity register. Resolve player, team, and competition IDs across Transfermarkt, FBref, Opta, FotMob, and 40+ providers." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 </head>
 <body>
 
   <!-- Hero -->
-  <header style="text-align: center; padding: 2rem 0 1rem;">
-    <h1 style="font-size: 2.2rem; font-weight: 700; margin-bottom: 0.25rem;">Reep</h1>
-    <p style="font-size: 1.15rem; color: var(--fg-muted); margin-bottom: 0.5rem;">The Football Entity Register</p>
-    <p style="font-size: 0.95rem; color: var(--fg-muted); margin-bottom: 1.5rem;">
-      Resolve player, team, competition, and season IDs across {providerCount}+ data providers.
+  <header style="text-align: center; padding: 2rem 0 0.5rem;">
+    <h1 style="font-size: 2.4rem; font-weight: 700; margin-bottom: 0.15rem;">Reep</h1>
+    <p style="font-size: 1.1rem; color: var(--fg-muted); margin-bottom: 0.75rem;">The Football Entity Register</p>
+
+    <p style="font-size: 2rem; font-weight: 700; color: var(--green); margin-bottom: 0.25rem;">
+      {formatNumber(stats.total_entities)} entities &middot; {providerCount}+ providers
     </p>
+
+    <p style="font-size: 0.95rem; color: var(--fg-muted); max-width: 560px; margin: 0 auto 0.75rem;">
+      Open-source register mapping football player, team, coach, competition, and season
+      identities across {providerCount}+ data providers. Available as
+      <a href="https://github.com/withqwerty/reep#data">downloadable CSVs</a> and a
+      <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register">REST API</a>.
+      Crowdsourced from <a href="https://www.wikidata.org/">Wikidata</a> and custom verified sources.
+    </p>
+
+    <p style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 1.25rem;">
+      Built by <a href="https://x.com/withqwerty" target="_blank" rel="noopener">@withqwerty</a>
+    </p>
+
     <div class="search-wrapper">
       <input
         type="text"
@@ -81,7 +93,7 @@ const coverageProviders = Object.entries(PROVIDERS)
               {entity.country}
             </p>
           )}
-          <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem;">
+          <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.5rem;">
             {ids.map(([provider, id], i) => {
               const url = providerUrl(provider, id as string);
               const colorClass = chipColors[i % 3];
@@ -96,112 +108,108 @@ const coverageProviders = Object.entries(PROVIDERS)
     })}
   </div>
 
-  <!-- Stats -->
-  <div class="stats-row" style="margin-top: 2.5rem;">
-    <div class="stat">
-      <span class="stat-value">{formatNumber(stats.total_entities)}</span>
-      <span class="stat-label">entities</span>
-    </div>
-    <div class="stat">
-      <span class="stat-value">{providerCount}+</span>
-      <span class="stat-label">providers</span>
-    </div>
-    <div class="stat">
-      <span class="stat-value">{formatNumber(stats.custom_ids_count)}</span>
-      <span class="stat-label">custom verified IDs</span>
-    </div>
-    <div class="stat">
-      <span class="stat-value">{Object.keys(stats.by_type).length}</span>
-      <span class="stat-label">entity types</span>
-    </div>
-  </div>
-
   <!-- API docs -->
-  <p class="section-title blue">API</p>
-  <p style="font-size: 0.95rem; color: var(--fg-muted); margin-bottom: 1rem;">
-    All endpoints require a RapidAPI key or bypass token via the <code>X-RapidAPI-Proxy-Secret</code> or <code>X-Reep-Key</code> header.
-  </p>
-  <table class="endpoint-table">
-    <thead>
-      <tr>
-        <th>Method</th>
-        <th>Endpoint</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>GET</code></td><td><code>/search</code></td><td>Full-text search by name or alias</td></tr>
-      <tr><td><code>GET</code></td><td><code>/lookup</code></td><td>Look up by Reep ID or Wikidata QID</td></tr>
-      <tr><td><code>GET</code></td><td><code>/resolve</code></td><td>Resolve a provider ID to all others</td></tr>
-      <tr><td><code>GET</code></td><td><code>/stats</code></td><td>Entity and provider coverage counts</td></tr>
-      <tr><td><code>POST</code></td><td><code>/batch/lookup</code></td><td>Look up multiple IDs (max 100)</td></tr>
-      <tr><td><code>POST</code></td><td><code>/batch/resolve</code></td><td>Resolve multiple provider IDs (max 100)</td></tr>
-    </tbody>
-  </table>
-
-  <pre style="margin-top: 1rem;"><code>curl "https://reep-api.rahulkeerthi2-95d.workers.dev/resolve?provider=transfermarkt&id=568177" \
-  -H "X-RapidAPI-Proxy-Secret: YOUR_KEY"</code></pre>
-
-  <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
-    <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" target="_blank" rel="noopener" class="cta">Get API key</a>
-    <a href="https://github.com/withqwerty/reep" target="_blank" rel="noopener" class="cta outline">GitHub</a>
-  </div>
-
-  <!-- Provider coverage -->
-  <p class="section-title pink">Provider coverage</p>
-  <div style="overflow-x: auto;">
-    <table class="coverage-table">
+  <div class="content-narrow">
+    <p class="section-title blue">API</p>
+    <p style="font-size: 0.95rem; color: var(--fg-muted); margin-bottom: 1rem;">
+      All endpoints require authentication via
+      <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register">RapidAPI</a>.
+    </p>
+    <table class="endpoint-table">
       <thead>
         <tr>
-          <th>Provider</th>
-          <th>Players</th>
-          <th>Teams</th>
-          <th>Coaches</th>
-          <th>Comps</th>
-          <th>Seasons</th>
-          <th>Source</th>
+          <th>Method</th>
+          <th>Endpoint</th>
+          <th>Description</th>
         </tr>
       </thead>
       <tbody>
-        {coverageProviders.map((p) => (
-          <tr>
-            <td style="font-weight: 500;">{p.name}</td>
-            <td>{p.players ? '\u2713' : ''}</td>
-            <td>{p.teams ? '\u2713' : ''}</td>
-            <td>{p.coaches ? '\u2713' : ''}</td>
-            <td>{p.competitions ? '\u2713' : ''}</td>
-            <td>{p.seasons ? '\u2713' : ''}</td>
-            <td style="font-size: 0.8rem; color: var(--fg-muted);">{p.source}</td>
-          </tr>
-        ))}
+        <tr><td><code>GET</code></td><td><code>/search</code></td><td>Full-text search by name or alias</td></tr>
+        <tr><td><code>GET</code></td><td><code>/lookup</code></td><td>Look up by Reep ID or Wikidata QID</td></tr>
+        <tr><td><code>GET</code></td><td><code>/resolve</code></td><td>Resolve a provider ID to all others</td></tr>
+        <tr><td><code>GET</code></td><td><code>/stats</code></td><td>Entity and provider coverage counts</td></tr>
+        <tr><td><code>POST</code></td><td><code>/batch/lookup</code></td><td>Look up multiple IDs (max 100)</td></tr>
+        <tr><td><code>POST</code></td><td><code>/batch/resolve</code></td><td>Resolve multiple provider IDs (max 100)</td></tr>
       </tbody>
     </table>
+
+    <pre style="margin-top: 1rem;"><code>curl "https://reep-api.rahulkeerthi2-95d.workers.dev/resolve?provider=transfermarkt&id=568177" \
+  -H "X-RapidAPI-Proxy-Secret: YOUR_KEY"</code></pre>
+
+    <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+      <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" target="_blank" rel="noopener" class="cta">Get API key</a>
+      <a href="https://github.com/withqwerty/reep" target="_blank" rel="noopener" class="cta outline">View on GitHub</a>
+      <a href="https://github.com/withqwerty/reep#data" target="_blank" rel="noopener" class="cta outline">Download CSVs</a>
+    </div>
+  </div>
+
+  <!-- Provider coverage -->
+  <div class="content-narrow">
+    <p class="section-title pink">Provider coverage</p>
+    <div style="overflow-x: auto;">
+      <table class="coverage-table">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Players</th>
+            <th>Teams</th>
+            <th>Coaches</th>
+            <th>Comps</th>
+            <th>Seasons</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {coverageProviders.map((p) => (
+            <tr>
+              <td style="font-weight: 500;">{p.name}</td>
+              <td>{p.players ? '\u2713' : ''}</td>
+              <td>{p.teams ? '\u2713' : ''}</td>
+              <td>{p.coaches ? '\u2713' : ''}</td>
+              <td>{p.competitions ? '\u2713' : ''}</td>
+              <td>{p.seasons ? '\u2713' : ''}</td>
+              <td style="font-size: 0.8rem; color: var(--fg-muted);">{p.source}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Contribute -->
-  <p class="section-title muted">Contribute mapping data</p>
-  <div class="card" style="max-width: 600px;">
-    <p style="font-size: 0.95rem; margin-bottom: 0.75rem;">
-      Have verified ID mappings between football data providers? Contributions are welcome.
-      Submit a CSV with columns: <code>reep_id</code> (or <code>qid</code>), <code>provider</code>, <code>external_id</code>.
-    </p>
-    <p style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 1rem;">
-      Mappings should be verified (not fuzzy-matched). Include your source and methodology in the issue.
-    </p>
-    <a href="https://github.com/withqwerty/reep/issues/new?template=contribute-data.yml" target="_blank" rel="noopener" class="cta outline">Open a contribution issue</a>
+  <div class="content-narrow">
+    <p class="section-title muted">Contribute data</p>
+    <div class="card" style="max-width: 600px;">
+      <p style="font-size: 0.95rem; margin-bottom: 0.75rem;">
+        Have verified ID mappings between football data providers? Drop a file anonymously.
+        CSV preferred, but any format with provider IDs and entity names works.
+      </p>
+      <p style="font-size: 0.85rem; color: var(--fg-muted); margin-bottom: 1rem;">
+        No account required. Files are reviewed manually before merging.
+      </p>
+      <div id="drop-zone" style="border: 2px dashed var(--border); border-radius: var(--radius); padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.15s;">
+        <p style="font-size: 0.95rem; color: var(--fg-muted);" id="drop-text">Drop a file here, or click to browse</p>
+        <input type="file" id="file-input" style="display: none;" />
+      </div>
+      <p id="upload-status" style="font-size: 0.85rem; margin-top: 0.5rem; display: none;"></p>
+    </div>
   </div>
 
   <!-- Footer -->
-  <footer>
-    <p style="margin-bottom: 0.5rem;">Named after Charles Reep, the first football analyst (1950).</p>
+  <footer class="content-narrow">
+    <p style="margin-bottom: 0.5rem;">
+      Named after <a href="https://en.wikipedia.org/wiki/Charles_Reep" target="_blank" rel="noopener">Charles Reep</a>
+      (1904&ndash;2002), who hand-recorded every action in over 2,200 football matches.
+    </p>
     <div>
       <a href="https://github.com/withqwerty/reep" target="_blank" rel="noopener">GitHub</a>
       <a href="https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" target="_blank" rel="noopener">RapidAPI</a>
-      <a href="https://github.com/withqwerty/reep/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      <a href="https://x.com/withqwerty" target="_blank" rel="noopener">@withqwerty</a>
+      <a href="https://github.com/withqwerty/reep/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>
     </div>
   </footer>
 
-  <!-- Client-side search -->
+  <!-- Client-side search + file upload -->
   <script>
     import Fuse from 'fuse.js';
     import { detectInput } from '../lib/detect';
@@ -227,6 +235,8 @@ const coverageProviders = Object.entries(PROVIDERS)
     const input = document.getElementById('search-input') as HTMLInputElement;
     const resultsEl = document.getElementById('search-results') as HTMLDivElement;
     const grid = document.getElementById('examples-grid') as HTMLDivElement;
+
+    // --- SEARCH ---
 
     async function loadIndex() {
       if (index) return;
@@ -312,7 +322,6 @@ const coverageProviders = Object.entries(PROVIDERS)
       resultsEl.classList.remove('open');
       input.value = entity.name_en;
 
-      // Check if it exists as a pre-loaded example
       const existing = grid.querySelector(`[data-reep-id="${entity.reep_id}"]`) as HTMLElement | null;
       if (existing) {
         existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -321,7 +330,6 @@ const coverageProviders = Object.entries(PROVIDERS)
         return;
       }
 
-      // Create a new card dynamically
       const card = document.createElement('div');
       card.className = 'card highlight';
       card.dataset.reepId = entity.reep_id;
@@ -342,7 +350,6 @@ const coverageProviders = Object.entries(PROVIDERS)
       header.appendChild(typeBadge);
       card.appendChild(header);
 
-      // Bio line
       if (entity.type === 'player') {
         const parts = [entity.nationality, entity.position, entity.date_of_birth ? `Born ${entity.date_of_birth}` : null].filter(Boolean);
         if (parts.length > 0) {
@@ -358,10 +365,9 @@ const coverageProviders = Object.entries(PROVIDERS)
         card.appendChild(bio);
       }
 
-      // Provider chips
       const chipColors = ['', 'blue', 'pink'];
       const chipsDiv = document.createElement('div');
-      chipsDiv.style.cssText = 'display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem;';
+      chipsDiv.style.cssText = 'display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.5rem;';
 
       const ids = Object.entries(entity.external_ids);
       ids.forEach(([provider, id], i) => {
@@ -382,12 +388,81 @@ const coverageProviders = Object.entries(PROVIDERS)
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // Close dropdown on outside click
     document.addEventListener('click', (e) => {
       if (!resultsEl.contains(e.target as Node) && e.target !== input) {
         resultsEl.classList.remove('open');
       }
     });
+
+    // --- FILE UPLOAD (anonymous dead drop to /contribute on the Worker) ---
+
+    const dropZone = document.getElementById('drop-zone') as HTMLDivElement;
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    const dropText = document.getElementById('drop-text') as HTMLParagraphElement;
+    const statusEl = document.getElementById('upload-status') as HTMLParagraphElement;
+
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--green)';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.borderColor = 'var(--border)';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--border)';
+      const file = e.dataTransfer?.files[0];
+      if (file) uploadFile(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files?.[0];
+      if (file) uploadFile(file);
+    });
+
+    async function uploadFile(file: File) {
+      if (file.size > MAX_SIZE) {
+        showStatus('File too large (max 10MB)', 'var(--pink)');
+        return;
+      }
+
+      dropText.textContent = `Uploading ${file.name}...`;
+      statusEl.style.display = 'none';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const resp = await fetch('https://reep-api.rahulkeerthi2-95d.workers.dev/contribute', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (resp.ok) {
+          dropText.textContent = 'Drop a file here, or click to browse';
+          showStatus('Thanks! We\'ll review your data.', 'var(--green)');
+        } else {
+          const msg = await resp.text().catch(() => 'Upload failed');
+          dropText.textContent = 'Drop a file here, or click to browse';
+          showStatus(msg, 'var(--pink)');
+        }
+      } catch {
+        dropText.textContent = 'Drop a file here, or click to browse';
+        showStatus('Upload failed. Try again later.', 'var(--pink)');
+      }
+    }
+
+    function showStatus(msg: string, color: string) {
+      statusEl.textContent = msg;
+      statusEl.style.color = color;
+      statusEl.style.display = 'block';
+    }
   </script>
 
 </body>
