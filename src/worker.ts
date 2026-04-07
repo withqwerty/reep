@@ -1,5 +1,6 @@
 export interface Env {
   DB: D1Database;
+  CONTRIBUTIONS?: R2Bucket;
   RAPIDAPI_PROXY_SECRET?: string;
   BYPASS_KEY?: string;
 }
@@ -99,6 +100,45 @@ export default {
         status,
         headers: { ...JSON_HEADERS, "Cache-Control": "no-store" },
       });
+    }
+
+    // POST /contribute — anonymous file upload to R2 (no auth required)
+    if (method === "POST" && path === "/contribute") {
+      if (!env.CONTRIBUTIONS) {
+        return json({ error: "Contributions not configured" }, 503);
+      }
+      const contentLength = parseInt(request.headers.get("content-length") || "0", 10);
+      if (contentLength > 10 * 1024 * 1024) {
+        return json({ error: "File too large (max 10MB)" }, 413);
+      }
+
+      try {
+        const formData = await request.formData();
+        const file = formData.get("file");
+        if (!file || !(file instanceof File)) {
+          return json({ error: "No file provided" }, 400);
+        }
+
+        const ts = new Date().toISOString().replace(/[:.]/g, "-");
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 100);
+        const key = `${ts}_${safeName}`;
+
+        await env.CONTRIBUTIONS.put(key, file.stream(), {
+          httpMetadata: { contentType: file.type || "application/octet-stream" },
+          customMetadata: {
+            originalName: file.name,
+            size: String(file.size),
+            uploadedAt: new Date().toISOString(),
+            ip: request.headers.get("cf-connecting-ip") || "unknown",
+          },
+        });
+
+        console.log(JSON.stringify({ method, path, file: safeName, size: file.size, status: 200, ms: Date.now() - start }));
+        return json({ ok: true, message: "Thanks! We'll review your data." });
+      } catch (e) {
+        console.log(JSON.stringify({ method, path, status: 500, error: String(e), ms: Date.now() - start }));
+        return json({ error: "Upload failed" }, 500);
+      }
     }
 
     // Auth: RapidAPI proxy secret or bypass key for internal use
