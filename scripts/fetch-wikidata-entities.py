@@ -331,26 +331,33 @@ def build_competition_ids_query(limit: int = 0, offset: int = 0) -> str:
     limit_clause = f"LIMIT {limit}" if limit else ""
     offset_clause = f"OFFSET {offset}" if offset else ""
 
-    # Union: class-based (Q15991290 subclasses) + property-based (items with competition IDs).
-    # Many competitions have FBref/Opta IDs but aren't typed as Q15991290 subclasses.
-    # Filter: only items whose sport (P641) is association football (Q2736) or unspecified.
-    # This is a positive filter (allow football) rather than a negative one (block non-football),
-    # because Wikidata's non-football sport taxonomy is too fragmented to enumerate reliably.
-    prop_unions = "\n      UNION\n".join(
-        f"      {{ ?e wdt:{prop} [] . }}" for prop in COMPETITION_IDS.values()
+    # Two-path union: class-based (Q15991290 subclasses) + property-based (has competition IDs).
+    # Class path: STRICT — require P641 = association football (Q2736). This blocks non-football
+    # competitions (NHL, PGA, rugby, etc.) that leaked through when P641 was missing or wrong.
+    # Property path: PERMISSIVE — having FBref/Opta IDs is strong enough proof of football.
+    # Items without P641 are still allowed through the property path if they have provider IDs.
+    prop_unions = "\n        UNION\n".join(
+        f"        {{ ?e wdt:{prop} [] . }}" for prop in COMPETITION_IDS.values()
     )
     return f"""
 SELECT ?e ?eLabel {id_selects}
 WHERE {{
   {{
     SELECT DISTINCT ?e WHERE {{
-      {{ ?e wdt:P31/wdt:P279* wd:Q15991290 . }}
+      {{
+        # Class path: must explicitly declare sport = association football
+        ?e wdt:P31/wdt:P279* wd:Q15991290 .
+        ?e wdt:P641 wd:Q2736 .
+      }}
       UNION
+      {{
+        # Property path: has football-specific provider IDs (FBref, Opta, etc.)
 {prop_unions}
-      # Only allow association football (Q2736) or items with no sport specified
-      FILTER NOT EXISTS {{
-        ?e wdt:P641 ?sport .
-        FILTER(?sport != wd:Q2736)
+        # Still block items that explicitly declare a non-football sport
+        FILTER NOT EXISTS {{
+          ?e wdt:P641 ?sport .
+          FILTER(?sport != wd:Q2736)
+        }}
       }}
     }}
     ORDER BY ?e
@@ -373,18 +380,33 @@ def build_season_ids_query(limit: int = 0, offset: int = 0) -> str:
     limit_clause = f"LIMIT {limit}" if limit else ""
     offset_clause = f"OFFSET {offset}" if offset else ""
 
-    # Only allow seasons of football competitions (P641 = Q2736 or no sport specified)
+    # Only allow seasons of football competitions.
+    # Two-path union mirrors the competition query:
+    # 1. Competition has P641 = Q2736 (strict class path)
+    # 2. Competition has football-specific provider IDs (FBref, Opta, etc.)
+    comp_prop_unions = "\n        UNION\n".join(
+        f"        {{ ?comp wdt:{prop} [] . }}" for prop in COMPETITION_IDS.values()
+    )
     return f"""
 SELECT ?e ?eLabel ?competitionQid{id_selects}
 WHERE {{
   {{
     SELECT DISTINCT ?e ?competitionQid WHERE {{
       ?e wdt:P3450 ?comp .
-      ?comp wdt:P31/wdt:P279* wd:Q15991290 .
       BIND(?comp AS ?competitionQid)
-      FILTER NOT EXISTS {{
-        ?comp wdt:P641 ?sport .
-        FILTER(?sport != wd:Q2736)
+      {{
+        # Class path: competition must declare sport = association football
+        ?comp wdt:P31/wdt:P279* wd:Q15991290 .
+        ?comp wdt:P641 wd:Q2736 .
+      }}
+      UNION
+      {{
+        # Property path: competition has football-specific provider IDs
+{comp_prop_unions}
+        FILTER NOT EXISTS {{
+          ?comp wdt:P641 ?sport .
+          FILTER(?sport != wd:Q2736)
+        }}
       }}
     }}
     ORDER BY ?e
