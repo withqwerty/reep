@@ -563,7 +563,10 @@ def merge_bio(entities: dict[str, dict], bio_rows: list[dict], entity_type: str)
 
         if not e["date_of_birth"] and row.get("dob"):
             dob = row["dob"]
-            e["date_of_birth"] = dob.split("T")[0] if "T" in dob else dob
+            dob = dob.split("T")[0] if "T" in dob else dob
+            # Skip blank-node genid URLs and implausible years
+            if not dob.startswith("http") and dob[:1] in ("1", "2"):
+                e["date_of_birth"] = dob
 
         if not e["nationality"] and row.get("nationalityLabel"):
             e["nationality"] = row["nationalityLabel"]
