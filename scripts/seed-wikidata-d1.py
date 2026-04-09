@@ -156,6 +156,27 @@ def main():
             print("ABORTED — no new entities found in JSON files.")
             sys.exit(1)
 
+    # --- Backup existing reep_ids before dropping tables ---
+    # reep_ids are immutable once assigned. On a full re-seed we must preserve
+    # them so that custom_ids, provider_ids, and all downstream consumers
+    # continue to reference the same stable identifiers.
+    saved_reep_ids: dict[str, str] = {}  # "qid:type" -> reep_id
+    if not args.dry_run and not args.local:
+        print("Backing up existing reep_ids...", end=" ", flush=True)
+        offset = 0
+        while True:
+            rows = query_d1(
+                f"SELECT qid, type, reep_id FROM entities "
+                f"WHERE reep_id IS NOT NULL "
+                f"LIMIT 10000 OFFSET {offset};"
+            )
+            if not rows:
+                break
+            for r in rows:
+                saved_reep_ids[f"{r['qid']}:{r['type']}"] = r["reep_id"]
+            offset += len(rows)
+        print(f"{len(saved_reep_ids):,} reep_ids saved")
+
     # Drop and recreate tables with current schema.
     # Safe because the seed is a full refresh. FTS table must also be recreated
     # since the entities table structure (PK) changes.
@@ -271,15 +292,18 @@ CREATE VIRTUAL TABLE IF NOT EXISTS entities_fts USING fts5(
 
             Path(tmp_path).unlink()
 
-    # --- Mint reep_ids for all entities ---
-    # After a full seed, entities have no reep_ids. Mint them before building provider_ids.
+    # --- Restore saved reep_ids + mint new ones ---
+    # Restore reep_ids backed up before DROP TABLE. Only mint new random IDs
+    # for entities that didn't exist in the previous database.
     if not args.dry_run:
-        print("\nMinting reep_ids for all entities...")
+        print("\nRestoring/minting reep_ids...")
         type_prefixes = {"player": "p", "team": "t", "coach": "c"}
         page_size = 10_000
         offset = 0
         mint_stmts = []
-        used_ids: set[str] = set()
+        used_ids: set[str] = set(saved_reep_ids.values())
+        restored = 0
+        minted = 0
 
         while True:
             rows = query_d1(
@@ -290,11 +314,18 @@ CREATE VIRTUAL TABLE IF NOT EXISTS entities_fts USING fts5(
             if not rows:
                 break
             for row in rows:
-                prefix = type_prefixes[row["type"]]
-                for _ in range(10):
-                    reep_id = f"reep_{prefix}{uuid.uuid4().hex[:8]}"
-                    if reep_id not in used_ids:
-                        break
+                key = f"{row['qid']}:{row['type']}"
+                existing = saved_reep_ids.get(key)
+                if existing:
+                    reep_id = existing
+                    restored += 1
+                else:
+                    prefix = type_prefixes[row["type"]]
+                    for _ in range(10):
+                        reep_id = f"reep_{prefix}{uuid.uuid4().hex[:8]}"
+                        if reep_id not in used_ids:
+                            break
+                    minted += 1
                 used_ids.add(reep_id)
                 mint_stmts.append(
                     f"UPDATE entities SET reep_id = {escape_sql(reep_id)} "
@@ -302,7 +333,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS entities_fts USING fts5(
                     f"AND reep_id IS NULL;"
                 )
             offset += page_size
-        print(f"  Generated {len(mint_stmts):,} reep_ids")
+        print(f"  {restored:,} restored, {minted:,} newly minted")
 
         batch_size = 500
         failed = 0
