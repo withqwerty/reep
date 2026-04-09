@@ -106,6 +106,31 @@ def main():
         json.dump(reep_map, f)
     print(f"Wrote {len(reep_map):,} reep_id mappings to {REEP_ID_MAP_OUTPUT}")
 
+    # Export custom_aliases
+    ALIASES_OUTPUT = Path(__file__).parent.parent / "data" / "custom_aliases.json"
+    print("\nFetching custom_aliases...")
+    alias_count_rows = query_d1("SELECT COUNT(*) as total FROM custom_aliases;", args.local)
+    alias_total = alias_count_rows[0]["total"] if alias_count_rows else 0
+    print(f"  custom_aliases in D1: {alias_total}")
+
+    alias_rows: list[dict] = []
+    offset = 0
+    while offset < alias_total:
+        rows = query_d1(
+            f"SELECT reep_id, alias, provider, language FROM custom_aliases "
+            f"ORDER BY reep_id LIMIT {BATCH_SIZE} OFFSET {offset};",
+            args.local,
+        )
+        if not rows:
+            break
+        alias_rows.extend(rows)
+        offset += len(rows)
+        print(f"  fetched {len(alias_rows)}/{alias_total}")
+
+    with open(ALIASES_OUTPUT, "w") as f:
+        json.dump(alias_rows, f, indent=2)
+    print(f"Wrote {len(alias_rows)} custom aliases to {ALIASES_OUTPUT}")
+
     # Export position_detail for all entities that have it
     POSITION_DETAIL_OUTPUT = Path(__file__).parent.parent / "data" / "position_detail.json"
     print("\nFetching position_detail...")

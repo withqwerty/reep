@@ -20,9 +20,9 @@ Wikidata SPARQL -> data/json/*.json -> D1 (entities + provider_ids)
                                        ↑
 reep-custom scripts -> D1 (custom_ids) ─┘
                                        │
-                     fetch-custom-ids.py -> data/custom_ids.json + data/reep_id_map.json
+                     fetch-custom-ids.py -> data/custom_ids.json + data/custom_aliases.json + data/reep_id_map.json
                                        │
-                     export-csv.py merges both -> data/*.csv (keyed on reep_id)
+                     export-csv.py merges all -> data/*.csv (keyed on reep_id, names.csv includes custom_aliases)
                                        │
                      reep-api Worker -> reads entities + provider_ids + custom_ids + FTS -> API responses
 ```
@@ -54,6 +54,7 @@ Design document: `docs/plan-reep-id.md`
 - `entities` - 488K+ players/teams/coaches/competitions/seasons with bio data, PK `reep_id`. Seasons have `competition_reep_id` FK to their competition.
 - `provider_ids` - 1.7M Wikidata-sourced provider ID mappings (including `provider=wikidata` for QIDs), PK `(reep_id, provider, external_id)`. Dropped and recreated on weekly refresh.
 - `custom_ids` - ~353K verified mappings, PK `(reep_id, provider, external_id)` (Opta, FotMob, Understat, WhoScored, Club Elo, SportMonks, API-Football, FBref verified, Impect, Wyscout, SkillCorner, heim:spiel, TheSportsDB, ESPN). Never bulk-dropped.
+- `custom_aliases` - name variants collected from provider data sources, PK `(reep_id, alias)`. Merged into `data/names.csv` by `export-csv.py`.
 - `entities_fts` - FTS5 virtual table for full-text search on entity names (synced from entities via triggers, rebuilt after each seed)
 
 ## Scripts
@@ -64,8 +65,8 @@ Design document: `docs/plan-reep-id.md`
 | `scripts/enrich-wikidata-bio.py` | Bio enrichment (DOB, nationality, position, aliases) |
 | `scripts/seed-wikidata-d1.py` | Bulk INSERT into D1 + mint reep_ids + rebuild provider_ids + FTS rebuild |
 | `scripts/incremental-update.py` | Incremental Wikidata update (dual-writes to provider_ids) |
-| `scripts/fetch-custom-ids.py` | Export custom_ids + reep_id_map from D1 to JSON |
-| `scripts/export-csv.py` | JSON -> CSV for public download (merges Wikidata + custom, keyed on reep_id) |
+| `scripts/fetch-custom-ids.py` | Export custom_ids + custom_aliases + reep_id_map from D1 to JSON |
+| `scripts/export-csv.py` | JSON -> CSV for public download (merges Wikidata + custom + custom_aliases, keyed on reep_id). `names.csv` columns: `reep_id,key_wikidata,name,alias` |
 | `scripts/mint-reep-ids.py` | Mint reep_ids for entities that don't have one |
 | `scripts/create-provider-ids.py` | Create provider_ids table from external_ids (one-time migration) |
 | `scripts/rekey-custom-ids.py` | Rekey custom_ids from (qid, type) to reep_id (one-time migration) |
@@ -75,6 +76,7 @@ Design document: `docs/plan-reep-id.md`
 | `scripts/cutover-reep-id.py` | Phase 4 cutover: make reep_id the PK (one-time migration) |
 | `scripts/clone-to-staging.py` | Clone production D1 to staging for rehearsal |
 | `scripts/research-competitions.py` | SPARQL exploration for competition/season coverage |
+| `scripts/validate-csv.py` | Validate exported CSVs (reep_ids populated, columns present, cross-file sync) |
 
 ## Adding a new provider
 
@@ -205,8 +207,10 @@ pnpm exec wrangler secret put SECRET_NAME    # set Worker secret
 python scripts/incremental-update.py         # incremental Wikidata update (weekly)
 python scripts/incremental-update.py --dry-run  # show what would change
 python scripts/fetch-wikidata-entities.py --ids-only  # full fetch (manual dispatch only, not scheduled)
-python scripts/fetch-custom-ids.py     # fetch custom IDs + reep_id map from D1
+python scripts/fetch-custom-ids.py     # fetch custom IDs + custom aliases + reep_id map from D1
 python scripts/export-csv.py           # regenerate CSVs (Wikidata + custom, keyed on reep_id)
+python scripts/validate-csv.py         # validate exported CSVs (run after export-csv.py)
+python scripts/validate-csv.py --verbose  # show sample failures
 python scripts/check-sync.py           # check what's out of sync (providers, CSVs, docs)
 python scripts/mint-reep-ids.py        # mint reep_ids for entities without one
 python scripts/mint-reep-ids.py --dry-run  # preview what would be minted

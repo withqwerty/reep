@@ -126,6 +126,7 @@ TEAM_COLUMNS = [
 
 # Column order for names.csv
 NAME_COLUMNS = [
+    "reep_id",
     "key_wikidata",
     "name",
     "alias",
@@ -271,25 +272,75 @@ def export_teams(teams: list[dict], out_path: Path,
     return len(teams)
 
 
-def export_names(all_entities: list[dict], out_path: Path):
-    """Export alias mappings to names.csv."""
+def export_names(all_entities: list[dict], out_path: Path, reep_id_map: dict[str, str],
+                  custom_aliases_path: Path | None = None):
+    """Export alias mappings to names.csv.
+
+    Merges two sources:
+      1. entities.aliases_en (Wikidata alt labels)
+      2. custom_aliases.json (name variants discovered by match scripts)
+    """
     rows = []
-    seen: set[tuple[str, str]] = set()
+    seen: set[tuple[str, str]] = set()  # (reep_id, alias)
+
+    # Build QID → reep_id reverse lookup
+    qid_to_reep: dict[str, str] = {}
+    for key, reep_id in reep_id_map.items():
+        qid = key.split(":")[0]
+        qid_to_reep.setdefault(qid, reep_id)
+
+    # Source 1: Wikidata aliases from entities
     for entity in all_entities:
         aliases_str = entity.get("aliases_en")
         if not aliases_str:
             continue
+        qid = entity["qid"]
+        reep_id = qid_to_reep.get(qid, "")
         name = entity.get("name_en", "")
         for alias in aliases_str.split(", "):
             alias = alias.strip()
-            key = (entity["qid"], alias)
+            key = (reep_id or qid, alias)
             if alias and alias != name and key not in seen:
                 seen.add(key)
                 rows.append({
-                    "key_wikidata": entity["qid"],
+                    "reep_id": reep_id,
+                    "key_wikidata": qid,
                     "name": name,
                     "alias": alias,
                 })
+
+    # Source 2: custom_aliases from match scripts
+    if custom_aliases_path and custom_aliases_path.exists():
+        with open(custom_aliases_path) as f:
+            custom_aliases = json.load(f)
+
+        # Build reep_id → (name, qid) lookup from entities
+        reep_to_info: dict[str, tuple[str, str]] = {}
+        for entity in all_entities:
+            qid = entity["qid"]
+            rid = qid_to_reep.get(qid, "")
+            if rid:
+                reep_to_info[rid] = (entity.get("name_en", ""), qid)
+
+        n_custom = 0
+        for row in custom_aliases:
+            rid = row["reep_id"]
+            alias = row["alias"]
+            key = (rid, alias)
+            if key in seen:
+                continue
+            seen.add(key)
+            name, qid = reep_to_info.get(rid, ("", ""))
+            if alias != name:
+                rows.append({
+                    "reep_id": rid,
+                    "key_wikidata": qid,
+                    "name": name,
+                    "alias": alias,
+                })
+                n_custom += 1
+
+        print(f"  (includes {n_custom} custom aliases from match scripts)")
 
     rows.sort(key=lambda r: (r["name"], r["alias"]))
 
@@ -432,7 +483,8 @@ def main():
         print(f"Exported {n_seasons} seasons to data/seasons.csv")
 
     all_entities = players + teams + coaches + competitions + seasons
-    n_names = export_names(all_entities, OUTPUT_DIR / "names.csv")
+    custom_aliases_path = OUTPUT_DIR / "custom_aliases.json"
+    n_names = export_names(all_entities, OUTPUT_DIR / "names.csv", reep_id_map, custom_aliases_path)
     print(f"Exported {n_names} aliases to data/names.csv")
 
     # Write metadata
