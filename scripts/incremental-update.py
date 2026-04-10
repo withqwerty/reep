@@ -97,7 +97,15 @@ def execute_sql_file(sql_path: str, remote: bool = True) -> bool:
 # ---------------------------------------------------------------------------
 
 def fetch_changed_qids(since: str) -> dict[str, list[str]]:
-    """Fetch QIDs modified since the given date, per entity type."""
+    """Fetch QIDs modified since the given date, per entity type.
+
+    These discovery queries must stay aligned with the initial-filter paths
+    in fetch-wikidata-entities.py's build_*_ids_query functions — any entity
+    reachable in the full fetch should also be discoverable here if it's
+    been edited recently. When the full-fetch filter widens, this file has
+    to widen too, otherwise newly-reachable entities would only arrive via
+    a full refresh.
+    """
     type_queries = {
         "player": f"""
             SELECT DISTINCT ?e WHERE {{
@@ -107,10 +115,27 @@ def fetch_changed_qids(since: str) -> dict[str, list[str]]:
               FILTER NOT EXISTS {{ ?e wdt:P31 wd:Q95074 }}
               FILTER NOT EXISTS {{ ?e wdt:P31 wd:Q15632617 }}
             }}""",
+        # Team: three-path UNION matching build_team_ids_query. Covers
+        # subclass of Q476028 (association football club), Q103229495
+        # (men's association football team — catches Q7156 Barcelona,
+        # Q170703 Boca), and sports clubs with football as sport.
         "team": f"""
             SELECT DISTINCT ?e WHERE {{
-              ?e wdt:P31 ?type .
-              ?type (wdt:P279)* wd:Q476028 .
+              {{
+                ?e wdt:P31 ?type .
+                ?type (wdt:P279)* wd:Q476028 .
+              }}
+              UNION
+              {{
+                ?e wdt:P31 ?type .
+                ?type (wdt:P279)* wd:Q103229495 .
+              }}
+              UNION
+              {{
+                ?e wdt:P641 wd:Q2736 .
+                ?e wdt:P31 ?type .
+                ?type (wdt:P279)* wd:Q847017 .
+              }}
               ?e schema:dateModified ?mod .
               FILTER(?mod > "{since}T00:00:00Z"^^xsd:dateTime)
             }}""",
@@ -122,15 +147,32 @@ def fetch_changed_qids(since: str) -> dict[str, list[str]]:
               FILTER NOT EXISTS {{ ?e wdt:P31 wd:Q95074 }}
               FILTER NOT EXISTS {{ ?e wdt:P31 wd:Q15632617 }}
             }}""",
+        # Competition: class path requires explicit P641 = football
+        # (blocks NHL / PGA / rugby leaks), property path allows any
+        # entity with a football-specific provider claim. Seasons are
+        # excluded via FILTER NOT EXISTS P3450 (they're handled by the
+        # season query below).
         "competition": f"""
             SELECT DISTINCT ?e WHERE {{
-              {{ ?e wdt:P31/wdt:P279* wd:Q15991290 . }}
-              UNION
-              {{ ?e wdt:P12758 [] . }}
-              UNION
-              {{ ?e wdt:P13664 [] . }}
-              UNION
-              {{ ?e wdt:P8735 [] . }}
+              {{
+                {{
+                  ?e wdt:P31/wdt:P279* wd:Q15991290 .
+                  ?e wdt:P641 wd:Q2736 .
+                }}
+                UNION
+                {{
+                  {{ ?e wdt:P12758 [] . }}
+                  UNION
+                  {{ ?e wdt:P13664 [] . }}
+                  UNION
+                  {{ ?e wdt:P8735 [] . }}
+                  FILTER NOT EXISTS {{
+                    ?e wdt:P641 ?sport .
+                    FILTER(?sport != wd:Q2736)
+                  }}
+                }}
+              }}
+              FILTER NOT EXISTS {{ ?e wdt:P3450 ?parentComp . }}
               ?e schema:dateModified ?mod .
               FILTER(?mod > "{since}T00:00:00Z"^^xsd:dateTime)
             }}""",
