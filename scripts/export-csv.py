@@ -320,7 +320,14 @@ def export_names(all_entities: list[dict], out_path: Path, reep_id_map: dict[str
         if not aliases_str:
             continue
         qid = entity["qid"]
-        reep_id = qid_to_reep.get(qid, "")
+        # For custom entities (from fetch-custom-entities.py), the qid slot
+        # holds the reep_id directly. Otherwise look it up from the map.
+        if qid.startswith("reep_"):
+            reep_id = qid
+            qid_for_csv = entity.get("reep_id", qid)  # no Wikidata QID to expose
+        else:
+            reep_id = qid_to_reep.get(qid, "") or entity.get("reep_id", "")
+            qid_for_csv = qid
         name = entity.get("name_en", "")
         for alias in aliases_str.split(", "):
             alias = alias.strip()
@@ -329,7 +336,7 @@ def export_names(all_entities: list[dict], out_path: Path, reep_id_map: dict[str
                 seen.add(key)
                 rows.append({
                     "reep_id": reep_id,
-                    "key_wikidata": qid,
+                    "key_wikidata": qid_for_csv if not qid_for_csv.startswith("reep_") else "",
                     "name": name,
                     "alias": alias,
                 })

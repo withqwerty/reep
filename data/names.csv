@@ -5403,6 +5403,10 @@ reep_pd1e94d61,Q10514792,Bobby De Cordova-Reid,Decordova-Reid
 reep_p8d87f877,Q100366870,Bobby Edwards,Robert Edwards
 reep_p7be9ffc4,Q4935059,Bobby Grant,Robert Grant
 reep_p966587b7,Q97059250,Bobby Thomas,Thomas
+reep_tca630395,,Boca Juniors,CA Boca Juniors
+reep_tca630395,,Boca Juniors,CABJ
+reep_tca630395,,Boca Juniors,Club Atletico Boca Juniors
+reep_tca630395,,Boca Juniors,Club Atlético Boca Juniors
 reep_p6c339972,Q110404504,Bodda Mouhsine,Mouhsine Bodda
 reep_t4b0b1b5f,Q4937261,Boeung Ket F.C.,Boeung Ket
 reep_p38391f12,Q125906933,Bogdan Brîncoveanu,Nicușor Brîncoveanu
@@ -9176,6 +9180,10 @@ reep_t77638198,Q5400867,Esteghlal Khuzestan F.C.,Esteghlal Khuzestan
 reep_p4eddec32,Q115332579,Estevão,Estêvão Almeida de Oliveira Gonçalves
 reep_p833e81c5,Q17612542,Estrela,Valdomiro Lameira
 reep_t8caf0ea1,Q214940,Estudiantes de La Plata,Club Estudiantes de La Plata
+reep_t09881a8a,,Estudiantes de Río Cuarto,AA Estudiantes (Río Cuarto)
+reep_t09881a8a,,Estudiantes de Río Cuarto,Asociación Atlética Estudiantes
+reep_t09881a8a,,Estudiantes de Río Cuarto,Estudiantes RC
+reep_t09881a8a,,Estudiantes de Río Cuarto,Estudiantes de Rio Cuarto
 reep_p8f2a2e10,Q26250324,Ethan Ampadu,Ampadu
 reep_p8f2a2e10,Q26250324,Ethan Ampadu,E. Ampadu
 reep_p7d13e362,Q111301495,Ethan Azoulay,Ethane Azoulay
@@ -9329,7 +9337,14 @@ reep_t80ab37e0,Q795978,FC Baltika Kaliningrad,Baltika Kaliningrad
 reep_t80ab37e0,Q795978,FC Baltika Kaliningrad,FK Baltika
 reep_taaf0f223,Q329471,FC Baník Ostrava,FC Baník Ostrava a.s.
 reep_tc503bdae,Q2496995,FC Baranovichi,Baranovichi
-reep_t69090873,Q5424838,FC Barcelona,Barcelona
+reep_tc7e2759e,,FC Barcelona,Barcelona FC
+reep_tc7e2759e,,FC Barcelona,Barcelona Football Club
+reep_tc7e2759e,,FC Barcelona,Barça
+reep_tc7e2759e,,FC Barcelona,F.C. Barcelona
+reep_tc7e2759e,,FC Barcelona,FCB
+reep_tc7e2759e,,FC Barcelona,Futbol Club Barcelona
+reep_tc7e2759e,,FC Barcelona,Fútbol Club Barcelona
+reep_t69090873,Q5424838,FC Barcelona (beach soccer),Barcelona
 reep_t4d2fc0fc,Q10467,FC Barcelona Atlètic,Barcelona Atlètic
 reep_t0f188321,Q189671,FC Basel,FC Basel 1893 AG
 reep_t2c00168a,Q3392513,FC Bavois,Bavois
