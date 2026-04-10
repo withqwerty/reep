@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026.17 - 2026-04-10
+
+### Scripts
+- `fetch-wikidata-entities.py`: operational hygiene pass.
+  - **Narrower exception handling in `sparql_query`.** The retry loop was catching a blanket `Exception`, which swallowed logic bugs, attribute errors, and type errors along with the transient network/JSON failures it was meant to recover from. Now catches only `OSError` (network family: URLError, ConnectionError, TimeoutError, etc.) and `json.JSONDecodeError` / `KeyError` (malformed responses). Anything else propagates immediately so real bugs surface loudly.
+  - **Run-delta metrics.** Each per-type save now reads the previous `data/json/{type}s.json`, compares it to the new entity list, and prints a one-line summary: `+added / -removed (bio changes: N, ID changes: M)`. A final per-type summary table at the end of the run gives a single glance at what changed. Covers name_en / DOB / nationality / position / height / country / founded / stadium / aliases / full_name / description_en / team_category / external_ids. Would have caught the 41K `reep_id_map` deficit from a partial fetch during the run itself instead of surfacing downstream.
+  - **Removed dead `parse_tsv_results` function** (47 lines). The script only uses JSON format these days — the TSV parser hadn't been called by anything for a while.
+
 ## 2026.16 - 2026-04-10
 
 ### Scripts

@@ -116,8 +116,17 @@ PAGE_SIZE = 50000  # SPARQL pagination size
 def sparql_query(query: str, retries: int = 5, expected_min: int = 0) -> list[dict]:
     """Execute a SPARQL query against Wikidata via POST.
 
-    Uses JSON format with strict=False to handle control characters.
-    Retries on malformed JSON (corrupt responses from Wikidata).
+    Uses JSON format with strict=False to handle control characters that
+    occasionally appear in label fields. Retries on:
+      - HTTP 429 (rate limit) with a long backoff
+      - HTTP 500 / 502 / 503 (transient server errors)
+      - network errors (URLError, OSError, ConnectionError, TimeoutError)
+      - malformed JSON (JSONDecodeError) — Wikidata's response stream
+        occasionally truncates under load
+      - missing expected fields (KeyError on results.bindings) — same
+        cause as malformed JSON
+    Anything else (AttributeError, TypeError, generic Exception) is a
+    bug in our code or an unknown failure and propagates immediately.
     """
     body = urllib.parse.urlencode({"query": query}).encode("utf-8")
     req = urllib.request.Request(
@@ -156,61 +165,24 @@ def sparql_query(query: str, retries: int = 5, expected_min: int = 0) -> list[di
                 time.sleep(10)
                 continue
             raise
-        except (urllib.error.URLError, ConnectionError, Exception) as e:
+        except OSError as e:
+            # OSError covers the full transient-network family on Python 3.x:
+            # URLError (inherits OSError), ConnectionError, TimeoutError,
+            # BrokenPipeError, ConnectionResetError, ConnectionRefusedError,
+            # and raw socket errors. HTTPError is a URLError subclass but is
+            # caught by the preceding handler.
             if attempt < retries:
-                print(f"  Connection error: {e}. Retrying in 10s...")
+                print(f"  Network error ({type(e).__name__}): {e}. Retrying in 10s...")
+                time.sleep(10)
+                continue
+            raise
+        except (json.JSONDecodeError, KeyError) as e:
+            if attempt < retries:
+                print(f"  Malformed response ({type(e).__name__}): {e}. Retrying in 10s...")
                 time.sleep(10)
                 continue
             raise
     return []
-
-
-def parse_tsv_results(text: str) -> list[dict]:
-    """Parse SPARQL TSV results into list of dicts.
-
-    TSV format: first line is ?var1\\t?var2\\t... headers,
-    subsequent lines are values. URIs are wrapped in <>, strings in quotes.
-    """
-    lines = text.strip().split("\n")
-    if not lines:
-        return []
-
-    # Headers: strip leading ? from variable names
-    headers = [h.lstrip("?") for h in lines[0].split("\t")]
-
-    rows = []
-    for line in lines[1:]:
-        if not line.strip():
-            continue
-        values = line.split("\t")
-        row = {}
-        for i, val in enumerate(values):
-            if i >= len(headers):
-                break
-            val = val.strip()
-            if not val:
-                continue
-            # Strip URI brackets: <http://www.wikidata.org/entity/Q123> → http://...
-            if val.startswith("<") and val.endswith(">"):
-                val = val[1:-1]
-            # Strip string quotes: "value" → value
-            elif val.startswith('"'):
-                # Handle "value"@en or "value"^^<type>
-                if '"@' in val:
-                    val = val[1:val.rindex('"@')]
-                elif '"^^' in val:
-                    val = val[1:val.rindex('"^^')]
-                elif val.endswith('"'):
-                    val = val[1:-1]
-            row[headers[i]] = val
-        if row:
-            rows.append(row)
-
-    # Drop last row if it has fewer columns than the header (truncated response)
-    if rows and len(rows[-1]) < len(headers) // 2:
-        rows.pop()
-
-    return rows
 
 
 def sparql_query_paginated(query_fn, limit: int = 0) -> list[dict]:
@@ -238,6 +210,71 @@ def sparql_query_paginated(query_fn, limit: int = 0) -> list[dict]:
 
 def extract_qid(uri: str) -> str:
     return uri.split("/")[-1]
+
+
+# Fields compared by compute_delta() when counting "bio changes" on the
+# common set of entities between the old and new json snapshots. name_en
+# is included so description-disambiguation renames show up too.
+_DELTA_BIO_FIELDS = (
+    "name_en", "date_of_birth", "nationality", "position", "position_detail",
+    "height_cm", "country", "founded", "stadium", "aliases_en",
+    "full_name", "description_en", "team_category",
+)
+
+
+def compute_delta(old: list[dict], new: list[dict]) -> dict:
+    """Compare two entity lists and return a summary of what changed.
+
+    Returns a dict with:
+      added         — count of new QIDs
+      removed       — count of QIDs present in old but not new
+      bio_changed   — count of entities where at least one scalar bio
+                      field changed (see _DELTA_BIO_FIELDS)
+      ids_changed   — count of entities whose external_ids dict differs
+      added_samples — up to 3 sample added QIDs
+      removed_samples — up to 3 sample removed QIDs
+    """
+    old_by_qid = {e["qid"]: e for e in old if e.get("qid")}
+    new_by_qid = {e["qid"]: e for e in new if e.get("qid")}
+    added = set(new_by_qid) - set(old_by_qid)
+    removed = set(old_by_qid) - set(new_by_qid)
+    common = set(old_by_qid) & set(new_by_qid)
+
+    bio_changed = 0
+    ids_changed = 0
+    for qid in common:
+        oe = old_by_qid[qid]
+        ne = new_by_qid[qid]
+        if any(oe.get(f) != ne.get(f) for f in _DELTA_BIO_FIELDS):
+            bio_changed += 1
+        if oe.get("external_ids") != ne.get("external_ids"):
+            ids_changed += 1
+
+    return {
+        "old_count": len(old),
+        "new_count": len(new),
+        "added": len(added),
+        "removed": len(removed),
+        "bio_changed": bio_changed,
+        "ids_changed": ids_changed,
+        "added_samples": sorted(added)[:3],
+        "removed_samples": sorted(removed)[:3],
+    }
+
+
+def print_delta(entity_type: str, delta: dict) -> None:
+    """Print a one-line summary of the delta against the previous run."""
+    if delta["old_count"] == 0:
+        print(f"  Delta: first run (no previous {entity_type}s.json)")
+        return
+    print(
+        f"  Delta vs previous: +{delta['added']} / -{delta['removed']} "
+        f"(bio changes: {delta['bio_changed']}, ID changes: {delta['ids_changed']})"
+    )
+    if delta["added"]:
+        print(f"    First added: {delta['added_samples']}")
+    if delta["removed"]:
+        print(f"    First removed: {delta['removed_samples']}")
 
 
 # ---------------------------------------------------------------------------
@@ -810,10 +847,25 @@ def main():
     if args.type:
         type_configs = {args.type: type_configs[args.type]}
 
+    run_summary: dict[str, dict] = {}
+
     for entity_type, (ids_query_fn, id_props, bio_query_fn) in type_configs.items():
         print(f"\n{'='*60}")
         print(f"Phase 1: Fetching {entity_type} names + IDs (limit={args.test or 'all'})...")
         print(f"{'='*60}")
+
+        out_path = OUTPUT_DIR / f"{entity_type}s.json"
+        # Load the previous snapshot BEFORE we overwrite it so compute_delta
+        # has something to diff against. Missing file is fine (first run).
+        old_entities: list[dict] = []
+        if out_path.exists():
+            try:
+                with open(out_path) as f:
+                    old_entities = json.load(f)
+            except (json.JSONDecodeError, OSError) as e:
+                print(f"  warning: could not load previous {out_path.name} ({e}); "
+                      f"delta will show first-run counts")
+                old_entities = []
 
         rows = sparql_query_paginated(ids_query_fn, limit=args.test)
         print(f"  Raw rows: {len(rows)}")
@@ -840,15 +892,33 @@ def main():
             print(f"    Aliases: {sample['aliases_en']}")
 
         # Save
-        out_path = OUTPUT_DIR / f"{entity_type}s.json"
+        new_entities_list = list(entities.values())
         with open(out_path, "w") as f:
-            json.dump(list(entities.values()), f, indent=2, ensure_ascii=False)
+            json.dump(new_entities_list, f, indent=2, ensure_ascii=False)
         print(f"  Saved {len(entities)} entities to {out_path}")
+
+        # Compute + print delta vs previous snapshot
+        delta = compute_delta(old_entities, new_entities_list)
+        print_delta(entity_type, delta)
+        run_summary[entity_type] = delta
 
         if len(type_configs) > 1:
             print("  Sleeping 5s between types...")
             time.sleep(5)
 
+    # Final summary — one-glance view of the full run
+    print(f"\n{'='*60}")
+    print(f"Run summary")
+    print(f"{'='*60}")
+    for etype, d in run_summary.items():
+        if d["old_count"] == 0:
+            print(f"  {etype:<12} {d['new_count']:>7,} (first run)")
+        else:
+            print(
+                f"  {etype:<12} {d['new_count']:>7,}  "
+                f"(+{d['added']:,} / -{d['removed']:,}, "
+                f"bio Δ {d['bio_changed']:,}, ids Δ {d['ids_changed']:,})"
+            )
     print(f"\nDone! Files in {OUTPUT_DIR}")
 
 
