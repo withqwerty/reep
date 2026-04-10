@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026.16 - 2026-04-10
+
+### Wikidata pipeline hardening
+This cut focuses on four `fetch-wikidata-entities.py` issues surfaced by the session's audit of broken club entities. All take effect on the next weekly refresh — no need to re-run the full fetch now. Each change is independently testable.
+
+- **Team SPARQL UNION expansion.** The team query used `?type (wdt:P279)* wd:Q476028`, which only matched entities whose P31 class was a subclass of *association football club*. That missed the entire *men's association football team* (Q103229495) branch — including Q7156 Futbol Club Barcelona, Q170703 Boca Juniors, and many other major clubs — as well as plain *sports club* entities (Q847017) that declare football via P641 but lack a football-specific P31. New three-path UNION covers Q476028, Q103229495, and `P641=Q2736 AND subclass-of Q847017`. Verified live against 7 known entities (Barcelona, Boca, Estudiantes Río Cuarto, FC Augsburg, Argentinos Juniors, plus both mis-labelled stubs).
+- **Description-based label disambiguation.** Phase 1 SPARQL now also captures `?eDescription` via the label service. A post-pass in `parse_ids_phase` detects entities that share the same English label within a type and auto-appends `(description)` to each colliding `name_en` so downstream consumers can tell them apart. The post-pass leaves entities alone if all colliding descriptions are identical or missing (can't disambiguate) and caps the appended description at 40 chars. Also drops Wikidata's SPARQL-service "Q{number}" fallback label at ingest so the empty-name validator catches it immediately instead of leaking a broken name that `backfill-broken-names.py` has to chase later. `description_en` is stored on the entity dict so JSON consumers can use it without re-disambiguating.
+- **Team category field** (`team_category`): new per-team classification derived from the P31 chain — `senior_men` / `women` / `beach_soccer` / `futsal` / `youth` / `reserve`, defaulting to `senior_men` when no specific category matches (since the team SPARQL already restricts to football). Implementation captures all P31 values via `OPTIONAL { ?e wdt:P31 ?typeQid }` and picks the highest-priority category from `TEAM_CATEGORY_PRIORITY`. Stored in the teams.json dict; not yet exposed in the D1 entities schema (that's a separate migration). Match scripts can already read `teams.json` to filter non-senior entities.
+- **Season exclusion from competition fetch.** Added `FILTER NOT EXISTS { ?e wdt:P3450 ?parentComp }` so seasonal entities (which have `sports season of league` pointing to a parent competition) no longer leak into the competition result set. They're handled separately by `build_season_ids_query`. This prevents the "2025–26 Senegal Ligue 1" class of bug where a seasonal entity inherits its parent's Transfermarkt code and collides with the real competition.
+- **Removed `transfermarkt_player` provider from `COACH_IDS`.** The COACH_IDS dict was storing P2446 (Transfermarkt player ID) under a `transfermarkt_player` provider namespace for coaches with a prior playing career. This created an orphan provider name that nothing else queries and caused 239 rows in D1 where the same player ID appeared under both `transfermarkt_player` (on a coach) and `transfermarkt` (on the player). Deleted all 239 rows and removed the dict key. If dual-career coaches need their player TM IDs preserved, that's a separate data model decision.
+
+### Data
+- **Boca Juniors stub re-rename.** The previous commit renamed `reep_t3ea3516e` to `CA Boca Juniors (women)`, but the new team category work confirmed it's actually `beach_soccer` (P31 = Q116953048, same as the Barcelona beach-soccer stub) — the Wikidata English description says "football club" which is misleading. Corrected to `CA Boca Juniors (beach soccer)`.
+
 ## 2026.15 - 2026-04-10 (data-only)
 
 ### Data

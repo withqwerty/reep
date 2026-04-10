@@ -85,7 +85,11 @@ TEAM_IDS = {
 
 COACH_IDS = {
     "transfermarkt_manager": "P2447",
-    "transfermarkt_player": "P2446",
+    # NB: P2446 (transfermarkt player ID) used to be stored here under the
+    # `transfermarkt_player` provider name for coaches with a prior playing
+    # career. That created a coach-only provider namespace that nothing else
+    # queries and triggered same-type-duplicate validation noise. Removed
+    # 2026-04-10 along with a one-time D1 cleanup of 239 orphan rows.
     "fbref": "P5750",
     "soccerway": "P2369",
     "soccerbase": "P2195",
@@ -251,7 +255,7 @@ def build_player_ids_query(limit: int = 0, offset: int = 0) -> str:
 
     # Subquery fetches QIDs first, then OPTIONALs + labels applied outside
     return f"""
-SELECT ?e ?eLabel {id_selects}
+SELECT ?e ?eLabel ?eDescription {id_selects}
 WHERE {{
   {{
     SELECT DISTINCT ?e WHERE {{
@@ -285,8 +289,11 @@ def build_team_ids_query(limit: int = 0, offset: int = 0) -> str:
     # 3. Sports club (Q847017 subclass) with P641 = association football — catches
     #    smaller/regional clubs (e.g. Q8206935 Estudiantes de Río Cuarto) classified
     #    generically but with an explicit football sport claim.
+    #
+    # Also captures the raw P31 QID(s) so parse_ids_phase can derive a
+    # team_category (senior_men / women / beach_soccer / youth / reserve).
     return f"""
-SELECT ?e ?eLabel {id_selects}
+SELECT ?e ?eLabel ?eDescription ?typeQid {id_selects}
 WHERE {{
   {{
     SELECT DISTINCT ?e WHERE {{
@@ -309,6 +316,7 @@ WHERE {{
     ORDER BY ?e
     {limit_clause} {offset_clause}
   }}
+  OPTIONAL {{ ?e wdt:P31 ?typeQid . }}
 {id_optionals}
   SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
 }}
@@ -325,7 +333,7 @@ def build_coach_ids_query(limit: int = 0, offset: int = 0) -> str:
     offset_clause = f"OFFSET {offset}" if offset else ""
 
     return f"""
-SELECT ?e ?eLabel {id_selects}
+SELECT ?e ?eLabel ?eDescription {id_selects}
 WHERE {{
   {{
     SELECT DISTINCT ?e WHERE {{
@@ -360,7 +368,7 @@ def build_competition_ids_query(limit: int = 0, offset: int = 0) -> str:
         f"        {{ ?e wdt:{prop} [] . }}" for prop in COMPETITION_IDS.values()
     )
     return f"""
-SELECT ?e ?eLabel {id_selects}
+SELECT ?e ?eLabel ?eDescription {id_selects}
 WHERE {{
   {{
     SELECT DISTINCT ?e WHERE {{
@@ -379,6 +387,12 @@ WHERE {{
           FILTER(?sport != wd:Q2736)
         }}
       }}
+      # Exclude season entities — P3450 = "sports season of league or
+      # competition". Those are handled separately by build_season_ids_query
+      # and should not end up as competition-type rows. A season like
+      # "2025-26 Senegal Ligue 1" leaked in previously and collided with its
+      # parent competition (SEN1 Transfermarkt code on both).
+      FILTER NOT EXISTS {{ ?e wdt:P3450 ?parentComp . }}
     }}
     ORDER BY ?e
     {limit_clause} {offset_clause}
@@ -408,7 +422,7 @@ def build_season_ids_query(limit: int = 0, offset: int = 0) -> str:
         f"        {{ ?comp wdt:{prop} [] . }}" for prop in COMPETITION_IDS.values()
     )
     return f"""
-SELECT ?e ?eLabel ?competitionQid{id_selects}
+SELECT ?e ?eLabel ?eDescription ?competitionQid{id_selects}
 WHERE {{
   {{
     SELECT DISTINCT ?e ?competitionQid WHERE {{
@@ -438,18 +452,94 @@ WHERE {{
 """
 
 
+# Mapping from Wikidata P31 QIDs to reep team_category values. The fetch script
+# collects every P31 value for each team (via OPTIONAL { ?e wdt:P31 ?typeQid })
+# and picks the highest-priority match here. "senior_men" wins over "unknown"
+# when a team has both, because it's the more informative classification.
+TEAM_CATEGORY_QIDS = {
+    "women": {
+        "Q20639857",   # women's association football team
+        "Q26783908",   # women's football club
+    },
+    "beach_soccer": {
+        "Q116953048",  # beach soccer club (mislabelled "women's club" in some Q)
+        "Q16977640",   # beach soccer team
+    },
+    "futsal": {
+        "Q1077434",    # futsal club
+        "Q15994025",   # futsal team
+    },
+    "youth": {
+        "Q22820",      # youth team
+        "Q26723090",   # youth football club
+        "Q2992826",    # under-21 team
+        "Q2466834",    # under-19 team
+    },
+    "reserve": {
+        "Q3563237",    # reserve team
+    },
+    "senior_men": {
+        "Q103229495",  # men's association football team
+        "Q476028",     # association football club (default men's senior when ambiguous)
+    },
+}
+
+# Priority order — when a team has multiple P31 values, the more specific wins.
+TEAM_CATEGORY_PRIORITY = [
+    "women", "beach_soccer", "futsal", "youth", "reserve", "senior_men",
+]
+
+
+def classify_team(type_qids: set[str]) -> str:
+    """Pick the highest-priority team category from a set of P31 QIDs.
+
+    Defaults to 'senior_men' when no specific category matches. The team
+    SPARQL filter has already restricted the result set to football-relevant
+    entities, so a generic sports club (Q847017 only) without women/youth/
+    beach markers is almost always a regular men's senior team (Wikidata
+    leaves many small clubs classified that way — e.g. Q170703 Boca Juniors
+    itself is only P31 = Q847017 live). Returns 'unknown' only when the
+    input set is empty, which indicates a data error upstream.
+    """
+    if not type_qids:
+        return "unknown"
+    for category in TEAM_CATEGORY_PRIORITY:
+        if type_qids & TEAM_CATEGORY_QIDS[category]:
+            return category
+    return "senior_men"
+
+
 def parse_ids_phase(rows: list[dict], entity_type: str, id_props: dict) -> dict[str, dict]:
-    """Parse Phase 1 results into entity dict keyed by QID."""
+    """Parse Phase 1 results into entity dict keyed by QID.
+
+    Post-pass: detect entities sharing the same English label within this
+    type and auto-disambiguate their `name_en` by appending the Wikidata
+    description in parentheses. Addresses the "FC Barcelona" class of bug
+    where multiple QIDs share a bare label and consumers can't tell them
+    apart by name alone.
+    """
     entities: dict[str, dict] = {}
+    # Collected P31 QIDs per entity (team classification) — flattened after the loop
+    type_qids_by_entity: dict[str, set[str]] = {}
+
     for row in rows:
         qid = extract_qid(row.get("e", ""))
         if not qid or not qid.startswith("Q"):
             continue
         if qid not in entities:
+            # Wikidata's SPARQL label service returns the QID as a fallback
+            # when no English label is set. Drop the fallback so
+            # backfill-broken-names.py can fix it on a second pass — storing
+            # `Q12345` as name_en is worse than an empty string because the
+            # empty-name validator catches it immediately.
+            label = row.get("eLabel", "")
+            if label == qid:
+                label = ""
             entities[qid] = {
                 "qid": qid,
                 "type": entity_type,
-                "name_en": row.get("eLabel", ""),
+                "name_en": label,
+                "description_en": row.get("eDescription", "") or None,
                 "aliases_en": None,
                 "full_name": None,
                 "date_of_birth": None,
@@ -463,16 +553,75 @@ def parse_ids_phase(rows: list[dict], entity_type: str, id_props: dict) -> dict[
                 "competition_qid": None,
                 "external_ids": {},
             }
+            if entity_type == "team":
+                entities[qid]["team_category"] = None
         # Capture competition QID for seasons (from SPARQL result)
         comp_qid_uri = row.get("competitionQid")
         if comp_qid_uri and entity_type == "season":
             comp_qid = extract_qid(comp_qid_uri)
             if comp_qid.startswith("Q"):
                 entities[qid]["competition_qid"] = comp_qid
+        # Collect all P31 values for team classification
+        if entity_type == "team":
+            type_uri = row.get("typeQid", "")
+            if type_uri:
+                type_q = extract_qid(type_uri)
+                if type_q.startswith("Q"):
+                    type_qids_by_entity.setdefault(qid, set()).add(type_q)
         for name in id_props:
             val = row.get(f"id_{name}")
             if val and name not in entities[qid]["external_ids"]:
                 entities[qid]["external_ids"][name] = val
+
+    # Derive team_category from the collected P31 chain
+    if entity_type == "team":
+        for qid, type_qids in type_qids_by_entity.items():
+            entities[qid]["team_category"] = classify_team(type_qids)
+        # Any entity with no P31 at all — shouldn't happen since the SPARQL
+        # filter requires a P31 — but defend against it defaulting to
+        # senior_men to match classify_team's bias.
+        for entity in entities.values():
+            if entity.get("team_category") is None:
+                entity["team_category"] = "senior_men"
+
+    # --- Disambiguation post-pass ---
+    # Group entities by their normalized English label; any label held by
+    # more than one entity gets description-suffixed so downstream users
+    # can distinguish them. We keep the raw description_en field on each
+    # entity regardless so consumers can still access it.
+    by_label: dict[str, list[str]] = {}
+    for qid, entity in entities.items():
+        name = (entity.get("name_en") or "").strip()
+        if not name:
+            continue
+        key = name.casefold()
+        by_label.setdefault(key, []).append(qid)
+
+    ambiguous_count = 0
+    for label_key, qids in by_label.items():
+        if len(qids) < 2:
+            continue
+        # Count how many of the colliding entities have distinct descriptions
+        # available — if they don't, we can't disambiguate and leave them alone.
+        descs = {q: (entities[q].get("description_en") or "").strip() for q in qids}
+        distinct = {d for d in descs.values() if d}
+        if len(distinct) < 2:
+            # All share the same description or none have one. Skip — manual
+            # review needed.
+            continue
+        for q in qids:
+            desc = descs[q]
+            if not desc:
+                continue
+            # Cap the appended description at 40 chars so names stay readable.
+            short = desc if len(desc) <= 40 else desc[:37].rstrip() + "..."
+            original = entities[q]["name_en"]
+            entities[q]["name_en"] = f"{original} ({short})"
+            ambiguous_count += 1
+
+    if ambiguous_count:
+        print(f"  Disambiguated {ambiguous_count} entities sharing labels with others")
+
     return entities
 
 
