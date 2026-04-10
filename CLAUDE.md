@@ -144,6 +144,8 @@ Two version tracks: API (semver) and Data (calver). Full plan: `../reep-custom/d
 
 In repo root. API bumps get `## v2.x.y` headings, data-only weeks get `## YYYY.WW` headings. Newest first.
 
+**Before adding a data heading, run `date +%G.%V` and use THAT as the ISO week.** If a heading for that week already exists, add to it — **do not create a new heading**. The plan's collision rule (`docs/plans/release-management.md`) says: *"One data tag per ISO week maximum. The changelog entry lists all events under the same `YYYY.WW` heading."* Multiple headings in the same week means you're creating multiple logical releases for the same calendar week, which breaks the data-tag model.
+
 ## Deployment
 
 The Worker reads from D1 at runtime. For existing providers, new data is available instantly without redeploying. New providers require a redeploy (worker validates against `VALID_PROVIDERS`). Only redeploy when `src/worker.ts` changes:
