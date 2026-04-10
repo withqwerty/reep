@@ -277,14 +277,34 @@ def build_team_ids_query(limit: int = 0, offset: int = 0) -> str:
     limit_clause = f"LIMIT {limit}" if limit else ""
     offset_clause = f"OFFSET {offset}" if offset else ""
 
-    # Use reverse traversal for P279* (optimization: ^wdt:P279* is cheaper)
+    # Three-path union covers three ways Wikidata classifies football clubs:
+    # 1. Subclass of Q476028 (association football club) — the canonical org type
+    # 2. Subclass of Q103229495 (men's association football team) — some major clubs
+    #    (e.g. Q7156 Futbol Club Barcelona, Q170703 Boca Juniors) only have this P31
+    #    and were silently missed by the class-only filter before this fix.
+    # 3. Sports club (Q847017 subclass) with P641 = association football — catches
+    #    smaller/regional clubs (e.g. Q8206935 Estudiantes de Río Cuarto) classified
+    #    generically but with an explicit football sport claim.
     return f"""
 SELECT ?e ?eLabel {id_selects}
 WHERE {{
   {{
     SELECT DISTINCT ?e WHERE {{
-      ?e wdt:P31 ?type .
-      ?type (wdt:P279)* wd:Q476028 .
+      {{
+        ?e wdt:P31 ?type .
+        ?type (wdt:P279)* wd:Q476028 .
+      }}
+      UNION
+      {{
+        ?e wdt:P31 ?type .
+        ?type (wdt:P279)* wd:Q103229495 .
+      }}
+      UNION
+      {{
+        ?e wdt:P641 wd:Q2736 .
+        ?e wdt:P31 ?type .
+        ?type (wdt:P279)* wd:Q847017 .
+      }}
     }}
     ORDER BY ?e
     {limit_clause} {offset_clause}
