@@ -41,6 +41,7 @@ COACH_IDS = _mod.COACH_IDS
 COMPETITION_IDS = _mod.COMPETITION_IDS
 SEASON_IDS = _mod.SEASON_IDS
 BIO_BATCH_SIZE = _mod.BIO_BATCH_SIZE
+LABEL_LANGS = _mod.LABEL_LANGS
 sparql_query = _mod.sparql_query
 parse_ids_phase = _mod.parse_ids_phase
 merge_bio = _mod.merge_bio
@@ -240,7 +241,29 @@ TYPE_CONFIGS = {
 
 
 def build_scoped_ids_query(qids: list[str], entity_type: str) -> str:
-    """Build an IDs query scoped to specific QIDs via VALUES clause."""
+    """Build a Phase 1 IDs query scoped to specific QIDs via VALUES clause.
+
+    Must stay aligned with the shared Phase 1 builders in
+    fetch-wikidata-entities.py in terms of SELECT columns — otherwise
+    parse_ids_phase silently skips the new fields that were added there:
+
+      - ?eDescription  — needed for description-based disambiguation
+                         post-pass
+      - ?typeQid       — needed for team_category classification
+                         (teams only — OPTIONAL so it's safe to always
+                         request but only parsed for team entities)
+
+    The multi-language LABEL_LANGS chain (en → Romance/Germanic → Slavic/
+    Turkic → Asian/Arabic) is also applied here so entities missing an
+    English label don't silently store the QID as their name.
+
+    Unlike the full-fetch builders, this query doesn't need a P31 filter
+    because the VALUES clause already restricts the result set. That
+    means it ALSO doesn't pick up entities newly reachable via the
+    expanded team SPARQL UNION (#1) — a full refresh is still the only
+    way to import the previously-missing clubs like Q7156 Barcelona and
+    Q170703 Boca Juniors.
+    """
     id_props = TYPE_CONFIGS[entity_type][0]
     values = " ".join(f"wd:{q}" for q in qids)
     id_optionals = "\n".join(
@@ -249,12 +272,19 @@ def build_scoped_ids_query(qids: list[str], entity_type: str) -> str:
     )
     id_selects = " ".join(f"?id_{name}" for name in id_props)
 
+    # Teams need P31 captured so parse_ids_phase can classify them.
+    type_select = " ?typeQid" if entity_type == "team" else ""
+    type_optional = (
+        "  OPTIONAL { ?e wdt:P31 ?typeQid . }\n"
+        if entity_type == "team" else ""
+    )
+
     return f"""
-SELECT ?e ?eLabel {id_selects}
+SELECT ?e ?eLabel ?eDescription{type_select} {id_selects}
 WHERE {{
   VALUES ?e {{ {values} }}
-{id_optionals}
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+{type_optional}{id_optionals}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{LABEL_LANGS}" . }}
 }}
 """
 

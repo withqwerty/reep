@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026.19 - 2026-04-10
+
+### Scripts
+- `incremental-update.py`: `build_scoped_ids_query` was silently out of sync with the Phase 1 query builders in `fetch-wikidata-entities.py`, so the scheduled Monday incremental refresh was bypassing this session's Phase 1 improvements (multi-language label fallback, description capture, team category classification). The scoped query now matches the shared shape: it captures `?eLabel` + `?eDescription` + `?typeQid` (for teams) and uses the same `LABEL_LANGS` 30-language chain. `LABEL_LANGS` is now imported from the shared module alongside the other shared constants. Note: the scoped query still doesn't replicate the expanded team SPARQL UNION (`#1` — `?type (wdt:P279)* wd:Q103229495` and the `P641=Q2736 AND sports club` path) because the VALUES clause already restricts the result set to specific QIDs — a full refresh is still required to import entities that are newly reachable via the expanded filter (e.g. the real Q7156 Futbol Club Barcelona and Q170703 Boca Juniors).
+
 ## 2026.18 - 2026-04-10
 
 ### Scripts
