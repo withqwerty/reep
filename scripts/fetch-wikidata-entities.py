@@ -112,6 +112,22 @@ SEASON_IDS: dict[str, str] = {}
 BIO_BATCH_SIZE = 200  # QIDs per bio-detail batch
 PAGE_SIZE = 50000  # SPARQL pagination size
 
+# Multi-language fallback chain for SPARQL label service. When an entity
+# has no English label, Wikidata's label service falls back to the QID
+# itself ("Q82595"), which then gets stored as a broken name until
+# backfill-broken-names.py catches it. Listing fallback languages in
+# priority order lets the label service return an actual human-readable
+# name for most entities at ingest time.
+#
+# Priority: English → Romance + Germanic (latin script, easy to read) →
+# Slavic + Turkic → Asian + Arabic + Hebrew. Covers ~99% of football
+# entities worldwide.
+LABEL_LANGS = (
+    "en,es,pt,ca,de,fr,it,nl,da,sv,no,fi,"
+    "pl,cs,sk,hr,sr,ro,hu,uk,ru,tr,"
+    "ja,ko,zh,ar,he,fa,id,vi,th"
+)
+
 
 def sparql_query(query: str, retries: int = 5, expected_min: int = 0) -> list[dict]:
     """Execute a SPARQL query against Wikidata via POST.
@@ -216,8 +232,9 @@ def extract_qid(uri: str) -> str:
 # common set of entities between the old and new json snapshots. name_en
 # is included so description-disambiguation renames show up too.
 _DELTA_BIO_FIELDS = (
-    "name_en", "date_of_birth", "nationality", "position", "position_detail",
-    "height_cm", "country", "founded", "stadium", "aliases_en",
+    "name_en", "name_native", "date_of_birth", "date_of_birth_precision",
+    "nationality", "position", "position_detail", "height_cm",
+    "country", "founded", "stadium", "aliases_en",
     "full_name", "description_en", "team_category",
 )
 
@@ -304,7 +321,7 @@ WHERE {{
     {limit_clause} {offset_clause}
   }}
 {id_optionals}
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{LABEL_LANGS}" . }}
 }}
 """
 
@@ -355,7 +372,7 @@ WHERE {{
   }}
   OPTIONAL {{ ?e wdt:P31 ?typeQid . }}
 {id_optionals}
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{LABEL_LANGS}" . }}
 }}
 """
 
@@ -382,7 +399,7 @@ WHERE {{
     {limit_clause} {offset_clause}
   }}
 {id_optionals}
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{LABEL_LANGS}" . }}
 }}
 """
 
@@ -435,7 +452,7 @@ WHERE {{
     {limit_clause} {offset_clause}
   }}
 {id_optionals}
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{LABEL_LANGS}" . }}
 }}
 """
 
@@ -484,7 +501,7 @@ WHERE {{
     {limit_clause} {offset_clause}
   }}
 {id_optionals}
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{LABEL_LANGS}" . }}
 }}
 """
 
@@ -576,10 +593,12 @@ def parse_ids_phase(rows: list[dict], entity_type: str, id_props: dict) -> dict[
                 "qid": qid,
                 "type": entity_type,
                 "name_en": label,
+                "name_native": None,
                 "description_en": row.get("eDescription", "") or None,
                 "aliases_en": None,
                 "full_name": None,
                 "date_of_birth": None,
+                "date_of_birth_precision": None,  # 'day' / 'month' / 'year'
                 "nationality": None,
                 "position": None,
                 "current_team_qid": None,
@@ -669,12 +688,18 @@ def parse_ids_phase(rows: list[dict], entity_type: str, id_props: dict) -> dict[
 def build_player_bio_query(qids: list[str]) -> str:
     values = " ".join(f"wd:{q}" for q in qids)
     return f"""
-SELECT ?e ?altLabels ?birthName ?dob ?nationalityLabel ?positionLabel ?heightAmount
+SELECT ?e ?altLabels ?birthName ?nativeName ?dob ?dobPrecision ?nationalityLabel ?positionLabel ?heightAmount
 WHERE {{
   VALUES ?e {{ {values} }}
   OPTIONAL {{ ?e skos:altLabel ?altLabels . FILTER(LANG(?altLabels) = "en") }}
   OPTIONAL {{ ?e wdt:P1477 ?birthName . FILTER(LANG(?birthName) = "en") }}
-  OPTIONAL {{ ?e wdt:P569 ?dob . }}
+  OPTIONAL {{ ?e wdt:P1559 ?nativeName . }}
+  OPTIONAL {{
+    ?e p:P569 ?dobStmt .
+    ?dobStmt psv:P569 ?dobValue .
+    ?dobValue wikibase:timeValue ?dob .
+    ?dobValue wikibase:timePrecision ?dobPrecision .
+  }}
   OPTIONAL {{ ?e wdt:P1532 ?sportNat . }}
   OPTIONAL {{ ?e wdt:P27 ?citizenship . }}
   BIND(COALESCE(?sportNat, ?citizenship) AS ?nationality)
@@ -685,7 +710,7 @@ WHERE {{
     ?hVal wikibase:quantityAmount ?heightAmount .
     ?hVal wikibase:quantityUnit wd:Q174728 .
   }}
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{LABEL_LANGS}" . }}
 }}
 """
 
@@ -700,7 +725,7 @@ WHERE {{
   OPTIONAL {{ ?e wdt:P17 ?country . }}
   OPTIONAL {{ ?e wdt:P571 ?founded . }}
   OPTIONAL {{ ?e wdt:P115 ?stadium . }}
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{LABEL_LANGS}" . }}
 }}
 """
 
@@ -708,16 +733,22 @@ WHERE {{
 def build_coach_bio_query(qids: list[str]) -> str:
     values = " ".join(f"wd:{q}" for q in qids)
     return f"""
-SELECT ?e ?altLabels ?birthName ?dob ?nationalityLabel
+SELECT ?e ?altLabels ?birthName ?nativeName ?dob ?dobPrecision ?nationalityLabel
 WHERE {{
   VALUES ?e {{ {values} }}
   OPTIONAL {{ ?e skos:altLabel ?altLabels . FILTER(LANG(?altLabels) = "en") }}
   OPTIONAL {{ ?e wdt:P1477 ?birthName . FILTER(LANG(?birthName) = "en") }}
-  OPTIONAL {{ ?e wdt:P569 ?dob . }}
+  OPTIONAL {{ ?e wdt:P1559 ?nativeName . }}
+  OPTIONAL {{
+    ?e p:P569 ?dobStmt .
+    ?dobStmt psv:P569 ?dobValue .
+    ?dobValue wikibase:timeValue ?dob .
+    ?dobValue wikibase:timePrecision ?dobPrecision .
+  }}
   OPTIONAL {{ ?e wdt:P1532 ?sportNat . }}
   OPTIONAL {{ ?e wdt:P27 ?citizenship . }}
   BIND(COALESCE(?sportNat, ?citizenship) AS ?nationality)
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{LABEL_LANGS}" . }}
 }}
 """
 
@@ -730,7 +761,7 @@ WHERE {{
   VALUES ?e {{ {values} }}
   OPTIONAL {{ ?e skos:altLabel ?altLabels . FILTER(LANG(?altLabels) = "en") }}
   OPTIONAL {{ ?e wdt:P17 ?country . }}
-  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{LABEL_LANGS}" . }}
 }}
 """
 
@@ -749,8 +780,11 @@ WHERE {{
 
 def merge_bio(entities: dict[str, dict], bio_rows: list[dict], entity_type: str):
     """Merge Phase 2 bio results into entity dicts."""
-    # Collect aliases per QID
+    # Accumulators — Wikidata returns one row per OPTIONAL join, so multi-value
+    # properties (aliases, positions) get expanded across rows and need to be
+    # collected into sets before being attached to the entity.
     aliases: dict[str, set] = {}
+    positions: dict[str, set] = {}
 
     for row in bio_rows:
         qid = extract_qid(row.get("e", ""))
@@ -767,19 +801,43 @@ def merge_bio(entities: dict[str, dict], bio_rows: list[dict], entity_type: str)
         if not e["full_name"] and row.get("birthName"):
             e["full_name"] = row["birthName"]
 
+        # Native name (P1559) — first row wins, fall back to birthName only
+        # if no native name claim exists
+        if not e.get("name_native") and row.get("nativeName"):
+            e["name_native"] = row["nativeName"]
+
         if not e["date_of_birth"] and row.get("dob"):
             dob = row["dob"]
             dob = dob.split("T")[0] if "T" in dob else dob
             # Skip blank-node genid URLs and implausible years
             if not dob.startswith("http") and dob[:1] in ("1", "2"):
                 e["date_of_birth"] = dob
+                # Capture precision alongside the date. Wikidata precision
+                # 11=day, 10=month, 9=year. We only label precision on the
+                # same row as the DOB so it stays in sync with the value.
+                prec_raw = row.get("dobPrecision")
+                if prec_raw:
+                    try:
+                        prec_int = int(prec_raw)
+                    except ValueError:
+                        prec_int = None
+                    if prec_int == 11:
+                        e["date_of_birth_precision"] = "day"
+                    elif prec_int == 10:
+                        e["date_of_birth_precision"] = "month"
+                    elif prec_int == 9:
+                        e["date_of_birth_precision"] = "year"
 
         if not e["nationality"] and row.get("nationalityLabel"):
             e["nationality"] = row["nationalityLabel"]
 
         if entity_type == "player":
-            if not e["position"] and row.get("positionLabel"):
-                e["position"] = row["positionLabel"]
+            # Collect all positions; join into a comma-separated string after
+            # the loop. Players with multiple P413 values (e.g. forward +
+            # winger) used to have only the first position stored.
+            pos_label = row.get("positionLabel")
+            if pos_label:
+                positions.setdefault(qid, set()).add(pos_label)
             if not e["height_cm"] and row.get("heightAmount"):
                 try:
                     e["height_cm"] = float(row["heightAmount"])
@@ -811,6 +869,11 @@ def merge_bio(entities: dict[str, dict], bio_rows: list[dict], entity_type: str)
     for qid, alias_set in aliases.items():
         if qid in entities:
             entities[qid]["aliases_en"] = ", ".join(sorted(alias_set))
+
+    # Apply accumulated positions (comma-separated, alphabetically stable)
+    for qid, position_set in positions.items():
+        if qid in entities:
+            entities[qid]["position"] = ", ".join(sorted(position_set))
 
 
 def fetch_bio_batched(entities: dict[str, dict], entity_type: str, bio_query_fn):

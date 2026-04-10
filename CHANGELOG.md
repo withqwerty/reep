@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026.18 - 2026-04-10
+
+### Scripts
+- `fetch-wikidata-entities.py`: four Phase 2 enrichment additions. All take effect on the next weekly refresh and add new fields to `data/json/{type}s.json`; existing consumers see the additions as new optional keys.
+  - **DOB precision captured.** Phase 2 player + coach queries now read `p:P569/psv:P569/wikibase:timePrecision` alongside the date value. Each entity with a DOB now carries a `date_of_birth_precision` field: `"day"` (precision 11), `"month"` (10), or `"year"` (9). Year-precision stubs (`YYYY-01-01`) are no longer indistinguishable from real January 1 births — match scripts can now use this to pick the right fallback path.
+  - **Multi-language label fallback.** The SPARQL label service was configured for English only, so any entity without an English label had its QID stored as the name (`Q82595` → the kind of broken name `backfill-broken-names.py` used to chase). The label service now accepts a 30-language chain (`en,es,pt,ca,de,fr,it,nl,da,sv,no,fi,pl,cs,sk,hr,sr,ro,hu,uk,ru,tr,ja,ko,zh,ar,he,fa,id,vi,th`) and returns the first available, falling back from English through Romance/Germanic then Slavic/Turkic then Asian/Arabic. The existing QID-as-name drop in `parse_ids_phase` stays as the final safety net.
+  - **Multi-position capture.** Player P413 (position) was being stored as the first value only. `merge_bio` now accumulates all positions across the Phase 2 result rows and joins them into a comma-separated `position` field. Players who play both forward and winger (or midfielder and striker) no longer lose that information.
+  - **Native name (P1559) captured.** Phase 2 player + coach queries now fetch `wdt:P1559` (name in native language) and store it as `name_native`. This is the Wikidata equivalent of the salimt dataset's `name_in_home_country` field that the TM sync script uses for transliteration matches, so reep now has native names for Eastern European, Asian, and Arabic players without needing the salimt bridge.
+
 ## 2026.17 - 2026-04-10
 
 ### Scripts
