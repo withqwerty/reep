@@ -194,7 +194,14 @@ _FALLBACK_TYPES = ["player", "coach", "team", "competition", "season"]
 
 
 def _resolve_reep_id(reep_id_map: dict[str, str], qid: str, primary_type: str) -> str:
-    """Look up reep_id, falling back to alternative type keys if needed."""
+    """Look up reep_id, falling back to alternative type keys if needed.
+
+    For custom entities (from match scripts) the 'qid' slot holds the reep_id
+    itself — see fetch-custom-entities.py. Detect that by prefix and return
+    directly rather than looking up in the Wikidata-only map.
+    """
+    if qid and qid.startswith("reep_"):
+        return qid
     rid = reep_id_map.get(f"{qid}:{primary_type}")
     if rid:
         return rid
