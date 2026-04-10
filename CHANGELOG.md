@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026.15 - 2026-04-10 (data-only)
+
+### Data
+- **7 new Transfermarkt club IDs** added: FC Augsburg (167), Argentinos Juniors (1030), Club Atlético Lanús (333), Fredrikstad FK (3837), Unión Magdalena (14680), FC Universitatea Cluj (6429), Kayseri Erciyesspor (6894). All are top-flight clubs whose formal TM names (e.g. `Fußball-Club Augsburg 1907`, `Asociación Atlética Argentinos Juniors`) previously failed the sync script's exact-name matcher.
+- **154 new Transfermarkt player IDs** added across two matching paths: 22 recovered from a namespace-collision bug fix (see Scripts), 43 via salimt's `name_in_home_country` native-name bridge (Brazilian/Portuguese nicknames like "Marcão" / "Kaká" / "Rafinha" → full Wikidata legal names), and 89 via a new year-precision placeholder fallback for reep entities whose DOBs are `YYYY-01-01` stubs.
+- **149 `position_detail` backfills** + **47 new player aliases** harvested from salimt name variants.
+
+### Scripts
+- `reep-custom/scripts/sync-transfermarkt-datasets.py`: major overhaul of club matching and a critical bug fix.
+  - **Fixed namespace-collision bug in `load_existing_tm_ids`.** The old loader conflated TM's separate player/team/competition ID namespaces into a single set. Because TM reuses numeric IDs across types (e.g. player 131 = Lars Ricken, club 131 = FC Barcelona), clubs whose ID collided with any reep player/competition were silently skipped. New `load_existing_tm_ids_by_type()` buckets by entity type. This bug alone had been blocking ~50 active first-tier clubs from being matched.
+  - **New country-scoped club matcher** with distinctive-token scoring. Stopwords now include club legal suffixes, football-word variants in many languages (fussball/fotboll/fudbalski/futebol/...), articles/conjunctions (la/el/y/e/van/von/...), and common founding years. Multilingual women's/youth/reserve exclusion (dames/frauen/femenino/kvinde/...). Single-token-subset matches are deliberately demoted to review to avoid false positives like "FK Beograd" ⊆ "IMT Novi Beograd".
+  - **Wikidata-fallback stub detector.** Reep entities with no founded/stadium/aliases are flagged as probable SPARQL label-service fallbacks (e.g. `Q5424838` labeled "FC Barcelona" is actually FC Barcelona Femení; `Q5008937` "CA Boca Juniors" is Boca Juniors Femenino). These are routed to `data/tm-club-review.csv` rather than auto-applied, so the real men's clubs remain detectable by the monthly dump reconciliation.
+  - **Borderline matches written to `reep-custom/data/tm-club-review.csv`** with score and reason — 24 candidates from this run, covering broken-entity stubs, legitimate missing entities (Legia Warsaw, Grazer AK, Olympiacos variant, Aris Thessaloniki, several Greek/Romanian clubs), and parent/child disambiguation ties.
+  - **salimt-transfermarkt-datasets integration.** A second TM source (92K player profiles vs dcaribou's 47K) is now loaded from `/Volumes/WQ/ref_code/salimt-transfermarkt-datasets/...` when present. Its `name_in_home_country` field feeds into `match_players` as an additional name variant, recovering matches where dcaribou's Latin-script `name` diverges from reep's Wikidata-sourced full name.
+  - **Year-placeholder DOB fallback.** `load_reep_people` now builds a secondary index of reep entities whose DOB is a `YYYY-01-01` Wikidata year-precision stub. `match_players` falls back to this index when the primary exact-DOB lookup misses, with a stricter ≥0.95 name-similarity bar and an unambiguous-hit guard (rejects matches where multiple reep entities share the same name+year).
+
 ## v2.4.0 - 2026-04-07
 
 ### API (breaking)
