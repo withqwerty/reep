@@ -2,35 +2,66 @@
 
 The football entity register. Maps player, team, and coach IDs across 30+ data providers.
 
+This repo holds **data + API only**. All data-wrangling scripts, the Astro site, and the Python CLI now live in sibling repos. See the "Sibling repos" section.
+
 - Public repo: github.com/withqwerty/reep
-- Private repo (custom IDs): github.com/withqwerty/reep-custom
 - API: Cloudflare Worker `reep-api` at reep-api.rahulkeerthi2-95d.workers.dev (deployed from this repo)
 - RapidAPI listing: rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register
 - D1 database: `football-entities` (52cf53a2-7453-4ae5-a149-f43c360514ad, WEUR)
 
 ## Sibling repos
 
-- `../reep-custom` — private match scripts that populate `custom_ids` in D1. See `../reep-custom/CLAUDE.md`.
+- `../reep-custom` — **private** workhorse. All data-wrangling scripts (Wikidata fetch, dump reconciliation, match scripts, exports), the D1 schema, intermediate JSON, docs/plans. Populates `custom_ids` + `provider_ids` + `entities` in D1 and regenerates this repo's CSVs. See `../reep-custom/CLAUDE.md`.
+- `../reep-site` — **private** Astro site deployed to `reep.football` via Cloudflare Pages.
+- `../reep-cli` — **public** Python CLI (`pip install reep` or similar).
 - `../football-docs` — MCP server serving provider documentation (StatsBomb, Opta, Wyscout, kloppy, SportMonks, etc.). When you need to understand a provider's data model, event types, qualifier IDs, or API surface, use `mcp__plugin_nutmeg_football-docs__search_docs` instead of guessing. See `../football-docs/CLAUDE.md` (gitignored, local only).
+
+## What lives in this repo
+
+```
+reep/
+├── src/              Cloudflare Worker source (TypeScript)
+├── data/             Published CSVs + intermediate JSON (custom_ids.json, reep_id_map.json)
+│   └── samples/      First 100 rows of each CSV, kept up to date so users can preview on GitHub
+├── openapi.yaml      OpenAPI spec for the RapidAPI listing
+├── wrangler.toml     Cloudflare Worker config
+├── package.json      Worker dependencies
+├── CHANGELOG.md      API semver + data calver release notes
+└── README.md         Public-facing docs
+```
+
+**Not here any more** (moved during the 2026-04 restructure):
+
+- `scripts/` → `../reep-custom/scripts/` (all 20 Python scripts that generate `data/`)
+- `schemas/` → `../reep-custom/schemas/`
+- `data/json/` → `../reep-custom/data/json/` (gitignored there — regenerated weekly)
+- `data/backups/`, `data/dedup-report.json`, `data/match_dictionary.csv` → `../reep-custom/data/` (also gitignored)
+- `docs/` → `../reep-custom/docs/` (plan/spec docs — this repo has no `docs/` dir)
+- `cli/` → `../reep-cli` (separate public repo)
+- `site/` → `../reep-site` (separate private repo)
+- `.github/workflows/update-register.yml` → deleted (replaced by `../reep-custom/docs/dump-workflow.md`)
+- `.github/workflows/ci.yml` → deleted (only ran CLI tests, which moved to reep-cli)
 
 ## Architecture
 
 ```
-Wikidata SPARQL -> data/json/*.json -> D1 (entities + provider_ids)
-                                       ↑
-reep-custom scripts -> D1 (custom_ids) ─┘
-                                       │
-                     fetch-custom-ids.py -> data/custom_ids.json + data/custom_aliases.json + data/reep_id_map.json
-                                       │
-                     export-csv.py merges all -> data/*.csv (keyed on reep_id, names.csv includes custom_aliases)
-                                       │
-                     reep-api Worker -> reads entities + provider_ids + custom_ids + FTS -> API responses
+Wikidata dump ─┐
+               ├──► reep-custom scripts ──► D1 (entities + provider_ids + custom_ids)
+Match scripts ─┘                             │
+                                             ▼
+                          reep-custom/scripts/fetch-custom-ids.py
+                          reep-custom/scripts/export-csv.py
+                                             │
+                                             ▼
+                                reep/data/*.csv (public)
+                                             │
+                                             ▼
+                                reep-api Worker ──► RapidAPI
 ```
 
-- Weekly GitHub Action refreshes Wikidata data + fetches custom_ids + exports CSVs
-- custom_ids table is maintained by reep-custom (private scripts, public data)
+- `reep-custom` owns the write path to D1 and regenerates this repo's CSVs
+- `reep` serves the data via the Cloudflare Worker and hosts the CSVs for direct download
 - All data is public. API serves all providers to all plans
-- Entities from Wikidata and non-Wikidata sources (e.g. Opta) coexist with stable Reep IDs
 
 ## Identity Model
 
@@ -47,7 +78,7 @@ Every entity has a self-minted `reep_id` as its canonical primary key: `reep_<ty
 
 Wikidata QIDs are a provider mapping (`provider=wikidata` in `provider_ids`), not the identity backbone. Entities can exist without a Wikidata QID (e.g. lower-league players sourced from Opta).
 
-Design document: `docs/plan-reep-id.md`
+Design document: `../reep-custom/docs/plan-reep-id.md`
 
 ## D1 Tables
 
@@ -57,26 +88,7 @@ Design document: `docs/plan-reep-id.md`
 - `custom_aliases` - name variants collected from provider data sources, PK `(reep_id, alias)`. Merged into `data/names.csv` by `export-csv.py`.
 - `entities_fts` - FTS5 virtual table for full-text search on entity names (synced from entities via triggers, rebuilt after each seed)
 
-## Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `scripts/fetch-wikidata-entities.py` | SPARQL extraction (paginated, two-phase) |
-| `scripts/enrich-wikidata-bio.py` | Bio enrichment (DOB, nationality, position, aliases) |
-| `scripts/seed-wikidata-d1.py` | Bulk INSERT into D1 + mint reep_ids + rebuild provider_ids + FTS rebuild |
-| `scripts/incremental-update.py` | Incremental Wikidata update (dual-writes to provider_ids) |
-| `scripts/fetch-custom-ids.py` | Export custom_ids + custom_aliases + reep_id_map from D1 to JSON |
-| `scripts/export-csv.py` | JSON -> CSV for public download (merges Wikidata + custom + custom_aliases, keyed on reep_id). `names.csv` columns: `reep_id,key_wikidata,name,alias` |
-| `scripts/mint-reep-ids.py` | Mint reep_ids for entities that don't have one |
-| `scripts/create-provider-ids.py` | Create provider_ids table from external_ids (one-time migration) |
-| `scripts/rekey-custom-ids.py` | Rekey custom_ids from (qid, type) to reep_id (one-time migration) |
-| `scripts/import-opta-entities.py` | Import Opta-only players as new entities |
-| `scripts/dedup-check.py` | Check for duplicate entities (DOB + name similarity) |
-| `scripts/resolve-dupes.py` | Merge duplicate entities from dedup report |
-| `scripts/cutover-reep-id.py` | Phase 4 cutover: make reep_id the PK (one-time migration) |
-| `scripts/clone-to-staging.py` | Clone production D1 to staging for rehearsal |
-| `scripts/research-competitions.py` | SPARQL exploration for competition/season coverage |
-| `scripts/validate-csv.py` | Validate exported CSVs (reep_ids populated, columns present, cross-file sync) |
+Schema source of truth: `../reep-custom/schemas/football-entities.sql`.
 
 ## Adding a new provider
 
@@ -84,7 +96,7 @@ Order matters — the worker validates provider names against `VALID_PROVIDERS` 
 
 **reep (this repo) — do first:**
 1. Add provider to `VALID_PROVIDERS` Set in `src/worker.ts`
-2. Add to: openapi.yaml resolve enum, cli/reep.py PROVIDERS list, README.md coverage table
+2. Add to: openapi.yaml resolve enum, ../reep-cli/reep.py PROVIDERS list, README.md coverage table
 3. Bump `API_VERSION` const in `src/worker.ts` (minor) + `package.json` version to match
 4. Add CHANGELOG.md entry
 5. Commit: `release: v2.x.y — add <provider> provider`
@@ -96,9 +108,10 @@ Order matters — the worker validates provider names against `VALID_PROVIDERS` 
 9. Update reep-custom `CLAUDE.md` provider table + scripts table
 
 **reep (this repo) — finalize:**
-10. `python scripts/fetch-custom-ids.py` — pull new custom_ids from D1
-11. `python scripts/export-csv.py` — regenerate CSVs with new column
-12. Commit data changes
+10. `cd ../reep-custom && python scripts/fetch-custom-ids.py` — pull new custom_ids from D1 (writes to `../reep/data/custom_ids.json`)
+11. `python scripts/export-csv.py` — regenerate CSVs (writes to `../reep/data/`)
+12. `python scripts/validate-csv.py` — verify the export
+13. Commit data changes in **this** repo
 
 ## Worker (src/worker.ts)
 
@@ -136,7 +149,7 @@ Two version tracks: API (semver) and Data (calver). Full plan: `../reep-custom/d
 
 ### Data versioning (calver)
 
-- **Format**: `YYYY.WW` (ISO year.week), auto-stamped in `data/meta.json` by `export-csv.py`
+- **Format**: `YYYY.WW` (ISO year.week), auto-stamped in `data/meta.json` by `export-csv.py` (which now runs from reep-custom)
 - **Notable data releases** (new provider, bulk reconciliation, >1% entity count change) get a `data-YYYY.WW` GitHub Release tag
 - **Routine weekly refreshes** are just commits, no tag
 
@@ -144,7 +157,7 @@ Two version tracks: API (semver) and Data (calver). Full plan: `../reep-custom/d
 
 In repo root. API bumps get `## v2.x.y` headings, data-only weeks get `## YYYY.WW` headings. Newest first.
 
-**Before adding a data heading, run `date +%G.%V` and use THAT as the ISO week.** If a heading for that week already exists, add to it — **do not create a new heading**. The plan's collision rule (`docs/plans/release-management.md`) says: *"One data tag per ISO week maximum. The changelog entry lists all events under the same `YYYY.WW` heading."* Multiple headings in the same week means you're creating multiple logical releases for the same calendar week, which breaks the data-tag model.
+**Before adding a data heading, run `date +%G.%V` and use THAT as the ISO week.** If a heading for that week already exists, add to it — **do not create a new heading**. The plan's collision rule (`../reep-custom/docs/plans/release-management.md`) says: *"One data tag per ISO week maximum. The changelog entry lists all events under the same `YYYY.WW` heading."* Multiple headings in the same week means you're creating multiple logical releases for the same calendar week, which breaks the data-tag model.
 
 ## Deployment
 
@@ -174,28 +187,22 @@ No `--remote` flag. Time Travel commands always act on the remote database.
 
 ## Opta / Stats Perform ID systems
 
-Stats Perform (Opta's parent) operates **multiple distinct ID systems** that are not interchangeable. Reep splits them into separate providers:
+Stats Perform (Opta's parent) operates **multiple distinct ID systems** that are not interchangeable. Reep splits them into separate providers. Full breakdown: `../reep-custom/docs/providers/opta-stats-perform.md`.
 
 | Provider | Format | Source | Coverage |
 |----------|--------|--------|----------|
-| `opta` | Alphanumeric UUID (e.g. `2kwbbcootiqqgmrzs6o5inle5`) | Stats Perform F1 data products, The Analyst, `/Volumes/WQ/projects/www/src/data/opta-*` | Players (50K), PL teams (34 historical), competitions (33), PL seasons (14 historical) |
-| `opta_numeric` | Integer (e.g. `8` for PL) | Wikidata P8735 | Competitions only (52), legacy but still used by Opta Stats Centre |
-| `premier_league` | Integer (e.g. `49293`) | premierleague.com player page URLs (Wikidata P12539) | Players (4.9K PL-registered) |
-| `fpl_code` | Integer (e.g. `244851`) | FPL / The Analyst `sc-{code}` URLs (ChrisMusson/FPL-ID-Map) | Players (2.5K PL players) |
+| `opta` | Alphanumeric UUID (e.g. `2kwbbcootiqqgmrzs6o5inle5`) | Stats Perform F1 data products, The Analyst | Players (50K), PL teams, competitions, PL seasons |
+| `opta_numeric` | Integer (e.g. `8` for PL) | Wikidata P8735, FPL bootstrap, SD API | Players, teams, competitions, seasons |
+| `premier_league` | Integer | premierleague.com player page URLs (Wikidata P12539) | Players (4.9K PL-registered) |
+| `optacore` | Integer | `../reep-custom/data/opta/sdapi-mapping-league-seasons.json` | Competitions + seasons |
 
-**`opta` is always UUID format.** Never mix numeric codes under `opta`. The numeric competition codes from P8735 go under `opta_numeric`.
+**`opta` is always UUID format.** Never mix numeric codes under `opta`.
 
-**Wikidata P8736 (player numeric) and P8737 (team numeric) are excluded from ingest** — both superseded by the Stats Perform F1 UUIDs and would duplicate/conflict with the canonical `opta` player IDs. See excluded list in `scripts/fetch-wikidata-entities.py`.
-
-Three different vendor ID systems exist within "Opta" because the codes were designed for different products:
-- UUIDs are used internally in Stats Perform's modern data products (F1, Opta Platform, The Analyst)
-- Opta numeric competition codes are still referenced by Opta Stats Centre and some legacy feeds
-- `sc-{code}` is used by The Analyst URL scheme for player pages and FPL's internal player codes
-- premierleague.com uses its own player page numbering
+**Wikidata P8736 (player numeric) and P8737 (team numeric) are excluded from ingest** — both superseded by the Stats Perform F1 UUIDs and would duplicate/conflict with the canonical `opta` player IDs. See excluded list in `../reep-custom/scripts/fetch-wikidata-entities.py`.
 
 ## Wikidata property mapping (source of truth)
 
-`scripts/fetch-wikidata-entities.py` contains the canonical mapping of Reep provider names to Wikidata property IDs in `PLAYER_PROVIDERS`, `TEAM_PROVIDERS`, and `COACH_PROVIDERS` dicts. This is the ONLY trusted source for property IDs. Never guess P-numbers. If a provider is not in these dicts, it has no Wikidata property.
+`../reep-custom/scripts/fetch-wikidata-entities.py` contains the canonical mapping of Reep provider names to Wikidata property IDs in `PLAYER_PROVIDERS`, `TEAM_PROVIDERS`, and `COACH_PROVIDERS` dicts. This is the ONLY trusted source for property IDs. Never guess P-numbers. If a provider is not in these dicts, it has no Wikidata property.
 
 Providers with Wikidata properties include: transfermarkt, fbref, soccerway, sofascore, flashscore, espn, kicker, 11v11, besoccer, soccerbase, worldfootball, national_football_teams, eu_football_info, footballdatabase_eu, lequipe, uefa, opta, and others.
 
@@ -203,37 +210,22 @@ Providers WITHOUT Wikidata properties (in custom_ids only): understat, whoscored
 
 ## Commands
 
+This repo deliberately has no `scripts/` directory. All data-wrangling commands live in `../reep-custom`:
+
 ```bash
+# From this repo (reep):
 pnpm exec wrangler deploy                    # deploy Worker (only when code changes)
 pnpm exec wrangler secret put SECRET_NAME    # set Worker secret
-python scripts/incremental-update.py         # incremental Wikidata update (weekly)
-python scripts/incremental-update.py --dry-run  # show what would change
-python scripts/fetch-wikidata-entities.py --ids-only  # full fetch (manual dispatch only, not scheduled)
-python scripts/fetch-custom-ids.py     # fetch custom IDs + custom aliases + reep_id map from D1
-python scripts/export-csv.py           # regenerate CSVs (Wikidata + custom, keyed on reep_id)
-python scripts/validate-csv.py         # validate exported CSVs (run after export-csv.py)
-python scripts/validate-csv.py --verbose  # show sample failures
-python scripts/check-sync.py           # check what's out of sync (providers, CSVs, docs)
-python scripts/mint-reep-ids.py        # mint reep_ids for entities without one
-python scripts/mint-reep-ids.py --dry-run  # preview what would be minted
+
+# From the sibling repo (reep-custom):
+cd ../reep-custom
+python scripts/fetch-custom-ids.py           # fetch custom IDs from D1 → reep/data/custom_ids.json
+python scripts/export-csv.py                 # regenerate reep/data/*.csv
+python scripts/validate-csv.py               # validate exported CSVs
+python scripts/check-sync.py                 # check what's out of sync (providers, CSVs, docs)
+python scripts/seed-wikidata-d1.py           # seed D1 from reep-custom/data/json/
+python scripts/apply-dump-snapshot.py --seed # one-shot: apply dump + reseed
 ```
-
-## Provider coverage by entity type
-
-Not all providers cover all entity types. To see live coverage:
-
-```bash
-pnpm exec wrangler d1 execute football-entities --remote --command "
-  SELECT provider, type, COUNT(*) as cnt
-  FROM (
-    SELECT pi.provider, e.type FROM provider_ids pi JOIN entities e ON pi.reep_id = e.reep_id
-    UNION ALL
-    SELECT ci.provider, e.type FROM custom_ids ci JOIN entities e ON ci.reep_id = e.reep_id
-  )
-  GROUP BY provider, type ORDER BY provider, type"
-```
-
-Key multi-type providers: fbref (player/team/coach), soccerway (player/team/coach), transfermarkt (player/team via main, coach via transfermarkt_manager), fotmob (player/team/coach), soccerbase (player/team/coach). Most other providers are player-only. playmakerstats is team-only. clubelo is player+team.
 
 ## Security
 
@@ -242,6 +234,4 @@ Key multi-type providers: fbref (player/team/coach), soccerway (player/team/coac
 **Accepted risks:**
 - **CORS wildcard `*`**: Intentional. This is a public read-only API. No cookies or sessions. Any origin can make requests.
 - **D1 database ID in `wrangler.toml`**: Required by Wrangler. The ID alone does not grant access — a valid Cloudflare API token + account ID is needed.
-- **Manual SQL escaping in Python scripts**: The `escape_sql()` function uses single-quote doubling, correct for SQLite. Data sources are controlled (Wikidata SPARQL, verified CSVs). Not a risk unless upstream data is compromised.
-- **No rate limiting on bypass path**: The bypass key is not distributed. RapidAPI handles rate limiting for subscribers. If bypass abuse becomes a concern, add Cloudflare Rate Limiting rules.
 - **Cache-Control `public` on all responses**: Acceptable for a public read-only API. Error responses (401, 404) are also cached — this is fine since they contain no user-specific data.
