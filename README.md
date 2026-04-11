@@ -1,7 +1,5 @@
 # Reep
 
-[![CI](https://github.com/withqwerty/reep/actions/workflows/ci.yml/badge.svg)](https://github.com/withqwerty/reep/actions/workflows/ci.yml)
-
 ![Charles Reep's match notations from 1953](https://ichef.bbci.co.uk/ace/standard/624/cpsprodpb/FC93/production/_124995646_bbc1953notations.jpg)
 
 The football entity register. Maps player, team, coach, competition, and season identities across Transfermarkt, FBref, UEFA, Sofascore, and 30+ data providers.
