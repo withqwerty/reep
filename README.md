@@ -174,7 +174,7 @@ pnpm exec wrangler d1 execute football-entities --remote \
 | ESPN | Custom | Via TheSportsDB mappings |
 | FotMob | Custom | DOB + name matching |
 | FBref verified | Custom | Cross-verified via worldfootballR |
-| FPL code | Custom | FPL internal player codes |
+| Opta numeric | Custom | Legacy Opta numeric IDs (same as FPL `code`, The Analyst `sc-` IDs) |
 | Understat | Custom | Verified cross-reference matching |
 | WhoScored | Custom | Verified cross-reference matching |
 | SportMonks | Custom | Verified cross-reference matching |
@@ -277,22 +277,26 @@ This design follows the [Chadwick Baseball Bureau Register](https://github.com/c
 
 ## CLI
 
+A Python CLI for the register lives in its own repo: [**withqwerty/reep-cli**](https://github.com/withqwerty/reep-cli).
+
 ```bash
+pip install git+https://github.com/withqwerty/reep-cli.git
+
 # Search by name
-python cli/reep.py search "Cole Palmer"
+reep search "Cole Palmer"
 
 # Resolve: Transfermarkt -> all IDs
-python cli/reep.py resolve transfermarkt 568177
+reep resolve transfermarkt 568177
 
 # Translate: just output the target ID (pipe-friendly)
-python cli/reep.py translate transfermarkt 568177 fbref
+reep translate transfermarkt 568177 fbref
 # dc7f8a28
 
 # Download CSVs for offline use
-python cli/reep.py download
+reep download
 
 # Search offline
-python cli/reep.py local "Salah"
+reep local "Salah"
 ```
 
 ## Source
@@ -375,7 +379,7 @@ A new Wikidata property for the new format has been proposed but not yet approve
 
 ## Updates
 
-The register is refreshed weekly from Wikidata every Monday. Incremental updates fetch only changed entities (~1-2K/day). Monthly dump reconciliation against the full Wikidata dump catches drift (deleted entities, lost occupations, missed IDs). Each update picks up new entities, updated IDs, and corrections made by the Wikidata community. Custom provider mappings persist across all updates.
+The register is refreshed periodically from Wikidata, plus monthly reconciliation against the full Wikidata dump to catch drift (deleted entities, lost occupations, missed IDs). Each refresh picks up new entities, updated IDs, and corrections made by the Wikidata community. Custom provider mappings persist across all refreshes. The `data/meta.json` file records when the current CSVs were generated.
 
 ## Contributing
 
@@ -403,7 +407,7 @@ We validate and match all submissions before adding them. Your IDs go into our v
 
 ### Edit Wikidata directly
 
-If a player is missing a Transfermarkt ID or FBref ID, the ideal fix is to add it to their [Wikidata](https://www.wikidata.org/) page — the next weekly build picks it up automatically.
+If a player is missing a Transfermarkt ID or FBref ID, the ideal fix is to add it to their [Wikidata](https://www.wikidata.org/) page — the next refresh picks it up automatically.
 
 - [How to edit Wikidata](https://www.wikidata.org/wiki/Wikidata:Introduction)
 - [Add an external identifier](https://www.wikidata.org/wiki/Help:Statements#Adding_statements)
@@ -412,11 +416,11 @@ Wikidata requires ~50 manual edits and a 4-day waiting period before bulk edits 
 
 ### Code contributions
 
-PRs to the API, CLI, scripts, and documentation are welcome. Note that the data CSVs are regenerated weekly from Wikidata — don't PR data changes directly.
+PRs to the Worker (`src/`) and documentation are welcome in this repo. CLI PRs belong in [withqwerty/reep-cli](https://github.com/withqwerty/reep-cli). Note that the data CSVs are regenerated upstream from Wikidata + verified mappings — don't PR data changes directly.
 
 ### What this repo doesn't contain
 
-This repo publishes IDs and tools, not scraping logic or raw data dumps from providers. Matching and ingestion scripts are maintained separately.
+This repo publishes IDs, the API, and the published CSVs — not scraping logic or raw data dumps from providers. Matching and ingestion scripts are maintained in a separate private repo.
 
 ## License
 
