@@ -3,6 +3,12 @@ export interface Env {
   CONTRIBUTIONS?: R2Bucket;
   RAPIDAPI_PROXY_SECRET?: string;
   BYPASS_KEY?: string;
+  // Unkey — direct API subscribers. Keys live in the `reep` namespace (api_IcuIgs3L).
+  // UNKEY_ROOT_KEY is used to call POST /v2/keys.verifyKey on the hot path.
+  // Absent in dev if you're only testing RapidAPI/bypass auth — the worker will
+  // silently skip the Unkey auth path rather than failing closed on the whole request.
+  UNKEY_ROOT_KEY?: string;
+  UNKEY_API_ID?: string;
   RESEND_API_KEY?: string;
   NOTIFICATION_EMAIL?: string;
 }
@@ -151,20 +157,54 @@ export default {
       }
     }
 
-    // Auth: RapidAPI proxy secret or bypass key for internal use
-    // Fail closed: if RAPIDAPI_PROXY_SECRET is not configured, reject all requests
+    // ---------- Auth: three paths, tried in order ----------
+    //   1. X-RapidAPI-Proxy-Secret  — RapidAPI-originated traffic (legacy marketplace listing)
+    //   2. X-Reep-Key               — shared BYPASS_KEY for internal tools (e.g. reep-site build script)
+    //   3. Authorization: Bearer …  — direct API subscribers, verified via Unkey with per-call credit deduction
+    //
+    // Fail closed: if RAPIDAPI_PROXY_SECRET is not configured, reject all requests.
+    // (BYPASS_KEY and UNKEY_* are optional — absence just disables their respective paths.)
     if (!env.RAPIDAPI_PROXY_SECRET) {
       return json({ error: "Server misconfigured" }, 500);
     }
 
     const proxySecret = request.headers.get("X-RapidAPI-Proxy-Secret");
     const bypassKey = request.headers.get("X-Reep-Key");
+    const bearerKey = extractBearer(request.headers.get("Authorization"));
+
     const isRapidApi = await safeCompare(proxySecret || "", env.RAPIDAPI_PROXY_SECRET);
     const isBypass = env.BYPASS_KEY ? await safeCompare(bypassKey || "", env.BYPASS_KEY) : false;
 
-    if (!isRapidApi && !isBypass) {
+    // Unkey path: only consulted if the caller presented a Bearer token and the env is configured.
+    // `unkeyResult` carries the rate-limit / credits state back to the outer handler so we can
+    // surface X-Reep-* headers on the success response.
+    let unkeyResult: UnkeyVerifyOk | null = null;
+    let unkeyError: UnkeyVerifyFail | null = null;
+    if (!isRapidApi && !isBypass && bearerKey && env.UNKEY_ROOT_KEY) {
+      const cost = await computeCost(request, path, method);
+      const result = await verifyUnkey(bearerKey, cost, env.UNKEY_ROOT_KEY);
+      if (result.ok) {
+        unkeyResult = result;
+      } else {
+        unkeyError = result;
+      }
+    }
+
+    const authed = isRapidApi || isBypass || unkeyResult !== null;
+    if (!authed) {
       console.log(JSON.stringify({ method, path, params, status: 401, ms: Date.now() - start }));
-      return json({ error: "Unauthorized. Subscribe at https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register" }, 401);
+      // If the caller presented a Bearer token that failed verification, return Unkey's mapped error.
+      // Otherwise return a generic 401 pointing at the signup page.
+      if (unkeyError) {
+        return json(unkeyError.body, unkeyError.status);
+      }
+      return json(
+        {
+          error: "unauthorized",
+          message: "Get a free API key at https://reep.football/signup or subscribe at https://reep.football/pricing",
+        },
+        401,
+      );
     }
 
     let response: Response;
@@ -198,6 +238,32 @@ export default {
       response = await handleBatchResolve(request, env.DB);
     } else {
       response = json({ error: "Not found" }, 404);
+    }
+
+    // Surface Unkey credit + rate-limit state on responses when the caller authed via Bearer token.
+    // X-Reep-Credits-Remaining : post-deduction credit balance on the key
+    // X-Reep-Plan              : plan tier from key meta (free / plus / pro) — set by createKey in the webhook
+    if (unkeyResult && response.ok) {
+      const headers = new Headers(response.headers);
+      const remaining = unkeyResult.data.credits?.remaining;
+      if (typeof remaining === "number") {
+        headers.set("X-Reep-Credits-Remaining", String(remaining));
+      }
+      const plan = unkeyResult.data.meta && typeof unkeyResult.data.meta.plan === "string"
+        ? unkeyResult.data.meta.plan
+        : undefined;
+      if (plan) headers.set("X-Reep-Plan", plan);
+      // Forward the first rate-limit bucket's state (most keys will only have one configured)
+      const firstRl = unkeyResult.data.ratelimits?.[0];
+      if (firstRl) {
+        if (typeof firstRl.remaining === "number") {
+          headers.set("X-Reep-Ratelimit-Remaining", String(firstRl.remaining));
+        }
+        if (typeof firstRl.reset === "number") {
+          headers.set("X-Reep-Ratelimit-Reset", String(firstRl.reset));
+        }
+      }
+      response = new Response(response.body, { status: response.status, headers });
     }
 
     console.log(JSON.stringify({ method, path, params, status: response.status, ms: Date.now() - start }));
@@ -240,6 +306,187 @@ export default {
     }
   },
 } satisfies ExportedHandler<Env, R2EventNotification>;
+
+// ---------- Unkey auth (direct API subscribers) ----------
+
+// Endpoints that do not deduct credits. Discovery (/search), diagnostics (/stats),
+// and public routes (/health, /contribute, /) are free to call as long as the key is valid.
+const FREE_PATHS = new Set(["/", "/search", "/stats", "/health", "/contribute"]);
+
+// Pricing (all tiers configure rate limits + refill at key creation time, so the
+// worker just needs to know how much to deduct per call).
+const UPGRADE_URL = "https://reep.football/pricing";
+
+interface UnkeyVerifyData {
+  valid: boolean;
+  code?: string;
+  keyId?: string;
+  name?: string;
+  enabled?: boolean;
+  meta?: Record<string, unknown>;
+  credits?: { remaining?: number };
+  permissions?: string[];
+  identity?: { id?: string; externalId?: string };
+  ratelimits?: Array<{ name: string; remaining?: number; reset?: number }>;
+}
+
+interface UnkeyVerifyOk {
+  ok: true;
+  data: UnkeyVerifyData;
+}
+
+interface UnkeyVerifyFail {
+  ok: false;
+  status: number;
+  body: Record<string, unknown>;
+}
+
+type UnkeyVerifyResult = UnkeyVerifyOk | UnkeyVerifyFail;
+
+/**
+ * Call Unkey POST /v2/keys.verifyKey with optional credit deduction.
+ * Atomic: verification and deduction happen in a single call, with Unkey's
+ * key-level rate limits (configured at createKey time) enforced server-side.
+ *
+ * Returns `{ok: true, data}` on VALID, or `{ok: false, status, body}` with a
+ * ready-to-return JSON error for anything else. Network / 5xx failures map to
+ * 503 (fail closed — no free lookups on Unkey outage).
+ */
+async function verifyUnkey(
+  key: string,
+  cost: number,
+  rootKey: string,
+): Promise<UnkeyVerifyResult> {
+  const body: Record<string, unknown> = { key };
+  if (cost > 0) body.credits = { cost };
+
+  let response: Response;
+  try {
+    response = await fetch("https://api.unkey.com/v2/keys.verifyKey", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${rootKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      status: 503,
+      body: { error: "auth_service_unavailable", detail: String(err) },
+    };
+  }
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: 503,
+      body: {
+        error: "auth_service_error",
+        upstream_status: response.status,
+      },
+    };
+  }
+
+  let payload: { data?: UnkeyVerifyData };
+  try {
+    payload = (await response.json()) as { data?: UnkeyVerifyData };
+  } catch {
+    return { ok: false, status: 503, body: { error: "auth_service_bad_response" } };
+  }
+
+  const data = payload.data;
+  if (!data) {
+    return { ok: false, status: 503, body: { error: "auth_service_bad_response" } };
+  }
+
+  if (data.valid) return { ok: true, data };
+
+  // Map Unkey's invalid-key codes to HTTP statuses.
+  switch (data.code) {
+    case "USAGE_EXCEEDED":
+    case "INSUFFICIENT_CREDITS":
+      return {
+        ok: false,
+        status: 402,
+        body: {
+          error: "quota_exceeded",
+          message: `You've used your monthly Reep API quota. Upgrade at ${UPGRADE_URL} for a bigger plan.`,
+          upgrade_url: UPGRADE_URL,
+        },
+      };
+    case "RATE_LIMITED":
+      return {
+        ok: false,
+        status: 429,
+        body: {
+          error: "rate_limited",
+          message: "You're hitting your plan's rate limit. Slow down, upgrade, or batch requests.",
+          upgrade_url: UPGRADE_URL,
+        },
+      };
+    case "INSUFFICIENT_PERMISSIONS":
+      return {
+        ok: false,
+        status: 403,
+        body: { error: "forbidden", detail: "Your key does not have permission for this endpoint." },
+      };
+    case "NOT_FOUND":
+    case "DISABLED":
+    case "EXPIRED":
+    default:
+      return {
+        ok: false,
+        status: 401,
+        body: {
+          error: "unauthorized",
+          detail: `Invalid or revoked API key${data.code ? ` (${data.code.toLowerCase()})` : ""}.`,
+        },
+      };
+  }
+}
+
+/**
+ * Compute the credit cost of a request without consuming its body.
+ * Uses request.clone() so the original stream stays intact for the handler.
+ * Malformed batch bodies default to cost 1 — the handler will reject them
+ * with a 400, but the caller still pays a minimal penalty for the attempt.
+ */
+async function computeCost(
+  request: Request,
+  path: string,
+  method: string,
+): Promise<number> {
+  if (FREE_PATHS.has(path)) return 0;
+  if (method === "GET" && (path === "/lookup" || path === "/resolve")) return 1;
+  if (method === "POST" && (path === "/batch/lookup" || path === "/batch/resolve")) {
+    try {
+      const body = (await request.clone().json()) as {
+        ids?: unknown[];
+        items?: unknown[];
+      };
+      const arr = path === "/batch/lookup" ? body.ids : body.items;
+      if (Array.isArray(arr) && arr.length > 0) {
+        return Math.min(arr.length, BATCH_MAX);
+      }
+    } catch {
+      /* fall through */
+    }
+    return 1;
+  }
+  return 1;
+}
+
+/**
+ * Extract the Bearer token from an Authorization header.
+ * Returns null for missing / malformed headers.
+ */
+function extractBearer(header: string | null): string | null {
+  if (!header) return null;
+  const match = header.match(/^Bearer\s+(\S+)$/i);
+  return match ? match[1] : null;
+}
 
 /** Constant-time string comparison to prevent timing side-channels on auth secrets. */
 async function safeCompare(a: string, b: string): Promise<boolean> {
@@ -330,7 +577,7 @@ async function handleLookup(
   return json({ results, count: results.length });
 }
 
-// GET /search?name=Cole+Palmer&type=player&limit=20
+// GET /search?name=Cole+Palmer&type=player&limit=20&targets=wyscout,fbref
 async function handleSearch(
   params: URLSearchParams,
   db: D1Database,
@@ -345,6 +592,10 @@ async function handleSearch(
 
   const type = params.get("type");
   const limit = Math.min(Number(params.get("limit")) || 25, 100);
+
+  // Optional ?targets=wyscout,fbref — filter external_ids to just these providers.
+  // When absent, the full cross-provider ID map is returned.
+  const targets = parseTargets(params.get("targets"));
 
   // Sanitize FTS query: strip non-word chars, quote each token, prefix-match last token
   const sanitized = name.replace(/[^\p{L}\p{N}\s'-]/gu, " ").trim();
@@ -388,9 +639,13 @@ async function handleSearch(
   const results = await Promise.all(
     entities.results.map(async (e) => {
       const ids = await fetchAllIds(db, e.reep_id as string);
+      const externalIds = targets ? filterIds(ids, targets) : ids;
+      // qid is a convenience alias for external_ids.wikidata. If the caller
+      // narrowed targets and didn't ask for wikidata, honour that and drop qid.
+      const qid = !targets || targets.includes("wikidata") ? ids.wikidata ?? null : null;
       return {
         reep_id: e.reep_id,
-        qid: ids.wikidata ?? null,
+        qid,
         type: e.type,
         name_en: e.name_en,
         aliases_en: e.aliases_en,
@@ -398,7 +653,7 @@ async function handleSearch(
         nationality: e.nationality,
         position: e.position,
         position_detail: e.position_detail,
-        external_ids: ids,
+        external_ids: externalIds,
       };
     }),
   );
@@ -476,6 +731,27 @@ async function resolveEntity(db: D1Database, provider: string, id: string): Prom
 
 const BATCH_MAX = 100;
 
+// Parse a comma-separated list of provider names from a query string or body field.
+// Returns null when the input is empty/missing so callers can distinguish
+// "no filter" (return everything) from "filter to empty set" (return nothing).
+function parseTargets(raw: string | null | undefined): string[] | null {
+  if (!raw) return null;
+  const list = raw
+    .split(",")
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0 && VALID_PROVIDERS.has(t));
+  return list.length > 0 ? list : null;
+}
+
+// Return a new external_ids map containing only keys that appear in `targets`.
+function filterIds(ids: Record<string, string>, targets: string[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const t of targets) {
+    if (ids[t] !== undefined) out[t] = ids[t];
+  }
+  return out;
+}
+
 // POST /batch/lookup — body: { ids: ["reep_p...", "Q99760796", ...] }
 // Also accepts legacy { qids: [...] } format
 async function handleBatchLookup(request: Request, db: D1Database): Promise<Response> {
@@ -519,9 +795,13 @@ async function handleBatchLookup(request: Request, db: D1Database): Promise<Resp
   return json({ results, count: results.length });
 }
 
-// POST /batch/resolve — body: { items: [{ provider: "transfermarkt", id: "568177" }, ...] }
+// POST /batch/resolve — body: {
+//   items: [{ provider: "transfermarkt", id: "568177" }, ...],
+//   targets?: ["wyscout", "fbref"]   // optional: filter external_ids in response
+// }
+// Each result echoes the input in `from` so callers can correlate without relying on array index.
 async function handleBatchResolve(request: Request, db: D1Database): Promise<Response> {
-  let body: { items?: { provider: string; id: string }[] };
+  let body: { items?: { provider: string; id: string }[]; targets?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -537,12 +817,24 @@ async function handleBatchResolve(request: Request, db: D1Database): Promise<Res
     return json({ error: `Maximum ${BATCH_MAX} items per request` }, 400);
   }
 
+  // Optional targets: narrow the external_ids map in each result to just these providers.
+  const targets = Array.isArray(body.targets)
+    ? parseTargets((body.targets as unknown[]).filter((t): t is string => typeof t === "string").join(","))
+    : null;
+
   const results = await Promise.all(
     items.map(async ({ provider, id }) => {
-      if (!provider || !id) return { provider, id, error: "missing_fields" };
-      if (!VALID_PROVIDERS.has(provider)) return { provider, id, error: "unknown_provider" };
+      const from = { provider, id };
+      if (!provider || !id) return { from, error: "missing_fields" };
+      if (!VALID_PROVIDERS.has(provider)) return { from, error: "unknown_provider" };
       const entity = await resolveEntity(db, provider, id);
-      return entity ?? { provider, id, error: "not_found" };
+      if (!entity) return { from, error: "not_found" };
+      if (!targets) return { from, ...entity };
+      // Narrow external_ids and qid convenience alias
+      const fullIds = (entity.external_ids as Record<string, string>) || {};
+      const filteredIds = filterIds(fullIds, targets);
+      const qid = targets.includes("wikidata") ? (entity.qid ?? null) : null;
+      return { from, ...entity, qid, external_ids: filteredIds };
     }),
   );
 

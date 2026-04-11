@@ -16,7 +16,7 @@ info:
     records with type-specific Reep IDs. The unique key is `reep_id`.
 
     All data is open source: https://github.com/withqwerty/reep
-  version: 2.3.0
+  version: 2.4.0
   contact:
     name: withqwerty
     url: https://github.com/withqwerty/reep
@@ -57,6 +57,19 @@ paths:
             default: 25
             maximum: 100
           description: Maximum results to return
+        - name: targets
+          in: query
+          required: false
+          schema:
+            type: string
+          example: wyscout,fbref
+          description: |
+            Comma-separated list of provider names to include in `external_ids`.
+            When omitted, the full cross-provider ID map is returned.
+            When set, only the named providers appear in `external_ids`, and the `qid`
+            convenience field is populated only if `wikidata` is in the list.
+            Unknown provider names are silently ignored. Useful for trimming response
+            size when you only need one or two target IDs per match.
       responses:
         "200":
           description: Search results ranked by relevance
@@ -92,8 +105,13 @@ paths:
   /lookup:
     get:
       operationId: lookupById
+      deprecated: true
       summary: Look up entity by Reep ID or Wikidata QID
       description: |
+        **Deprecated.** Prefer `POST /batch/resolve` with a one-element `items` array, or
+        `GET /search` when you only have a name. This endpoint remains functional but is
+        not the recommended path for new integrations.
+
         Exact lookup by Reep ID or Wikidata QID. The ID type is auto-detected:
         - `reep_p...` / `reep_t...` / `reep_c...` / `reep_l...` / `reep_s...` → Reep ID lookup
         - `Q...` → Wikidata QID lookup (may return multiple records for dual-role people)
@@ -131,8 +149,13 @@ paths:
   /resolve:
     get:
       operationId: resolveProviderId
+      deprecated: true
       summary: Resolve a provider ID to all other IDs
       description: |
+        **Deprecated.** Prefer `POST /batch/resolve` — it accepts a one-element `items`
+        array and supports the `targets` parameter for response narrowing. This endpoint
+        remains functional but is not the recommended path for new integrations.
+
         Given a provider name and ID, find the entity and return all cross-provider IDs.
         This is the core use case: "I have a Transfermarkt ID, what's the FBref ID?"
       parameters:
@@ -140,52 +163,7 @@ paths:
           in: query
           required: true
           schema:
-            type: string
-            enum:
-              - wikidata
-              - transfermarkt
-              - transfermarkt_manager
-              - transfermarkt_player
-              - fbref
-              - fbref_verified
-              - soccerway
-              - sofascore
-              - flashscore
-              - opta
-              - premier_league
-              - 11v11
-              - espn
-              - national_football_teams
-              - worldfootball
-              - soccerbase
-              - kicker
-              - uefa
-              - lequipe
-              - fff_fr
-              - serie_a
-              - besoccer
-              - footballdatabase_eu
-              - eu_football_info
-              - hugman
-              - german_fa
-              - statmuse_pl
-              - sofifa
-              - soccerdonna
-              - dongqiudi
-              - playmakerstats
-              - understat
-              - whoscored
-              - clubelo
-              - sportmonks
-              - api_football
-              - fotmob
-              - fpl_code
-              - thesportsdb
-              - impect
-              - wyscout
-              - skillcorner
-              - heimspiel
-              - capology
+            $ref: "#/components/schemas/ProviderName"
           example: transfermarkt
           description: Source provider name
         - name: id
@@ -212,11 +190,17 @@ paths:
   /batch/lookup:
     post:
       operationId: batchLookup
+      deprecated: true
       summary: Look up multiple IDs in one request
       description: |
+        **Deprecated.** Prefer `POST /batch/resolve` for all bulk lookups — it is
+        provider-aware, supports the `targets` parameter for response narrowing,
+        and echoes each input back in the `from` field for easy correlation.
+
         Batch lookup by Reep IDs or Wikidata QIDs. Accepts a mix of both.
         A single QID may return multiple records if the person is both a player and coach.
-        Results are flattened into a single array. Maximum 100 IDs per request.
+        Results are flattened into a single array, so the response `count` may exceed
+        the number of `ids` in the request. Maximum 100 IDs per request.
       requestBody:
         required: true
         content:
@@ -229,6 +213,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  minItems: 1
                   maxItems: 100
                   description: Array of Reep IDs or Wikidata QIDs
             example:
@@ -250,9 +235,27 @@ paths:
   /batch/resolve:
     post:
       operationId: batchResolve
-      summary: Resolve multiple provider IDs in one request
+      summary: Resolve one or more provider IDs to entities (primary endpoint)
       description: |
-        Batch resolve provider IDs to entities. Maximum 100 items per request.
+        The primary bulk translation endpoint. Given a list of `(provider, id)` pairs,
+        returns the matching entities. Use this both for single lookups (one-element array)
+        and bulk translation (up to 100 per request).
+
+        **Translation workflow** — to translate N Opta IDs into Wyscout IDs in one call:
+        ```
+        POST /batch/resolve
+        { "items": [{"provider": "opta", "id": "..."}, ...],
+          "targets": ["wyscout"] }
+        ```
+        Each result's `external_ids` will contain only the requested target providers,
+        dramatically reducing payload size. The `from` field on every result echoes
+        the input so callers can correlate regardless of array order or `not_found` gaps.
+
+        **Error handling** — malformed items return inline errors (`missing_fields`,
+        `unknown_provider`, `not_found`) rather than failing the whole batch. The
+        response `count` always equals `items.length`; position is preserved.
+
+        Maximum 100 items per request.
       requestBody:
         required: true
         content:
@@ -268,23 +271,48 @@ paths:
                     required: [provider, id]
                     properties:
                       provider:
-                        type: string
+                        $ref: "#/components/schemas/ProviderName"
                       id:
                         type: string
+                  minItems: 1
                   maxItems: 100
+                targets:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ProviderName"
+                  description: |
+                    Optional filter on response `external_ids`. When provided, each
+                    matched entity's `external_ids` will contain only the named providers,
+                    and the `qid` convenience field is populated only if `wikidata` is in
+                    the list. Unknown provider names are silently ignored. Useful for
+                    trimming response size when you only need one or two target IDs per
+                    translation.
             example:
               items:
                 - provider: transfermarkt
                   id: "568177"
                 - provider: fbref
                   id: dea698d9
+              targets: ["wyscout", "sofascore"]
       responses:
         "200":
-          description: Batch resolve results
+          description: Batch resolve results. Position is preserved, `count` equals `items.length`.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BatchResolveResponse"
+              example:
+                results:
+                  - from: {provider: transfermarkt, id: "568177"}
+                    reep_id: reep_p2804f5db
+                    type: player
+                    name_en: Cole Palmer
+                    external_ids:
+                      wyscout: "569823"
+                      sofascore: "982780"
+                  - from: {provider: fbref, id: dea698d9}
+                    error: not_found
+                count: 2
         "400":
           description: Invalid body, empty items array, or exceeds 100 item limit
           content:
@@ -307,6 +335,57 @@ paths:
 
 components:
   schemas:
+    ProviderName:
+      type: string
+      description: |
+        Name of a supported data provider. Sourced from `VALID_PROVIDERS` in the worker.
+        Update this list whenever a new provider is added.
+      enum:
+        - wikidata
+        - transfermarkt
+        - transfermarkt_manager
+        - fbref
+        - fbref_verified
+        - soccerway
+        - sofascore
+        - flashscore
+        - opta
+        - opta_numeric
+        - optacore
+        - premier_league
+        - 11v11
+        - espn
+        - national_football_teams
+        - worldfootball
+        - soccerbase
+        - kicker
+        - uefa
+        - lequipe
+        - fff_fr
+        - serie_a
+        - besoccer
+        - footballdatabase_eu
+        - eu_football_info
+        - hugman
+        - german_fa
+        - statmuse_pl
+        - sofifa
+        - soccerdonna
+        - dongqiudi
+        - playmakerstats
+        - understat
+        - whoscored
+        - clubelo
+        - sportmonks
+        - api_football
+        - fotmob
+        - thesportsdb
+        - impect
+        - wyscout
+        - skillcorner
+        - heimspiel
+        - capology
+
     Entity:
       type: object
       properties:
@@ -319,7 +398,7 @@ components:
           description: Wikidata QID (convenience field, null for entities not in Wikidata)
         type:
           type: string
-          enum: [player, team, coach]
+          enum: [player, team, coach, competition, season]
         name_en:
           type: string
         aliases_en:
@@ -399,12 +478,27 @@ components:
       properties:
         results:
           type: array
+          description: |
+            Flattened list. A single QID input may expand to multiple entities
+            (e.g. dual-role player/coach), so `count` can exceed the number of
+            input ids.
           items:
             oneOf:
               - $ref: "#/components/schemas/Entity"
               - type: object
+                description: Error for a reep_id that was not found
+                required: [id, error]
                 properties:
                   id:
+                    type: string
+                  error:
+                    type: string
+                    enum: [not_found]
+              - type: object
+                description: Error for a Wikidata QID that was not found
+                required: [qid, error]
+                properties:
+                  qid:
                     type: string
                   error:
                     type: string
@@ -417,20 +511,40 @@ components:
       properties:
         results:
           type: array
+          description: |
+            Position-preserved, one result per input item. `count` always equals
+            the input `items.length`. Every result — success or error — includes
+            a `from` field echoing the input for correlation.
           items:
             oneOf:
-              - $ref: "#/components/schemas/Entity"
+              - allOf:
+                  - type: object
+                    required: [from]
+                    properties:
+                      from:
+                        $ref: "#/components/schemas/FromEcho"
+                  - $ref: "#/components/schemas/Entity"
               - type: object
+                description: Error variant
+                required: [from, error]
                 properties:
-                  provider:
-                    type: string
-                  id:
-                    type: string
+                  from:
+                    $ref: "#/components/schemas/FromEcho"
                   error:
                     type: string
-                    enum: [not_found, missing_fields]
+                    enum: [not_found, missing_fields, unknown_provider]
         count:
           type: integer
+
+    FromEcho:
+      type: object
+      description: Echo of the input `(provider, id)` pair so callers can correlate results.
+      required: [provider, id]
+      properties:
+        provider:
+          type: string
+        id:
+          type: string
 
     StatsResponse:
       type: object
