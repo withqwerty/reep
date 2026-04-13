@@ -146,17 +146,7 @@ Think of it as the football equivalent of the [Chadwick Baseball Bureau Register
 
 ## Coverage
 
-Not every entity has every ID. Coverage depends on what the Wikidata community has mapped plus custom verified mappings. To get live coverage counts:
-
-```bash
-# Wikidata-sourced IDs (provider_ids)
-pnpm exec wrangler d1 execute football-entities --remote \
-  --command "SELECT provider, COUNT(*) as cnt FROM provider_ids GROUP BY provider ORDER BY cnt DESC"
-
-# Custom verified IDs
-pnpm exec wrangler d1 execute football-entities --remote \
-  --command "SELECT provider, COUNT(*) as cnt FROM custom_ids GROUP BY provider ORDER BY cnt DESC"
-```
+Not every entity has every ID. Coverage depends on what the Wikidata community has mapped plus independently verified mappings. Use `GET /stats` for live counts.
 
 | Provider | Source | Notes |
 |----------|--------|-------|
@@ -164,24 +154,24 @@ pnpm exec wrangler d1 execute football-entities --remote \
 | FBref | Wikidata | Strong for recent players |
 | Soccerway | Wikidata | Broad international coverage |
 | Sofascore | Wikidata | Modern players well covered |
-| Opta | Custom | Alphanumeric IDs from Stats Perform's Opta F1 database (~50K players) |
-| Impect | Custom | DOB + name matching via Impect export |
-| Wyscout | Custom | Via Impect ID mappings |
-| SkillCorner | Custom | Via Impect ID mappings |
-| heim:spiel | Custom | Via Impect ID mappings |
-| TheSportsDB | Custom | Direct QID + DOB/name matching |
-| API-Football | Custom | Via TheSportsDB + direct matching |
-| ESPN | Custom | Via TheSportsDB mappings |
-| FotMob | Custom | DOB + name matching |
-| FBref verified | Custom | Cross-verified via worldfootballR |
-| Opta numeric | Custom | Legacy Opta numeric IDs (same as FPL `code`, The Analyst `sc-` IDs) |
-| Understat | Custom | Verified cross-reference matching |
-| WhoScored | Custom | Verified cross-reference matching |
-| SportMonks | Custom | Verified cross-reference matching |
-| Club Elo | Custom | Manual team mapping |
 | Premier League | Wikidata | PL players only |
+| Opta | Verified | Alphanumeric IDs from Stats Perform's Opta F1 database (~50K players) |
+| Opta numeric | Verified | Legacy Opta numeric IDs (same as FPL `code`, The Analyst `sc-` IDs) |
+| Impect | Verified | DOB + name matching via Impect export |
+| Wyscout | Verified | Via Impect ID mappings |
+| SkillCorner | Verified | Via Impect ID mappings |
+| heim:spiel | Verified | Via Impect ID mappings |
+| TheSportsDB | Verified | Direct Wikidata link + DOB/name matching |
+| API-Football | Verified | Via TheSportsDB + direct matching |
+| ESPN | Verified | Via TheSportsDB mappings |
+| FotMob | Verified | DOB + name matching |
+| FBref verified | Verified | Cross-verified via worldfootballR |
+| Understat | Verified | Cross-reference matching |
+| WhoScored | Verified | Cross-reference matching |
+| SportMonks | Verified | Cross-reference matching |
+| Club Elo | Verified | Manual team mapping |
 
-IDs sourced from Wikidata are community-maintained. Custom IDs are verified independently — see the [Reep API](#api) for methodology details.
+**Wikidata** IDs are community-maintained and update automatically with each refresh. **Verified** IDs are matched independently using DOB, name, and cross-provider bridges, then validated before inclusion.
 
 ## Usage
 
@@ -318,8 +308,6 @@ Entities not in Wikidata (e.g. lower-league players) are sourced from authoritat
 | [P6131](https://www.wikidata.org/wiki/Property:P6131) | Soccerway team ID |
 | [P12302](https://www.wikidata.org/wiki/Property:P12302) | Sofascore player ID |
 | [P8259](https://www.wikidata.org/wiki/Property:P8259) | Flashscore player ID |
-| ~~[P8736](https://www.wikidata.org/wiki/Property:P8736)~~ | ~~Opta player ID~~ (removed — outdated numeric IDs, see note below) |
-| ~~[P8737](https://www.wikidata.org/wiki/Property:P8737)~~ | ~~Opta team ID~~ (removed — outdated numeric IDs, see note below) |
 | [P12539](https://www.wikidata.org/wiki/Property:P12539) | Premier League player ID |
 | [P12551](https://www.wikidata.org/wiki/Property:P12551) | 11v11 player ID |
 | [P3681](https://www.wikidata.org/wiki/Property:P3681) | ESPN FC player ID |
