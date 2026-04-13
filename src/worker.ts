@@ -245,7 +245,9 @@ export default {
     // X-Reep-Plan              : plan tier from key meta (free / plus / pro) — set by createKey in the webhook
     if (unkeyResult && response.ok) {
       const headers = new Headers(response.headers);
-      const remaining = unkeyResult.data.credits?.remaining;
+      // credits comes back as a bare integer on verifyKey (not nested)
+      const creditsRaw = unkeyResult.data.credits;
+      const remaining = typeof creditsRaw === "number" ? creditsRaw : creditsRaw?.remaining;
       if (typeof remaining === "number") {
         headers.set("X-Reep-Credits-Remaining", String(remaining));
       }
@@ -324,7 +326,11 @@ interface UnkeyVerifyData {
   name?: string;
   enabled?: boolean;
   meta?: Record<string, unknown>;
-  credits?: { remaining?: number };
+  // Unkey v2's verifyKey endpoint returns credits as a bare integer (the
+  // remaining count), NOT a nested {remaining} object. The listKeys endpoint
+  // returns the nested shape — they're inconsistent. Accept both so this type
+  // is safe to reuse if we ever parse listKeys responses in the worker.
+  credits?: number | { remaining?: number };
   permissions?: string[];
   identity?: { id?: string; externalId?: string };
   ratelimits?: Array<{ name: string; remaining?: number; reset?: number }>;
@@ -357,8 +363,11 @@ async function verifyUnkey(
   cost: number,
   rootKey: string,
 ): Promise<UnkeyVerifyResult> {
-  const body: Record<string, unknown> = { key };
-  if (cost > 0) body.credits = { cost };
+  // Always pass credits.cost explicitly — including cost: 0 for free paths.
+  // Unkey's verifyKey deducts 1 credit by default when `credits` is omitted
+  // (despite docs suggesting otherwise), which would silently burn a credit
+  // on every /search call. Explicit cost: 0 skips the deduction cleanly.
+  const body: Record<string, unknown> = { key, credits: { cost } };
 
   let response: Response;
   try {
