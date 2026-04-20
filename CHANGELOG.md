@@ -2,6 +2,16 @@
 
 All notable changes to the Reep Register API and data are documented here. Versioned releases (v2.x.y) contain API changes; calver releases (YYYY.WW) are data-only.
 
+## v2.5.0 - 2026-04-20
+
+### Data
+- **API-Football player IDs: +14,054.** Cross-referenced from public TheSportsDB records, accepted only when the date of birth matches the Reep entity. Coverage jumps from Premier League–only to global.
+- **ESPN player IDs: +9,948.** Same cross-reference pass, same DOB safeguard.
+- **Capology IDs: +31,960.** Auto-confirmed the subset where name uniqueness on both sides plus nationality agreement make the match unambiguous. The residual ambiguous pairs are under community validation.
+
+### Data quality
+- All new IDs in this release are gated on date-of-birth exact match before writing. Records without a verifiable DOB or with conflicting DOBs are never auto-confirmed.
+
 ## v2.4.1 - 2026-04-13
 
 ### Docs

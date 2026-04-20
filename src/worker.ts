@@ -20,7 +20,7 @@ interface R2EventNotification {
   object?: { key: string; size: number; eTag: string };
 }
 
-const API_VERSION = "2.4.1";
+const API_VERSION = "2.5.0";
 
 const VALID_PROVIDERS = new Set([
   "wikidata",
