@@ -1,7 +1,7 @@
 {
   "data_version": "2026.17",
   "api_version": "2.5.0",
-  "generated_at": "2026-04-20T01:57:09.556990+00:00",
+  "generated_at": "2026-04-20T02:13:18.340901+00:00",
   "source": "Wikidata SPARQL + custom verified mappings",
   "counts": {
     "people": 444707,
@@ -9,6 +9,6 @@
     "competitions": 212,
     "seasons": 1200,
     "aliases": 27591,
-    "custom_ids": 398183
+    "custom_ids": 398181
   }
 }
