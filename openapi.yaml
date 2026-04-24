@@ -145,8 +145,8 @@ paths:
             Entity details. When the client asked for a retired `reep_id`
             that has a canonical successor, the response body carries the
             canonical entity's fields with `_deprecated`, `_canonical_id`,
-            and `_deprecated_at` attached (WIT-41). Provider-id lookups
-            (QIDs) redirect silently — no deprecation meta.
+            and `_deprecated_at` attached. Provider-id lookups (QIDs)
+            redirect silently — no deprecation meta.
           content:
             application/json:
               schema:
@@ -568,8 +568,8 @@ components:
           enum: [retired, chain_depth_exceeded, canonical_missing]
           description: |
             Present on error-shape deprecation responses (410 Gone body). `retired`
-            = no successor. The other two are defensive fallbacks for chain rot
-            that validate-db should prevent.
+            = no successor. The other two are defensive fallbacks that should not
+            surface in normal operation.
 
     SearchResponse:
       type: object
@@ -615,8 +615,8 @@ components:
               - type: object
                 description: |
                   Gone marker for a reep_id that was retired without a
-                  canonical successor (WIT-41). Mirrors the /lookup 410
-                  body shape but lives inline in the batch results array.
+                  canonical successor. Mirrors the /lookup 410 body shape
+                  but lives inline in the batch results array.
                 required: [id, error, _deprecated, _canonical_id, _deprecated_at, _deprecated_reason]
                 properties:
                   id:
