@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: The Reep Register
   description: |
-    The football entity register. Resolve player, team, coach, competition, and season IDs across
+    The football entity register. Resolve player, team, coach, competition, season, and match IDs across
     Transfermarkt, FBref, Sofascore, Understat, WhoScored, and 40+ data providers.
 
     492,000+ entities with cross-provider ID mappings sourced from Wikidata
@@ -16,7 +16,7 @@ info:
     records with type-specific Reep IDs. The unique key is `reep_id`.
 
     All data is open source: https://github.com/withqwerty/reep
-  version: 2.4.0
+  version: 2.7.0
   contact:
     name: withqwerty
     url: https://github.com/withqwerty/reep
@@ -31,7 +31,8 @@ paths:
       summary: Search entities by name
       description: |
         Full-text search across players, teams, coaches, and competitions by name or alias.
-        Seasons are excluded from default search to avoid noise; use `type=season` to search seasons explicitly.
+        Seasons and matches are excluded from default search to avoid noise; use `type=season`
+        or `type=match` explicitly when you want those entity classes.
         Uses prefix matching with BM25 relevance ranking (e.g. "Cole Palm" matches "Cole Palmer").
         Diacritics-insensitive ("Muller" matches "Müller").
       parameters:
@@ -47,7 +48,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [player, team, coach, competition, season]
+            enum: [player, team, coach, competition, season, match]
           description: Filter by entity type
         - name: limit
           in: query
@@ -113,7 +114,7 @@ paths:
         not the recommended path for new integrations.
 
         Exact lookup by Reep ID or Wikidata QID. The ID type is auto-detected:
-        - `reep_p...` / `reep_t...` / `reep_c...` / `reep_l...` / `reep_s...` → Reep ID lookup
+        - `reep_p...` / `reep_t...` / `reep_c...` / `reep_l...` / `reep_s...` / `reep_m...` → Reep ID lookup
         - `Q...` → Wikidata QID lookup (may return multiple records for dual-role people)
 
         Also accepts the legacy `?qid=` parameter for backwards compatibility.
@@ -130,11 +131,16 @@ paths:
           required: false
           schema:
             type: string
-            enum: [player, team, coach, competition, season]
+            enum: [player, team, coach, competition, season, match]
           description: Filter by entity type (only needed for QID lookups with dual-role people)
       responses:
         "200":
-          description: Entity details
+          description: |
+            Entity details. When the client asked for a retired `reep_id`
+            that has a canonical successor, the response body carries the
+            canonical entity's fields with `_deprecated`, `_canonical_id`,
+            and `_deprecated_at` attached (WIT-41). Provider-id lookups
+            (QIDs) redirect silently — no deprecation meta.
           content:
             application/json:
               schema:
@@ -145,6 +151,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "410":
+          description: |
+            The requested `reep_id` was retired with no canonical successor.
+            Body contains `_deprecated: true`, `_canonical_id: null`, and
+            `_deprecated_reason`. Applies only to direct `reep_id` lookups;
+            provider-id paths surface retirement as 200 with empty results.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [_deprecated, _canonical_id, _deprecated_at, _deprecated_reason]
+                properties:
+                  _deprecated:
+                    type: boolean
+                    enum: [true]
+                  _canonical_id:
+                    type: string
+                    nullable: true
+                    enum: [null]
+                  _deprecated_at:
+                    type: string
+                  _deprecated_reason:
+                    type: string
+                    enum: [retired, chain_depth_exceeded, canonical_missing]
 
   /resolve:
     get:
@@ -157,7 +187,8 @@ paths:
         remains functional but is not the recommended path for new integrations.
 
         Given a provider name and ID, find the entity and return all cross-provider IDs.
-        This is the core use case: "I have a Transfermarkt ID, what's the FBref ID?"
+        Provider namespaces are not globally type-unique, so `type` is available when you
+        need to disambiguate IDs that exist across multiple entity classes.
       parameters:
         - name: provider
           in: query
@@ -173,6 +204,13 @@ paths:
             type: string
           example: "568177"
           description: ID from the source provider
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [player, team, coach, competition, season, match]
+          description: Optional entity type disambiguator for provider IDs reused across types
       responses:
         "200":
           description: Resolved entity with all provider IDs
@@ -182,6 +220,12 @@ paths:
                 $ref: "#/components/schemas/LookupResponse"
         "400":
           description: Missing provider or id parameter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Multiple entities share the same provider ID across different types
           content:
             application/json:
               schema:
@@ -237,7 +281,7 @@ paths:
       operationId: batchResolve
       summary: Resolve one or more provider IDs to entities (primary endpoint)
       description: |
-        The primary bulk translation endpoint. Given a list of `(provider, id)` pairs,
+        The primary bulk translation endpoint. Given a list of `(provider, id, type?)` items,
         returns the matching entities. Use this both for single lookups (one-element array)
         and bulk translation (up to 100 per request).
 
@@ -274,6 +318,10 @@ paths:
                         $ref: "#/components/schemas/ProviderName"
                       id:
                         type: string
+                      type:
+                        type: string
+                        enum: [player, team, coach, competition, season, match]
+                        description: Optional entity type disambiguator for reused provider IDs
                   minItems: 1
                   maxItems: 100
                 targets:
@@ -398,7 +446,7 @@ components:
           description: Wikidata QID (convenience field, null for entities not in Wikidata)
         type:
           type: string
-          enum: [player, team, coach, competition, season]
+          enum: [player, team, coach, competition, season, match]
         name_en:
           type: string
         aliases_en:
@@ -444,6 +492,46 @@ components:
           type: string
           nullable: true
           description: For seasons only — Reep ID of the parent competition
+        match_date:
+          type: string
+          nullable: true
+          description: For matches only — ISO date of the fixture
+        kickoff_utc:
+          type: string
+          nullable: true
+          description: For matches only — ISO kickoff timestamp when known
+        home_team_reep_id:
+          type: string
+          nullable: true
+          description: For matches only — Reep ID of the home team
+        away_team_reep_id:
+          type: string
+          nullable: true
+          description: For matches only — Reep ID of the away team
+        home_score:
+          type: integer
+          nullable: true
+          description: For matches only — final home score when known
+        away_score:
+          type: integer
+          nullable: true
+          description: For matches only — final away score when known
+        round_label:
+          type: string
+          nullable: true
+          description: For matches only — provider round label
+        referee:
+          type: string
+          nullable: true
+          description: For matches only
+        attendance:
+          type: integer
+          nullable: true
+          description: For matches only
+        season_label:
+          type: string
+          nullable: true
+          description: For matches only — provider-native season label when no canonical season mapping exists
         source:
           type: string
           description: Provenance (wikidata, opta, etc.)
@@ -452,6 +540,30 @@ components:
           additionalProperties:
             type: string
           description: Map of provider name to external ID (includes wikidata QID)
+        _deprecated:
+          type: boolean
+          description: |
+            Present and `true` when the client asked for a `reep_id` that has
+            been retired. The body carries the canonical entity's fields; the
+            `_canonical_id` meta tells the client the underlying `reep_id` has
+            moved. Provider-id paths (e.g. `?id=Q42`) redirect silently and do
+            NOT set this field.
+        _canonical_id:
+          type: string
+          nullable: true
+          description: |
+            When `_deprecated=true`, the canonical successor `reep_id`. Null on
+            a retirement (entity removed with no successor — a 410 Gone body).
+        _deprecated_at:
+          type: string
+          description: ISO timestamp when the retired `reep_id` was soft-deleted.
+        _deprecated_reason:
+          type: string
+          enum: [retired, chain_depth_exceeded, canonical_missing]
+          description: |
+            Present on error-shape deprecation responses (410 Gone body). `retired`
+            = no successor. The other two are defensive fallbacks for chain rot
+            that validate-db should prevent.
 
     SearchResponse:
       type: object
@@ -495,6 +607,30 @@ components:
                     type: string
                     enum: [not_found]
               - type: object
+                description: |
+                  Gone marker for a reep_id that was retired without a
+                  canonical successor (WIT-41). Mirrors the /lookup 410
+                  body shape but lives inline in the batch results array.
+                required: [id, error, _deprecated, _canonical_id, _deprecated_at, _deprecated_reason]
+                properties:
+                  id:
+                    type: string
+                  error:
+                    type: string
+                    enum: [gone]
+                  _deprecated:
+                    type: boolean
+                    enum: [true]
+                  _canonical_id:
+                    type: string
+                    nullable: true
+                    enum: [null]
+                  _deprecated_at:
+                    type: string
+                  _deprecated_reason:
+                    type: string
+                    enum: [retired, chain_depth_exceeded, canonical_missing]
+              - type: object
                 description: Error for a Wikidata QID that was not found
                 required: [qid, error]
                 properties:
@@ -532,7 +668,12 @@ components:
                     $ref: "#/components/schemas/FromEcho"
                   error:
                     type: string
-                    enum: [not_found, missing_fields, unknown_provider]
+                    enum: [not_found, missing_fields, unknown_provider, unknown_type, ambiguous]
+                  types:
+                    type: array
+                    items:
+                      type: string
+                    description: Present on `ambiguous` results to show the matching entity classes
         count:
           type: integer
 
@@ -545,6 +686,9 @@ components:
           type: string
         id:
           type: string
+        type:
+          type: string
+          nullable: true
 
     StatsResponse:
       type: object

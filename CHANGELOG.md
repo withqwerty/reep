@@ -2,6 +2,25 @@
 
 All notable changes to the Reep Register API and data are documented here. Versioned releases (v2.x.y) contain API changes; calver releases (YYYY.WW) are data-only.
 
+## v2.7.0 - 2026-04-24
+
+### API
+- **Stable `reep_id`s with redirect-on-retire.** A Reep ID promoted to prod is guaranteed to keep resolving forever. When an entity is deduplicated or re-canonicalised, its old `reep_id` now redirects to the canonical entity instead of returning not-found. The response body carries the canonical entity's fields with three meta markers attached: `_deprecated: true`, `_canonical_id` (the new canonical `reep_id`), and `_deprecated_at` (ISO timestamp). Provider-ID lookups (e.g. `?id=Q42`) redirect silently — no meta fields, since the client didn't name a specific `reep_id`.
+- **410 Gone for retired `reep_id`s with no successor.** Entities removed without a canonical replacement (e.g. upstream confirmed non-football) return a 410 with `_deprecated: true`, `_canonical_id: null`, and `_deprecated_reason: "retired"`.
+
+### Data quality
+- **Search results exclude retired entities.** `/search` and any FTS-backed path no longer surface soft-deleted rows.
+
+## v2.6.0 - 2026-04-23
+
+### API
+- **Add `match` as a first-class entity type.** Reep IDs with the `reep_m...` prefix can now be looked up and resolved alongside players, teams, coaches, competitions, and seasons.
+- **Make `/resolve` and `/batch/resolve` type-aware.** Provider IDs are no longer assumed to be globally unique across entity classes. Both endpoints now accept an optional `type`, and ambiguous cross-type IDs return an explicit ambiguity response instead of silently choosing one entity.
+- **Return match metadata on entity responses.** Match lookups now include the fixture date, home/away team Reep IDs, score, round, venue, referee, attendance, and season label when available.
+
+### Data
+- **Add partitioned match export support.** Canonical match identity can now be published as narrow, compressed per-competition/per-season CSV partitions plus a separate match-ID mapping export, without bundling any raw event data.
+
 ## v2.5.0 - 2026-04-20
 
 ### Data

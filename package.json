@@ -1,7 +1,7 @@
 {
   "name": "reep",
-  "version": "2.5.0",
-  "description": "The football entity register. Maps player, team, and coach identities across Transfermarkt, FBref, Sofascore, Opta, and 10+ data providers.",
+  "version": "2.7.0",
+  "description": "The football entity register. Maps player, team, coach, competition, season, and match identities across Transfermarkt, FBref, Sofascore, Opta, and 10+ data providers.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

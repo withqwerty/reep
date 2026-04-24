@@ -20,7 +20,7 @@ interface R2EventNotification {
   object?: { key: string; size: number; eTag: string };
 }
 
-const API_VERSION = "2.5.0";
+const API_VERSION = "2.7.0";
 
 const VALID_PROVIDERS = new Set([
   "wikidata",
@@ -67,6 +67,15 @@ const VALID_PROVIDERS = new Set([
   "skillcorner",
   "heimspiel",
   "capology",
+]);
+
+const VALID_ENTITY_TYPES = new Set([
+  "player",
+  "team",
+  "coach",
+  "competition",
+  "season",
+  "match",
 ]);
 
 const CORS = {
@@ -539,7 +548,7 @@ async function fetchAllIds(db: D1Database, reepId: string): Promise<Record<strin
   return ids;
 }
 
-// GET /lookup?id=reep_p2804f5db  OR  ?id=Q99760796  OR  ?qid=Q99760796 (legacy)
+// GET /lookup?id=reep_p2804f5db  OR  ?id=reep_m1234abcd  OR  ?id=Q99760796  OR  ?qid=Q99760796 (legacy)
 async function handleLookup(
   params: URLSearchParams,
   db: D1Database,
@@ -556,13 +565,22 @@ async function handleLookup(
 
   // Detect ID type by prefix
   if (id.startsWith("reep_")) {
-    // Direct Reep ID lookup
+    // Direct Reep ID lookup — tombstones surface with deprecation meta
+    // or as a 410 Gone for retirements (WIT-41).
     const entity = await lookupByReepId(db, id);
     if (!entity) return json({ results: [], count: 0 });
+    if (isRetirementSentinel(entity)) {
+      return json(entity, 410);
+    }
     return json({ results: [entity], count: 1 });
   }
 
-  // QID lookup — resolve via provider_ids (provider=wikidata)
+  // QID lookup — resolve via provider_ids (provider=wikidata).
+  // Tombstones on this path redirect SILENTLY to the canonical (WIT-41
+  // decision: the caller asked for Q42, not a specific reep_id; give
+  // them the canonical data without a deprecation marker). Retired
+  // entities on this path surface as not_found (the QID mapping is
+  // effectively gone).
   const reepIds = await db
     .prepare("SELECT reep_id FROM provider_ids WHERE provider = 'wikidata' AND external_id = ?")
     .bind(id)
@@ -577,7 +595,9 @@ async function handleLookup(
     reepIds.results.map((r) => lookupByReepId(db, r.reep_id as string)),
   );
 
-  let results = entities.filter(Boolean) as Record<string, unknown>[];
+  let results = (entities.filter(Boolean) as Record<string, unknown>[])
+    .filter((e) => !isRetirementSentinel(e))
+    .map(stripDeprecationMeta);
 
   if (type) {
     results = results.filter((e) => e.type === type);
@@ -616,23 +636,32 @@ async function handleSearch(
     .map((t, i) => '"' + t.replace(/"/g, '""') + '"' + (i === tokens.length - 1 ? "*" : ""))
     .join(" ");
 
+  // Filter tombstones from search results (WIT-41). WIT-49 FTS triggers
+  // already remove soft-deleted rows from the index on every UPDATE, so
+  // the JOIN filter is defence-in-depth for rows that slipped in before
+  // the trigger split.
   let query = `
     SELECT e.reep_id, e.type, e.name_en, e.aliases_en,
            e.date_of_birth, e.nationality, e.position, e.position_detail,
+           m.match_date, m.kickoff_utc, m.home_team_reep_id, m.away_team_reep_id,
+           m.home_score, m.away_score, m.venue, m.referee, m.attendance,
+           m.round_label, m.season_reep_id, m.season_label,
            bm25(entities_fts, 10.0, 1.0) AS score
     FROM entities_fts
     JOIN entities e ON e.rowid = entities_fts.rowid
-    WHERE entities_fts MATCH ?`;
+    LEFT JOIN matches m ON m.reep_id = e.reep_id
+    WHERE entities_fts MATCH ?
+      AND e.deleted_at IS NULL`;
   const binds: (string | number)[] = [ftsQuery];
 
   if (type) {
     query += " AND e.type = ?";
     binds.push(type);
   } else {
-    // Exclude seasons from default search — they pollute results with
-    // "2024-25 Premier League", "2023-24 Premier League" etc.
-    // Use ?type=season explicitly to search seasons.
-    query += " AND e.type != 'season'";
+    // Exclude seasons and matches from default search — they pollute results
+    // with seasonal editions and fixture rows when the common case is still
+    // player/team/coach/competition lookup.
+    query += " AND e.type NOT IN ('season', 'match')";
   }
 
   query += " ORDER BY score LIMIT ?";
@@ -662,6 +691,18 @@ async function handleSearch(
         nationality: e.nationality,
         position: e.position,
         position_detail: e.position_detail,
+        match_date: e.match_date,
+        kickoff_utc: e.kickoff_utc,
+        home_team_reep_id: e.home_team_reep_id,
+        away_team_reep_id: e.away_team_reep_id,
+        home_score: e.home_score,
+        away_score: e.away_score,
+        venue: e.venue,
+        referee: e.referee,
+        attendance: e.attendance,
+        round_label: e.round_label,
+        season_reep_id: e.season_reep_id,
+        season_label: e.season_label,
         external_ids: externalIds,
       };
     }),
@@ -670,13 +711,14 @@ async function handleSearch(
   return json({ results, count: results.length });
 }
 
-// GET /resolve?provider=transfermarkt&id=568177
+// GET /resolve?provider=transfermarkt&id=568177&type=player
 async function handleResolve(
   params: URLSearchParams,
   db: D1Database,
 ): Promise<Response> {
   const provider = params.get("provider");
   const id = params.get("id");
+  const type = params.get("type");
 
   if (!provider || !id) {
     return json(
@@ -698,44 +740,206 @@ async function handleResolve(
     );
   }
 
-  const entity = await resolveEntity(db, provider, id);
-  if (!entity) return json({ results: [], count: 0 });
+  if (type && !VALID_ENTITY_TYPES.has(type)) {
+    return json(
+      {
+        error: `Unknown type: ${type}`,
+        types: [...VALID_ENTITY_TYPES],
+      },
+      400,
+    );
+  }
 
-  return json({ results: [entity], count: 1 });
+  const resolved = await resolveEntity(db, provider, id, type || undefined);
+  if (resolved.kind === "not_found") return json({ results: [], count: 0 });
+  if (resolved.kind === "ambiguous") {
+    return json(
+      {
+        error: "ambiguous_id",
+        provider,
+        id,
+        types: resolved.types,
+      },
+      409,
+    );
+  }
+
+  return json({ results: [resolved.entity], count: 1 });
 }
 
-const ENTITY_COLS = "reep_id, type, name_en, aliases_en, full_name, date_of_birth, nationality, position, position_detail, current_team_reep_id, height_cm, country, founded, stadium, source, competition_reep_id";
+const ENTITY_COLS = "e.reep_id, e.type, e.name_en, e.aliases_en, e.full_name, e.date_of_birth, e.nationality, e.position, e.position_detail, e.current_team_reep_id, e.height_cm, e.country, e.founded, e.stadium, e.source, e.competition_reep_id";
+const MATCH_COLS = "m.match_date, m.kickoff_utc, m.home_team_reep_id, m.away_team_reep_id, m.home_score, m.away_score, m.venue, m.referee, m.attendance, m.round_label, m.season_reep_id, m.season_label";
 
-// Helper: look up entity by reep_id, attach provider IDs and qid convenience field
-async function lookupByReepId(db: D1Database, reepId: string): Promise<Record<string, unknown> | null> {
-  const entity = await db
-    .prepare(`SELECT ${ENTITY_COLS} FROM entities WHERE reep_id = ?`)
+// Helper: look up entity by reep_id, attach provider IDs and qid convenience
+// field. Soft-delete-aware (WIT-40/41):
+//
+//   - live entity:          { ...fields, qid, external_ids }
+//   - tombstone w/ canonical: follows canonical_reep_id (1 hop, per WIT-51)
+//                             and returns the canonical entity spliced with
+//                             { _deprecated: true, _canonical_id, _deprecated_at }
+//   - tombstone w/o canonical (retired): returns a sentinel
+//                             { _deprecated: true, _canonical_id: null,
+//                               _deprecated_at, _deprecated_reason: "retired" }
+//                             — callers surface 410 Gone.
+//   - canonical itself soft-deleted (chain rot, shouldn't happen post-WIT-51):
+//                             returns sentinel with _deprecated_reason: "chain_depth_exceeded"
+//
+// Pass `{ _followCanonical: false }` to short-circuit the recursion; used
+// internally to enforce the 1-hop cap.
+async function lookupByReepId(
+  db: D1Database,
+  reepId: string,
+  opts: { _followCanonical?: boolean } = {},
+): Promise<Record<string, unknown> | null> {
+  const followCanonical = opts._followCanonical !== false;
+
+  const row = await db
+    .prepare(
+      `SELECT ${ENTITY_COLS}, e.deleted_at, e.canonical_reep_id, ${MATCH_COLS}
+       FROM entities e
+       LEFT JOIN matches m ON m.reep_id = e.reep_id
+       WHERE e.reep_id = ?`
+    )
     .bind(reepId)
     .first();
 
-  if (!entity) return null;
+  if (!row) return null;
 
-  const ids = await fetchAllIds(db, reepId);
-  return { ...entity, qid: ids.wikidata ?? null, external_ids: ids };
-}
+  const deletedAt = row.deleted_at as string | null;
+  const canonicalReepId = row.canonical_reep_id as string | null;
+  // Strip the meta columns from the entity shape we'll surface.
+  const { deleted_at: _d, canonical_reep_id: _c, ...entity } = row as Record<string, unknown> & {
+    deleted_at?: unknown;
+    canonical_reep_id?: unknown;
+  };
 
-// Helper: resolve a provider+id to an entity
-async function resolveEntity(db: D1Database, provider: string, id: string): Promise<Record<string, unknown> | null> {
-  // Search provider_ids first (Wikidata-sourced), then custom_ids
-  let match = await db
-    .prepare("SELECT reep_id FROM provider_ids WHERE provider = ? AND external_id = ?")
-    .bind(provider, id)
-    .first();
-
-  if (!match) {
-    match = await db
-      .prepare("SELECT reep_id FROM custom_ids WHERE provider = ? AND external_id = ?")
-      .bind(provider, id)
-      .first();
+  // Live entity — existing path.
+  if (!deletedAt) {
+    const ids = await fetchAllIds(db, reepId);
+    return { ...entity, qid: ids.wikidata ?? null, external_ids: ids };
   }
 
-  if (!match) return null;
-  return lookupByReepId(db, match.reep_id as string);
+  // Tombstone without a successor — return a sentinel; handlers convert to 410.
+  if (!canonicalReepId) {
+    return {
+      _deprecated: true,
+      _canonical_id: null,
+      _deprecated_at: deletedAt,
+      _deprecated_reason: "retired",
+    };
+  }
+
+  // Second-hop refusal (1-hop cap). WIT-51 collapses chains on every merge,
+  // so this should only trip if chain collapse has regressed.
+  if (!followCanonical) {
+    return {
+      _deprecated: true,
+      _canonical_id: canonicalReepId,
+      _deprecated_at: deletedAt,
+      _deprecated_reason: "chain_depth_exceeded",
+    };
+  }
+
+  const canonical = await lookupByReepId(db, canonicalReepId, { _followCanonical: false });
+  // Canonical row missing altogether (validate-db chain-rot would catch this).
+  if (!canonical) {
+    return {
+      _deprecated: true,
+      _canonical_id: canonicalReepId,
+      _deprecated_at: deletedAt,
+      _deprecated_reason: "canonical_missing",
+    };
+  }
+  // Canonical is itself a tombstone (sentinel came back). Propagate as-is.
+  if (canonical._deprecated) {
+    return canonical;
+  }
+  // Happy path: splice deprecation meta onto the canonical entity.
+  return {
+    ...canonical,
+    _deprecated: true,
+    _canonical_id: canonicalReepId,
+    _deprecated_at: deletedAt,
+  };
+}
+
+// Helper: strip deprecation meta from a lookupByReepId result. Used on
+// provider-id → reep_id → entity paths where the caller didn't ask by reep_id,
+// so the redirect is silent (WIT-41 design decision: "silent redirect for
+// /wikidata/Q42 case" — client didn't name a specific reep_id, just give
+// them the canonical data).
+function stripDeprecationMeta(entity: Record<string, unknown>): Record<string, unknown> {
+  const { _deprecated, _canonical_id, _deprecated_at, _deprecated_reason, ...rest } = entity;
+  // Referenced to keep TS happy on unused vars — the destructure is the point.
+  void _deprecated;
+  void _canonical_id;
+  void _deprecated_at;
+  void _deprecated_reason;
+  return rest;
+}
+
+// Helper: test if a lookup result is a retirement sentinel (no canonical,
+// no entity fields — callers should return 410 Gone).
+function isRetirementSentinel(entity: Record<string, unknown>): boolean {
+  return entity._deprecated === true && entity._canonical_id === null;
+}
+
+type ResolveResult =
+  | { kind: "found"; entity: Record<string, unknown> }
+  | { kind: "not_found" }
+  | { kind: "ambiguous"; types: string[] };
+
+// Helper: resolve a provider+id to an entity, with optional type disambiguation.
+async function resolveEntity(
+  db: D1Database,
+  provider: string,
+  id: string,
+  type?: string,
+): Promise<ResolveResult> {
+  const candidateRows = await db
+    .prepare(`
+      SELECT reep_id, type FROM (
+        SELECT e.reep_id AS reep_id, e.type AS type
+        FROM provider_ids p
+        JOIN entities e ON e.reep_id = p.reep_id
+        WHERE p.provider = ? AND p.external_id = ?
+        UNION ALL
+        SELECT e.reep_id AS reep_id, e.type AS type
+        FROM custom_ids c
+        JOIN entities e ON e.reep_id = c.reep_id
+        WHERE c.provider = ? AND c.external_id = ?
+      ) AS candidates
+    `)
+    .bind(provider, id, provider, id)
+    .all();
+
+  const seen = new Set<string>();
+  let candidates = candidateRows.results
+    .map((row) => ({ reep_id: row.reep_id as string, type: row.type as string }))
+    .filter((row) => {
+      if (seen.has(row.reep_id)) return false;
+      seen.add(row.reep_id);
+      return true;
+    });
+
+  if (type) {
+    candidates = candidates.filter((row) => row.type === type);
+  }
+
+  if (candidates.length === 0) return { kind: "not_found" };
+  if (candidates.length > 1) {
+    return {
+      kind: "ambiguous",
+      types: [...new Set(candidates.map((row) => row.type))].sort(),
+    };
+  }
+
+  const entity = await lookupByReepId(db, candidates[0].reep_id);
+  if (!entity) return { kind: "not_found" };
+  // Provider-id paths silently redirect to the canonical (WIT-41). Retired
+  // entities surface as not_found (the provider bridge has no successor).
+  if (isRetirementSentinel(entity)) return { kind: "not_found" };
+  return { kind: "found", entity: stripDeprecationMeta(entity) };
 }
 
 const BATCH_MAX = 100;
@@ -783,10 +987,17 @@ async function handleBatchLookup(request: Request, db: D1Database): Promise<Resp
   const nested = await Promise.all(
     ids.map(async (id) => {
       if (id.startsWith("reep_")) {
+        // Direct reep_id: redirect with deprecation meta, or surface
+        // retirement as a gone-marker item in the results array (batch
+        // endpoint returns a mixed list of entities + error stubs).
         const entity = await lookupByReepId(db, id);
-        return entity ? [entity] : [{ id, error: "not_found" }];
+        if (!entity) return [{ id, error: "not_found" }];
+        if (isRetirementSentinel(entity)) {
+          return [{ id, error: "gone", ...entity }];
+        }
+        return [entity];
       }
-      // QID lookup
+      // QID lookup — silent redirect (WIT-41)
       const reepIds = await db
         .prepare("SELECT reep_id FROM provider_ids WHERE provider = 'wikidata' AND external_id = ?")
         .bind(id)
@@ -795,7 +1006,9 @@ async function handleBatchLookup(request: Request, db: D1Database): Promise<Resp
       const entities = await Promise.all(
         reepIds.results.map((r) => lookupByReepId(db, r.reep_id as string)),
       );
-      const valid = entities.filter(Boolean) as Record<string, unknown>[];
+      const valid = (entities.filter(Boolean) as Record<string, unknown>[])
+        .filter((e) => !isRetirementSentinel(e))
+        .map(stripDeprecationMeta);
       return valid.length > 0 ? valid : [{ qid: id, error: "not_found" }];
     }),
   );
@@ -805,12 +1018,12 @@ async function handleBatchLookup(request: Request, db: D1Database): Promise<Resp
 }
 
 // POST /batch/resolve — body: {
-//   items: [{ provider: "transfermarkt", id: "568177" }, ...],
+//   items: [{ provider: "transfermarkt", id: "568177", type: "player" }, ...],
 //   targets?: ["wyscout", "fbref"]   // optional: filter external_ids in response
 // }
 // Each result echoes the input in `from` so callers can correlate without relying on array index.
 async function handleBatchResolve(request: Request, db: D1Database): Promise<Response> {
-  let body: { items?: { provider: string; id: string }[]; targets?: unknown };
+  let body: { items?: { provider: string; id: string; type?: string }[]; targets?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -832,18 +1045,20 @@ async function handleBatchResolve(request: Request, db: D1Database): Promise<Res
     : null;
 
   const results = await Promise.all(
-    items.map(async ({ provider, id }) => {
-      const from = { provider, id };
+    items.map(async ({ provider, id, type }) => {
+      const from = type ? { provider, id, type } : { provider, id };
       if (!provider || !id) return { from, error: "missing_fields" };
       if (!VALID_PROVIDERS.has(provider)) return { from, error: "unknown_provider" };
-      const entity = await resolveEntity(db, provider, id);
-      if (!entity) return { from, error: "not_found" };
-      if (!targets) return { from, ...entity };
+      if (type && !VALID_ENTITY_TYPES.has(type)) return { from, error: "unknown_type" };
+      const resolved = await resolveEntity(db, provider, id, type);
+      if (resolved.kind === "not_found") return { from, error: "not_found" };
+      if (resolved.kind === "ambiguous") return { from, error: "ambiguous", types: resolved.types };
+      if (!targets) return { from, ...resolved.entity };
       // Narrow external_ids and qid convenience alias
-      const fullIds = (entity.external_ids as Record<string, string>) || {};
+      const fullIds = (resolved.entity.external_ids as Record<string, string>) || {};
       const filteredIds = filterIds(fullIds, targets);
-      const qid = targets.includes("wikidata") ? (entity.qid ?? null) : null;
-      return { from, ...entity, qid, external_ids: filteredIds };
+      const qid = targets.includes("wikidata") ? (resolved.entity.qid ?? null) : null;
+      return { from, ...resolved.entity, qid, external_ids: filteredIds };
     }),
   );
 
