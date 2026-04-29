@@ -20,9 +20,12 @@ interface R2EventNotification {
   object?: { key: string; size: number; eTag: string };
 }
 
-const API_VERSION = "2.7.0";
+const API_VERSION = "2.9.0";
 
 const VALID_PROVIDERS = new Set([
+  // Pseudo-provider accepted by /resolve so v1/v2 Reep IDs can use the
+  // primary translation endpoint. It is not stored in external_ids.
+  "reep",
   "wikidata",
   "transfermarkt",
   "transfermarkt_manager",
@@ -75,6 +78,7 @@ const VALID_ENTITY_TYPES = new Set([
   "coach",
   "competition",
   "season",
+  "stage",
   "match",
 ]);
 
@@ -562,6 +566,15 @@ async function handleLookup(
   }
 
   const type = params.get("type");
+  if (type && !VALID_ENTITY_TYPES.has(type)) {
+    return json(
+      {
+        error: `Unknown type: ${type}`,
+        types: [...VALID_ENTITY_TYPES],
+      },
+      400,
+    );
+  }
 
   // Detect ID type by prefix
   if (id.startsWith("reep_")) {
@@ -572,6 +585,7 @@ async function handleLookup(
     if (isRetirementSentinel(entity)) {
       return json(entity, 410);
     }
+    if (type && entity.type !== type) return json({ results: [], count: 0 });
     return json({ results: [entity], count: 1 });
   }
 
@@ -621,6 +635,15 @@ async function handleSearch(
 
   const type = params.get("type");
   const limit = Math.min(Number(params.get("limit")) || 25, 100);
+  if (type && !VALID_ENTITY_TYPES.has(type)) {
+    return json(
+      {
+        error: `Unknown type: ${type}`,
+        types: [...VALID_ENTITY_TYPES],
+      },
+      400,
+    );
+  }
 
   // Optional ?targets=wyscout,fbref — filter external_ids to just these providers.
   // When absent, the full cross-provider ID map is returned.
@@ -636,16 +659,16 @@ async function handleSearch(
     .map((t, i) => '"' + t.replace(/"/g, '""') + '"' + (i === tokens.length - 1 ? "*" : ""))
     .join(" ");
 
+  const schemaInfo = await getSchemaInfo(db);
+  const entityCols = selectAvailableColumns("e", ENTITY_COLS, schemaInfo.entityColumns);
+  const matchCols = selectAvailableColumns("m", MATCH_COLS, schemaInfo.matchColumns);
+
   // Filter tombstones from search results (WIT-41). WIT-49 FTS triggers
   // already remove soft-deleted rows from the index on every UPDATE, so
   // the JOIN filter is defence-in-depth for rows that slipped in before
   // the trigger split.
   let query = `
-    SELECT e.reep_id, e.type, e.name_en, e.aliases_en,
-           e.date_of_birth, e.nationality, e.position, e.position_detail,
-           m.match_date, m.kickoff_utc, m.home_team_reep_id, m.away_team_reep_id,
-           m.home_score, m.away_score, m.venue, m.referee, m.attendance,
-           m.round_label, m.season_reep_id, m.season_label,
+    SELECT ${entityCols}, ${matchCols},
            bm25(entities_fts, 10.0, 1.0) AS score
     FROM entities_fts
     JOIN entities e ON e.rowid = entities_fts.rowid
@@ -659,9 +682,9 @@ async function handleSearch(
     binds.push(type);
   } else {
     // Exclude seasons and matches from default search — they pollute results
-    // with seasonal editions and fixture rows when the common case is still
-    // player/team/coach/competition lookup.
-    query += " AND e.type NOT IN ('season', 'match')";
+    // with seasonal editions and fixture rows. v2 stages are also structural
+    // rows, so keep the default on player/team/coach/competition lookup.
+    query += " AND e.type NOT IN ('season', 'stage', 'match')";
   }
 
   query += " ORDER BY score LIMIT ?";
@@ -677,34 +700,9 @@ async function handleSearch(
   const results = await Promise.all(
     entities.results.map(async (e) => {
       const ids = await fetchAllIds(db, e.reep_id as string);
-      const externalIds = targets ? filterIds(ids, targets) : ids;
-      // qid is a convenience alias for external_ids.wikidata. If the caller
-      // narrowed targets and didn't ask for wikidata, honour that and drop qid.
-      const qid = !targets || targets.includes("wikidata") ? ids.wikidata ?? null : null;
-      return {
-        reep_id: e.reep_id,
-        qid,
-        type: e.type,
-        name_en: e.name_en,
-        aliases_en: e.aliases_en,
-        date_of_birth: e.date_of_birth,
-        nationality: e.nationality,
-        position: e.position,
-        position_detail: e.position_detail,
-        match_date: e.match_date,
-        kickoff_utc: e.kickoff_utc,
-        home_team_reep_id: e.home_team_reep_id,
-        away_team_reep_id: e.away_team_reep_id,
-        home_score: e.home_score,
-        away_score: e.away_score,
-        venue: e.venue,
-        referee: e.referee,
-        attendance: e.attendance,
-        round_label: e.round_label,
-        season_reep_id: e.season_reep_id,
-        season_label: e.season_label,
-        external_ids: externalIds,
-      };
+      const { score, ...entity } = e as Record<string, unknown> & { score?: unknown };
+      void score;
+      return attachIds(entity, ids, targets);
     }),
   );
 
@@ -767,8 +765,106 @@ async function handleResolve(
   return json({ results: [resolved.entity], count: 1 });
 }
 
-const ENTITY_COLS = "e.reep_id, e.type, e.name_en, e.aliases_en, e.full_name, e.date_of_birth, e.nationality, e.position, e.position_detail, e.current_team_reep_id, e.height_cm, e.country, e.founded, e.stadium, e.source, e.competition_reep_id";
-const MATCH_COLS = "m.match_date, m.kickoff_utc, m.home_team_reep_id, m.away_team_reep_id, m.home_score, m.away_score, m.venue, m.referee, m.attendance, m.round_label, m.season_reep_id, m.season_label";
+const ENTITY_COLS = [
+  "reep_id",
+  "type",
+  "name_en",
+  "aliases_en",
+  "name_disambiguator",
+  "full_name",
+  "date_of_birth",
+  "nationality",
+  "position",
+  "position_detail",
+  "current_team_reep_id",
+  "height_cm",
+  "country",
+  "founded",
+  "end_year",
+  "stadium",
+  "source",
+  "competition_reep_id",
+  "parent_season_reep_id",
+  "stage_type",
+  "stage_order",
+  "role",
+  "gender",
+  "tier",
+  "team_type",
+];
+const ENTITY_LIFECYCLE_COLS = ["deleted_at", "canonical_reep_id"];
+const MATCH_COLS = [
+  "match_date",
+  "kickoff_utc",
+  "home_team_reep_id",
+  "away_team_reep_id",
+  "home_score",
+  "away_score",
+  "venue",
+  "referee",
+  "attendance",
+  "round_label",
+  "season_reep_id",
+  "season_label",
+  "stage_reep_id",
+];
+
+interface SchemaInfo {
+  entityColumns: Set<string>;
+  matchColumns: Set<string>;
+  hasLegacyReepIdAliases: boolean;
+}
+
+let schemaInfoCache: { value: SchemaInfo; expiresAt: number } | null = null;
+let schemaInfoInFlight: Promise<SchemaInfo> | null = null;
+
+async function getSchemaInfo(db: D1Database): Promise<SchemaInfo> {
+  const now = Date.now();
+  if (schemaInfoCache && schemaInfoCache.expiresAt > now) return schemaInfoCache.value;
+  if (schemaInfoInFlight) return schemaInfoInFlight;
+
+  schemaInfoInFlight = loadSchemaInfo(db)
+    .then((value) => {
+      schemaInfoCache = { value, expiresAt: Date.now() + 30_000 };
+      return value;
+    })
+    .finally(() => {
+      schemaInfoInFlight = null;
+    });
+  return schemaInfoInFlight;
+}
+
+async function loadSchemaInfo(db: D1Database): Promise<SchemaInfo> {
+  const [entityInfo, matchInfo, legacyAliases] = await Promise.all([
+    db.prepare("PRAGMA table_info(entities)").all(),
+    db.prepare("PRAGMA table_info(matches)").all(),
+    db
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_reep_id_aliases'")
+      .all(),
+  ]);
+
+  return {
+    entityColumns: columnNames(entityInfo),
+    matchColumns: columnNames(matchInfo),
+    hasLegacyReepIdAliases: legacyAliases.results.length > 0,
+  };
+}
+
+function columnNames(result: D1Result<Record<string, unknown>>): Set<string> {
+  return new Set(result.results.map((row) => String(row.name)));
+}
+
+function selectAvailableColumns(
+  tableAlias: string,
+  columns: string[],
+  availableColumns: Set<string>,
+): string {
+  return columns
+    .map((column) => (
+      availableColumns.has(column) ? `${tableAlias}.${column}` : `NULL AS ${column}`
+    ))
+    .join(", ");
+}
 
 // Helper: look up entity by reep_id, attach provider IDs and qid convenience
 // field. Soft-delete-aware (WIT-40/41):
@@ -789,13 +885,18 @@ const MATCH_COLS = "m.match_date, m.kickoff_utc, m.home_team_reep_id, m.away_tea
 async function lookupByReepId(
   db: D1Database,
   reepId: string,
-  opts: { _followCanonical?: boolean } = {},
+  opts: { _followCanonical?: boolean; _allowLegacyAlias?: boolean } = {},
 ): Promise<Record<string, unknown> | null> {
   const followCanonical = opts._followCanonical !== false;
+  const allowLegacyAlias = opts._allowLegacyAlias !== false;
+  const schemaInfo = await getSchemaInfo(db);
+  const entityCols = selectAvailableColumns("e", ENTITY_COLS, schemaInfo.entityColumns);
+  const lifecycleCols = selectAvailableColumns("e", ENTITY_LIFECYCLE_COLS, schemaInfo.entityColumns);
+  const matchCols = selectAvailableColumns("m", MATCH_COLS, schemaInfo.matchColumns);
 
   const row = await db
     .prepare(
-      `SELECT ${ENTITY_COLS}, e.deleted_at, e.canonical_reep_id, ${MATCH_COLS}
+      `SELECT ${entityCols}, ${lifecycleCols}, ${matchCols}
        FROM entities e
        LEFT JOIN matches m ON m.reep_id = e.reep_id
        WHERE e.reep_id = ?`
@@ -803,7 +904,24 @@ async function lookupByReepId(
     .bind(reepId)
     .first();
 
-  if (!row) return null;
+  if (!row) {
+    const directMatch = reepId.startsWith("reep_m")
+      ? await lookupMatchByReepId(db, reepId, schemaInfo)
+      : null;
+    if (directMatch) return directMatch;
+
+    if (allowLegacyAlias) {
+      const v2ReepId = await lookupLegacyReepId(db, reepId, schemaInfo);
+      if (v2ReepId && v2ReepId !== reepId) {
+        return lookupByReepId(db, v2ReepId, {
+          _followCanonical: followCanonical,
+          _allowLegacyAlias: false,
+        });
+      }
+    }
+
+    return null;
+  }
 
   const deletedAt = row.deleted_at as string | null;
   const canonicalReepId = row.canonical_reep_id as string | null;
@@ -816,7 +934,7 @@ async function lookupByReepId(
   // Live entity — existing path.
   if (!deletedAt) {
     const ids = await fetchAllIds(db, reepId);
-    return { ...entity, qid: ids.wikidata ?? null, external_ids: ids };
+    return attachIds(entity, ids);
   }
 
   // Tombstone without a successor — return a sentinel; handlers convert to 410.
@@ -863,6 +981,52 @@ async function lookupByReepId(
   };
 }
 
+async function lookupMatchByReepId(
+  db: D1Database,
+  reepId: string,
+  schemaInfo: SchemaInfo,
+): Promise<Record<string, unknown> | null> {
+  const matchCols = selectAvailableColumns("m", MATCH_COLS, schemaInfo.matchColumns);
+  const sourceCol = schemaInfo.matchColumns.has("source") ? "m.source" : "NULL AS source";
+  const row = await db
+    .prepare(
+      `SELECT m.reep_id, ${matchCols}, ${sourceCol}
+       FROM matches m
+       WHERE m.reep_id = ?`,
+    )
+    .bind(reepId)
+    .first();
+
+  if (!row) return null;
+
+  const entity: Record<string, unknown> = {};
+  for (const column of ENTITY_COLS) entity[column] = null;
+  Object.assign(entity, row, { type: "match" });
+
+  const ids = await fetchAllIds(db, reepId);
+  return attachIds(entity, ids);
+}
+
+async function lookupLegacyReepId(
+  db: D1Database,
+  reepId: string,
+  schemaInfo: SchemaInfo,
+): Promise<string | null> {
+  if (!schemaInfo.hasLegacyReepIdAliases) return null;
+
+  const row = await db
+    .prepare(
+      `SELECT v2_reep_id
+       FROM legacy_reep_id_aliases
+       WHERE v1_reep_id = ? AND is_current = 1
+       LIMIT 1`,
+    )
+    .bind(reepId)
+    .first();
+
+  return typeof row?.v2_reep_id === "string" ? row.v2_reep_id : null;
+}
+
 // Helper: strip deprecation meta from a lookupByReepId result. Used on
 // provider-id → reep_id → entity paths where the caller didn't ask by reep_id,
 // so the redirect is silent (WIT-41 design decision: "silent redirect for
@@ -896,34 +1060,44 @@ async function resolveEntity(
   id: string,
   type?: string,
 ): Promise<ResolveResult> {
+  if (provider === "reep") {
+    const entity = await lookupByReepId(db, id);
+    if (!entity || isRetirementSentinel(entity)) return { kind: "not_found" };
+    const cleanEntity = stripDeprecationMeta(entity);
+    if (type && cleanEntity.type !== type) return { kind: "not_found" };
+    return { kind: "found", entity: cleanEntity };
+  }
+
   const candidateRows = await db
     .prepare(`
-      SELECT reep_id, type FROM (
-        SELECT e.reep_id AS reep_id, e.type AS type
-        FROM provider_ids p
-        JOIN entities e ON e.reep_id = p.reep_id
-        WHERE p.provider = ? AND p.external_id = ?
-        UNION ALL
-        SELECT e.reep_id AS reep_id, e.type AS type
-        FROM custom_ids c
-        JOIN entities e ON e.reep_id = c.reep_id
-        WHERE c.provider = ? AND c.external_id = ?
-      ) AS candidates
+      SELECT reep_id
+      FROM provider_ids
+      WHERE provider = ? AND external_id = ?
+      UNION ALL
+      SELECT reep_id
+      FROM custom_ids
+      WHERE provider = ? AND external_id = ?
     `)
     .bind(provider, id, provider, id)
     .all();
 
   const seen = new Set<string>();
-  let candidates = candidateRows.results
-    .map((row) => ({ reep_id: row.reep_id as string, type: row.type as string }))
-    .filter((row) => {
-      if (seen.has(row.reep_id)) return false;
-      seen.add(row.reep_id);
-      return true;
-    });
+  const candidates: { reep_id: string; type: string; entity: Record<string, unknown> }[] = [];
+  for (const row of candidateRows.results) {
+    const reepId = row.reep_id as string;
+    if (seen.has(reepId)) continue;
+    seen.add(reepId);
 
-  if (type) {
-    candidates = candidates.filter((row) => row.type === type);
+    const entity = await lookupByReepId(db, reepId);
+    if (!entity || isRetirementSentinel(entity)) continue;
+    const cleanEntity = stripDeprecationMeta(entity);
+    const entityType = cleanEntity.type as string;
+    if (type && entityType !== type) continue;
+    candidates.push({
+      reep_id: cleanEntity.reep_id as string,
+      type: entityType,
+      entity: cleanEntity,
+    });
   }
 
   if (candidates.length === 0) return { kind: "not_found" };
@@ -934,12 +1108,7 @@ async function resolveEntity(
     };
   }
 
-  const entity = await lookupByReepId(db, candidates[0].reep_id);
-  if (!entity) return { kind: "not_found" };
-  // Provider-id paths silently redirect to the canonical (WIT-41). Retired
-  // entities surface as not_found (the provider bridge has no successor).
-  if (isRetirementSentinel(entity)) return { kind: "not_found" };
-  return { kind: "found", entity: stripDeprecationMeta(entity) };
+  return { kind: "found", entity: candidates[0].entity };
 }
 
 const BATCH_MAX = 100;
@@ -963,6 +1132,35 @@ function filterIds(ids: Record<string, string>, targets: string[]): Record<strin
     if (ids[t] !== undefined) out[t] = ids[t];
   }
   return out;
+}
+
+function formatDisplayName(entity: Record<string, unknown>): string | null {
+  const name = typeof entity.name_en === "string" ? entity.name_en : "";
+  if (!name) return null;
+  const disambiguator = typeof entity.name_disambiguator === "string"
+    ? entity.name_disambiguator.trim()
+    : "";
+  if (!disambiguator) return name;
+  return name.endsWith(`(${disambiguator})`)
+    ? name
+    : `${name} (${disambiguator})`;
+}
+
+function attachIds(
+  entity: Record<string, unknown>,
+  ids: Record<string, string>,
+  targets: string[] | null = null,
+): Record<string, unknown> {
+  const externalIds = targets ? filterIds(ids, targets) : ids;
+  // qid is a convenience alias for external_ids.wikidata. If the caller
+  // narrowed targets and didn't ask for wikidata, honour that and drop qid.
+  const qid = !targets || targets.includes("wikidata") ? ids.wikidata ?? null : null;
+  return {
+    ...entity,
+    display_name: formatDisplayName(entity),
+    qid,
+    external_ids: externalIds,
+  };
 }
 
 // POST /batch/lookup — body: { ids: ["reep_p...", "Q99760796", ...] }

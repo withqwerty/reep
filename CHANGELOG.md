@@ -2,6 +2,19 @@
 
 All notable changes to the Reep Register API and data are documented here. Versioned releases (v2.x.y) contain API changes; calver releases (YYYY.WW) are data-only.
 
+## v2.9.0 - 2026-04-29
+
+### API
+- **Add `display_name` for structured team disambiguation.** Entity responses keep raw `name_en` intact and expose a rendered `display_name` that appends `name_disambiguator` when present.
+
+## v2.8.0 - 2026-04-28
+
+### API
+- **Prepare the API for the v2 data migration.** Entity responses now expose v2 structural fields including stage metadata, parent seasons, team disambiguators, coach roles, gender/tier segmentation, team type, and match `stage_reep_id`.
+- **Add `stage` as a first-class entity type.** Stage rows can now be looked up, resolved, and searched explicitly with `type=stage`; default search still keeps structural season/stage/match rows out of the common player/team/coach/competition path.
+- **Resolve v2 table-only matches.** Direct `reep_m...` lookups and provider-ID resolves now work when canonical match rows live in the `matches` table rather than `entities`.
+- **Maintain v1 Reep ID compatibility.** `/lookup?id=reep_...` and `/resolve?provider=reep&id=reep_...` use the compatibility mapping when present, returning the canonical v2 entity for current legacy aliases.
+
 ## v2.7.0 - 2026-04-24
 
 ### API
