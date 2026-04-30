@@ -139,8 +139,8 @@ export default {
 
       try {
         const formData = await request.formData();
-        const file = formData.get("file");
-        if (!file || !(file instanceof File)) {
+        const file = formData.get("file") as unknown;
+        if (!isUploadedFile(file)) {
           return json({ error: "No file provided" }, 400);
         }
 
@@ -529,6 +529,17 @@ function json(data: unknown, status = 200): Response {
     status,
     headers: { ...JSON_HEADERS, "Cache-Control": "public, max-age=3600" },
   });
+}
+
+function isUploadedFile(value: unknown): value is File {
+  if (!value || typeof value !== "object") return false;
+  return (
+    "name" in value &&
+    "size" in value &&
+    "type" in value &&
+    "stream" in value &&
+    typeof value.stream === "function"
+  );
 }
 
 // Fetch all provider IDs for an entity by reep_id.
