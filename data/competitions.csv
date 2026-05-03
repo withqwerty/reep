@@ -22,7 +22,7 @@ reep_l8dc1beca,Q2299810,Armenian First League,,,,,,,,
 reep_lf6a29180,Q84497979,Bangladesh Women's Football League,,,,,,,,
 reep_lee620815,Q244464,Belarusian Premier League,,WER1,,,,,,
 reep_l64eccec3,Q216022,Belgian Pro League,,BE1,37,4zwgbb66rif2spcoeeol2motx,,,,18
-reep_l169ae47c,reep_l169ae47c,Belgian Super Cup,Belgium,BESC,,,,,,
+reep_l169ae47c,,Belgian Super Cup,Belgium,BESC,,,,,,
 reep_l030b5b27,Q118954137,Big Five,,,Big5,,,,,
 reep_lf8ceeadb,Q130272037,Buganda Masaza Cup,,,,,,,,
 reep_l15d39c26,Q219592,Bundesliga,,A1,56,5c96g1zm7vo5ons9c42uy2w3r,,,38,32
@@ -57,7 +57,7 @@ reep_l0077ca9a,Q162604,Croatian Football League,,KR1,63,1b70m6qtxrp75b4vtk8hxh8c
 reep_l736a5eba,Q217016,Czech First League,,TS1,66,bu1l7ckihyr0errxw61p0m05,,,,
 reep_le92f4144,Q150880,DFB-Pokal,,DFB,521,231,231,,209,24
 reep_l01e72ea4,Q1158138,Damallsvenskan,,,187,,,,9089,
-reep_l07982d29,reep_l07982d29,Danish Cup,Denmark,DKP,,,,,,
+reep_l07982d29,,Danish Cup,Denmark,DKP,,,,,,
 reep_lba72483a,Q204752,Danish Superliga,,DK1,50,29actv1ohj8r10kd9hu0jnb0n,100,30,46,1
 reep_l5bdd9936,Q19510,EFL Championship,,,10,10,10,70,48,
 reep_l3ecd3541,Q11152,EFL Cup,,CGB,690,2,2,,133,
@@ -96,17 +96,17 @@ reep_l6dab66cb,Q1122820,Greek Football Cup,,GRP,,399,399,,145,
 reep_ld3ab92dd,Q28457541,Hexagonal,,,,339,339,,,
 reep_laca81f16,Q15938614,I-League,,,378,,,,,333
 reep_lc3c18bed,Q16056350,Indian Super League,,,82,3oa9e03e7w9nr8kqwqc3tlqz9,,,9478,582
-reep_l6b7858d0,reep_l6b7858d0,International football,,,,cesdwwnxbc5fmajgroc0hqzy2,88,430,,
+reep_l6b7858d0,,International football,,,,cesdwwnxbc5fmajgroc0hqzy2,88,430,,
 reep_l4a59ffb7,Q575453,J.League,,,,20,,,223,150
 reep_l4d609984,Q276445,J1 League,,JAP1,25,8o5tv5viv4hy1qg9jp94k7ayb,20,109,,
 reep_lde82a099,Q1140581,J2 League,,,49,5z8v4mj6cjs9ex6hdrpourjzh,,,,
-reep_l22edea93,reep_l22edea93,Johan Cruijff Shield,Netherlands,NLSC,,,,,,
-reep_l8eb529c8,reep_l8eb529c8,Johan Cruyff Shield,Netherlands,,,a9z1becy13xwjmcu8d6mhm66s,18,170,,
+reep_l22edea93,,Johan Cruijff Shield,Netherlands,NLSC,,,,,,
+reep_l8eb529c8,,Johan Cruyff Shield,Netherlands,,,a9z1becy13xwjmcu8d6mhm66s,18,170,,
 reep_ld8599de4,Q2386334,K League 1,,RSK1,55,,,,9080,387
-reep_l57be94f4,reep_l57be94f4,KNVB Cup,Netherlands,NLP,,,,,,
+reep_l57be94f4,,KNVB Cup,Netherlands,NLP,,,,,,
 reep_ld517cd4f,Q324867,La Liga,,ES1,12,23,23,7,87,4
 reep_lb9ce8b5c,Q35615,LaLiga 2,,,17,3is4bkgf3loxv9qfg3hm8zfqb,102,12,140,63
-reep_l3974963c,reep_l3974963c,League of Ireland Premier Division,Ireland,,,4mbfidy8zum5u0aqjqo0vuqs2,101,34,,
+reep_l3974963c,,League of Ireland Premier Division,Ireland,,,4mbfidy8zum5u0aqjqo0vuqs2,101,34,,
 reep_l445a27d2,Q64162670,Leagues Cup,,,,1045,1045,,,
 reep_l289e8aab,Q1092612,Lega Nazionale Professionisti,,,,,,,,
 reep_l52853325,Q237753,Liga I,,RO1,47,89ovpy1rarewwzqvi30bfdr8b,,,189,121
@@ -139,15 +139,15 @@ reep_l0e14e351,Q1231102,Première Ligue,,,193,,,,,743
 reep_l2e7b8b73,Q21929716,Primeira Liga,,PO1,32,,99,,,
 reep_l25bbb79a,Q40068,Primera División Femenina,,,230,,,,9907,
 reep_le2e51b3a,Q1622667,Primera División de Bolivia,,,74,,,,,
-reep_l47d013d2,reep_l47d013d2,Russian Cup,Russia,RUP,,,,,,
+reep_l47d013d2,,Russian Cup,Russia,RUP,,,,,,
 reep_l1e82a03e,Q182165,Russian Premier League,,RU1,30,3ab1uwtoyjopdj1y1fynyy9jg,,,,
-reep_l6ce786d0,reep_l6ce786d0,Russian Super Cup,Russia,RUSS,,,,,,
+reep_l6ce786d0,,Russian Super Cup,Russia,RUSS,,,,,,
 reep_l07e8fd55,Q255633,Saudi Pro League,,SA1,70,,,,536,
-reep_l465ca307,reep_l465ca307,Scottish Challenge Cup,Scotland,,,19q13y6ruzo0o84ipblcuouzs,37,314,,
+reep_l465ca307,,Scottish Challenge Cup,Scotland,,,19q13y6ruzo0o84ipblcuouzs,37,314,,
 reep_l3bd8a132,Q14468438,Scottish Championship,,,72,8t2o4huu2e48ij23dxnl9w5qx,91,45,,
-reep_l0861368d,reep_l0861368d,Scottish Cup,Scotland,SFA,,8kt53kt3mfo29gldhkl05u25b,80,175,,
-reep_l417ecff8,reep_l417ecff8,Scottish League One,Scotland,,,6sxm2iln2w45ux498pty9miw8,92,46,,
-reep_l901e10e3,reep_l901e10e3,Scottish League Two,Scotland,,,6321dlqv4ziuwqte4xpohijtw,93,47,,
+reep_l0861368d,,Scottish Cup,Scotland,SFA,,8kt53kt3mfo29gldhkl05u25b,80,175,,
+reep_l417ecff8,,Scottish League One,Scotland,,,6sxm2iln2w45ux498pty9miw8,92,46,,
+reep_l901e10e3,,Scottish League Two,Scotland,,,6321dlqv4ziuwqte4xpohijtw,93,47,,
 reep_l8cc7cd9a,Q14377162,Scottish Premiership,,SC1,40,e21cf135btr8t3upw0vl6n6x0,14,43,,
 reep_l00604bd8,Q1188284,Senegal Premier League,,SEN1,,,,,,
 reep_l6a8606a3,Q235307,Serbian SuperLiga,,SER1,54,3ww12jab49q8q8mk9avdwjqgk,,,,
@@ -162,23 +162,23 @@ reep_l3cc97ca9,Q20655841,Super League Vrouwenvoetbal,,,296,,,,,
 reep_l2a4614b8,Q485997,Supercopa de España,,SUC,646,,,,139,
 reep_l269079c1,Q19618,Supercoppa Italiana,,SCI,612,,,,11015,64
 reep_l86923913,Q692009,Superettan,,,48,9chuiarcjofld1dkj9kysehmb,,,168,48
-reep_l97d964c4,reep_l97d964c4,Supertaça Cândido de Oliveira,Portugal,POSU,,,,,,
+reep_l97d964c4,,Supertaça Cândido de Oliveira,Portugal,POSU,,,,,,
 reep_lb7870013,Q202699,Swiss Super League,,C1,57,,,,69,33
 reep_la41838d0,Q485568,Süper Lig,,TR1,26,482ofyysbdbeoxauk19yg7tdt,,,71,17
-reep_lc0e8e168,reep_lc0e8e168,Taça da Liga,Portugal,POCP,,,,,,
+reep_lc0e8e168,,Taça da Liga,Portugal,POCP,,,,,,
 reep_l1c17f210,Q29224,Taça de Portugal,,POPO,,,,,186,11
 reep_l4a2e04f7,Q2301428,Toppserien,,,185,,,,331,
 reep_le5594bf2,Q653544,Trophée des Champions,,FRCH,604,,,,207,54
 reep_l7bbda384,Q27192,U.S. Open Cup,,,577,557,557,,9441,568
 reep_l5ffc4aa2,Q18756,UEFA Champions League,,CL,8,5,5,,42,12
-reep_l8375f54a,reep_l8375f54a,UEFA Champions League qualifying rounds,,CLQ,,,,,,
+reep_l8375f54a,,UEFA Champions League qualifying rounds,,CLQ,,,,,,
 reep_l764c2adf,Q59365764,UEFA Conference League,,UCOL,882,1125,1125,,10216,715
-reep_la55db611,reep_la55db611,UEFA Conference League qualifying rounds,,ECLQ,,,,,,
+reep_la55db611,,UEFA Conference League qualifying rounds,,ECLQ,,,,,,
 reep_l74c9a055,Q18760,UEFA Europa League,,EL,19,6,6,,73,30
-reep_l6682a308,reep_l6682a308,UEFA Europa League qualifying rounds,,ELQ,,,,,,
+reep_l6682a308,,UEFA Europa League qualifying rounds,,ELQ,,,,,,
 reep_lc568b9e5,Q260858,UEFA European Championship,,EURO,676,,3,,,124
 reep_lece82fe7,Q16848281,UEFA European Championship qualifying,,,678,,,,,
-reep_lfa980eb4,reep_lfa980eb4,UEFA European Under-21 Championship,,,,etta63x1t7tnkn4jheisjwk4p,35,1543,,
+reep_lfa980eb4,,UEFA European Under-21 Championship,,,,etta63x1t7tnkn4jheisjwk4p,35,1543,,
 reep_le0922a94,Q15980635,UEFA Nations League,,,677,941,941,,,686
 reep_la3f0116f,Q484028,UEFA Super Cup,,USC,122,,,,74,62
 reep_l8ef03cd3,Q748389,UEFA Women's Champions League,,,181,,,,9375,741
@@ -188,11 +188,11 @@ reep_l0c5375da,Q1362411,USL Championship,,,73,807,807,,8972,
 reep_l9267a217,Q1351694,USL First Division,,,68,,,,,
 reep_ld6e5c6a8,Q30636616,USL League One,,,137,jznihqxle06xych9ygwiwnsa,,,9296,498
 reep_la102ad0e,Q1852873,USSF Division 2 Professional League,,,79,,,,,
-reep_ldb89a57a,reep_ldb89a57a,Ukrainian Cup,Ukraine,UKRP,,,,,,
+reep_ldb89a57a,,Ukrainian Cup,Ukraine,UKRP,,,,,,
 reep_l69475825,Q1561244,Ukrainian First League,,UKR2,,,,,,
 reep_ldcfd0624,Q12169436,Ukrainian National League U-19,,UA19,,,,,,
 reep_ld87022ae,Q4470534,Ukrainian Premier League,,,39,,,,,
-reep_lf8a71345,reep_lf8a71345,Ukrainian Super Cup,Ukraine,UKRS,,,,,,
+reep_lf8a71345,,Ukrainian Super Cup,Ukraine,UKRS,,,,,,
 reep_l45fc9b26,Q835989,Under 17 Bundesliga,,,851,,,,,
 reep_l912ac5ae,Q315673,Under 19 Bundesliga,,,850,,,,,
 reep_l7eddf211,Q287453,Uruguayan Primera División,,,45,,,,,
