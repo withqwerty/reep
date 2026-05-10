@@ -5771,7 +5771,7 @@ reep_tac405987,Q657729,Bobo Sport,Burkina Faso,1947-01-01,Stade Wobi Bobo-Dioula
 reep_t15cc8733,Q3063079,Bobruichanka Bobruisk,Belarus,1991-01-01,Spartak Stadium,,,5369,,,,,,,,,,,,,,,,,,,
 reep_t605c1231,Q4936073,Boca Alumni,Argentina,1907-01-01,,,,,,,,,,,,,,,,,,,,,,,
 reep_t9bd73bd5,Q4936084,Boca F.C.,Belize,,,,,,,,,,,,,,,,,,,,,,,,
-reep_tca630395,reep_tca630395,Boca Juniors,Argentina,1905-04-03,La Bombonera,,,,,,,,,,,,,,,,,,,,,,boca-juniors
+reep_tca630395,,Boca Juniors,Argentina,1905-04-03,La Bombonera,,,,,,,,,,,,,,,,,,,,,,boca-juniors
 reep_t7d5b9062,Q19576926,Boca Juniors F.C.,United Kingdom,2009-01-01,Victoria Stadium,42954,,,,,,,,,,,,,,,,,,,,,
 reep_t1cb91273,Q25184198,Boca Juniors FC,Grenada,,,,,,,,,,,,,,,,,,,,,,,,
 reep_t143bb31d,Q2567648,Boca Juniors de Cali,Colombia,1939-01-01,Estadio Olímpico Pascual Guerrero,,,,,,,,,,,,,,,,,,,141061,,,
@@ -12742,7 +12742,7 @@ reep_taee85f7d,Q5401913,Estudiantes de Medicina,Peru,1975-01-01,Estadio José Pi
 reep_t2ea3184c,Q65048835,Estudiantes de Murcia CF,Spain,,,,,,,,,,,,,,,,,,,,,,,,
 reep_t83670cca,Q786500,Estudiantes de Mérida,Venezuela,1971-04-04,Estadio Metropolitano de Mérida,14555,,2306,,,,,,,,,,,,,,,,137636,,,
 reep_t7afdf257,Q50379183,Estudiantes de Mérida Fútbol Club,Venezuela,,,,,,,,,,,,,,,,,,,,,,,,
-reep_t09881a8a,reep_t09881a8a,Estudiantes de Río Cuarto,Argentina,1912-01-01,,,,,,,,,,,,,,,,,,,,,,,estudiantes-de-rio-cuarto
+reep_t09881a8a,,Estudiantes de Río Cuarto,Argentina,1912-01-01,,,,,,,,,,,,,,,,,,,,,,,estudiantes-de-rio-cuarto
 reep_tcff811ff,Q20024551,Estudiantes de Xalapa,Mexico,2001-01-01,,,,,,,,,,,,,,,,,,,,,,,
 reep_t0a3ccbb7,Q113574816,Estudiantil CNI,Peru,,,,,,,,,,,,,,,,,,,,,155111,,,
 reep_t2cca1f95,Q934863,Estudiantil Sanducero football club,Uruguay,1930-03-05,,,,,,,,,,,,,,,,,,,,,,,
@@ -13483,7 +13483,7 @@ reep_tcdfd50d4,Q1136989,FC Bansko,Bulgaria,1951-01-01,,,,,,,,,,,,,,,,,,,,,,,
 reep_taaf0f223,Q329471,FC Baník Ostrava,Czech Republic,1922-01-01,Bazaly,377,9c87251a,531,,,,,301,51886,363,banik-ostrava,,2058,,3269,,,,,,,banik
 reep_t1ffa7026,Q126827696,FC Baník Ostrava B,,,,,,,,,,,,,,,,,,,,,,,,,
 reep_tc503bdae,Q2496995,FC Baranovichi,Belarus,1945-01-01,,24009,,,,,,,,,,,,,,,,,,141320,,,
-reep_tc7e2759e,reep_tc7e2759e,FC Barcelona,Spain,1899-11-29,Camp Nou,,,,,,,,,,,,,,,,,,,,,,
+reep_tc7e2759e,,FC Barcelona,Spain,1899-11-29,Camp Nou,,,,,,,,,,,,,,,,,,,,,,
 reep_t69090873,Q5424838,FC Barcelona (beach soccer),Spain,2011-01-01,,,,,,,,,,,,,,57569,,83,,241,,133739,,,
 reep_t4d2fc0fc,Q10467,FC Barcelona Atlètic,Spain,1970-01-01,Johan Cruijff Stadium,2464,,2104,,,,,,,1735,,,5221,,,,,,134487,,,
 reep_t7c1532d6,Q2346842,FC Barcelona C,Spain,1969-01-01,Miniestadi,63954,,,,,,,,,,,,,,,,,,,,,
