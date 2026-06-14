@@ -1,7 +1,7 @@
 {
-  "data_version": "2026.20",
+  "data_version": "2026.24",
   "api_version": "2.7.0",
-  "generated_at": "2026-05-17T05:58:36.373464+00:00",
+  "generated_at": "2026-06-14T08:36:11.979953+00:00",
   "source": "Wikidata SPARQL + custom verified mappings",
   "counts": {
     "people": 444707,
