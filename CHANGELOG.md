@@ -2,6 +2,14 @@
 
 All notable changes to the Reep Register API and data are documented here. Versioned releases (v2.x.y) contain API changes; calver releases (YYYY.WW) are data-only.
 
+## Unreleased
+
+### Docs
+- Marked this repository as the frozen v0/RapidAPI/D1 surface for the migration
+  bridge and pointed new integrations to `reep.football/api`,
+  `reep.football/downloads`, and the RapidAPI migration guide.
+- Clarified that v0 `reep_...` IDs are not interchangeable with Reep v1 IDs.
+
 ## v2.7.0 - 2026-04-24
 
 ### API

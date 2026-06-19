@@ -4,6 +4,13 @@
 
 The football entity register. Maps player, team, coach, competition, and season identities across Transfermarkt, FBref, UEFA, Sofascore, and 30+ data providers.
 
+> **Status:** this repository is the frozen v0 register and RapidAPI/D1 API surface.
+> It remains available for existing users during the migration bridge. New Reep v1
+> integrations should start from [reep.football/api](https://reep.football/api),
+> [reep.football/downloads](https://reep.football/downloads), and the
+> [RapidAPI migration guide](https://reep.football/api/migration). v0 `reep_...`
+> IDs are not interchangeable with Reep v1 IDs.
+
 Named after [Charles Reep](https://en.wikipedia.org/wiki/Charles_Reep) (1904--2002), an RAF wing commander who hand-recorded every action in over 2,200 football matches starting in the 1950s. He's considered the grandfather of football analytics -- decades before expected goals or tracking data, Reep was tallying passes, shots, and sequences with pen and paper, pioneering the idea that football could be understood through data.
 
 ## What is this?
@@ -17,6 +24,13 @@ People who are both players and coaches (e.g. Pep Guardiola) have separate recor
 Think of it as the football equivalent of the [Chadwick Baseball Bureau Register](https://github.com/chadwickbureau/register).
 
 ## Data
+
+These CSVs are the v0 public files. The v1 release files use a different
+bridge-register contract with canonical CSVs, a DuckDB convenience bundle,
+release metadata, namespace-scoped bridges, bridge-only provider roles and
+overlay-only Wikidata aliases. Use
+[reep.football/downloads](https://reep.football/downloads) for the current v1
+download surface.
 
 | File | Records | Description |
 |------|---------|-------------|
@@ -234,9 +248,24 @@ SELECT * FROM people WHERE reep_id = 'reep_p2804f5db';
 
 ## API
 
-The Reep API provides the same data as the CSVs via a convenient REST interface. All providers (Wikidata + custom verified) are available to all plans.
+The API in this repository is the v0 REST interface served through RapidAPI and
+the legacy Cloudflare Worker. It remains available for existing users during the
+migration bridge. All providers (Wikidata + custom verified) are available to all
+plans.
 
 **Get your API key on [RapidAPI](https://rapidapi.com/withqwerty-withqwerty-default/api/the-reep-register).**
+
+For new integrations, use the v1 release API at
+[reep.football/api](https://reep.football/api). The v1 API is release-backed,
+uses direct Reep API keys, and requires namespace-aware provider ID resolution:
+
+```bash
+curl -H "Authorization: Bearer $REEP_API_KEY" \
+  "https://reep.football/api/v1/resolve/transfermarkt/568177?namespace=spieler&type=player"
+```
+
+See the [RapidAPI migration guide](https://reep.football/api/migration) before
+moving a v0 consumer. v1 is not a drop-in continuity layer for v0 `reep_...` IDs.
 
 | Endpoint | Description | Example |
 |----------|-------------|---------|
