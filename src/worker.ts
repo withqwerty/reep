@@ -22,6 +22,26 @@ interface R2EventNotification {
 
 const API_VERSION = "2.7.0";
 
+// The v0 register is FROZEN (migration bridge). D1 has had no data written since
+// 2026-04-25; the living register moved to Reep v1 at reep.football. Every
+// response says so — in a `data` block on / and /health, and on X-Reep-Data-*
+// headers everywhere — so a caller can never mistake an April snapshot for
+// current data. Update DATA_AS_OF only if the v0 D1 is genuinely reloaded.
+const DATA_AS_OF = "2026-04-25";
+const DATA_STATUS = "frozen";
+const MIGRATION_URL = "https://reep.football/api/migration";
+const FREEZE_NOTICE =
+  `This is the frozen v0 register: its data has not been updated since ${DATA_AS_OF} ` +
+  `and it will not be refreshed. Transfers, new players and corrections since that date ` +
+  `are absent. The maintained register is Reep v1 — see ${MIGRATION_URL}.`;
+
+const DATA_FRESHNESS = {
+  status: DATA_STATUS,
+  as_of: DATA_AS_OF,
+  notice: FREEZE_NOTICE,
+  migration: MIGRATION_URL,
+} as const;
+
 const VALID_PROVIDERS = new Set([
   "wikidata",
   "transfermarkt",
@@ -118,6 +138,9 @@ export default {
         status: dbOk ? "ok" : "degraded",
         version: API_VERSION,
         db: dbOk ? "ok" : "error",
+        // `status: ok` means the worker and D1 are reachable — NOT that the data
+        // is current. It is not: see `data`.
+        data: DATA_FRESHNESS,
         timestamp: new Date().toISOString(),
       };
       console.log(JSON.stringify({ method, path, params, status, ms: Date.now() - start }));
@@ -220,8 +243,9 @@ export default {
 
     if (path === "/" || path === "") {
       response = json({
-        name: "Reep — The Football Entity Register",
+        name: "Reep — The Football Entity Register (v0, frozen)",
         version: API_VERSION,
+        data: DATA_FRESHNESS,
         docs: "https://github.com/withqwerty/reep",
         endpoints: {
           "GET /health": "Public health check (no auth). Returns 200 if worker + D1 are reachable",
@@ -275,6 +299,36 @@ export default {
         }
       }
       response = new Response(response.body, { status: response.status, headers });
+    }
+
+    // Freeze disclosure on EVERY response. A caller reading only headers, or only
+    // the JSON body, still learns the data is an April snapshot rather than a live
+    // register. `Warning: 299` is the standard stale-response advisory; the `data`
+    // key is additive, so existing clients reading `results` are unaffected.
+    {
+      const headers = new Headers(response.headers);
+      headers.set("X-Reep-Data-Status", DATA_STATUS);
+      headers.set("X-Reep-Data-As-Of", DATA_AS_OF);
+      headers.set("X-Reep-Migration", MIGRATION_URL);
+      headers.set("Warning", `299 - "${FREEZE_NOTICE}"`);
+
+      // Read the body ONCE (never clone-and-reuse the original stream: passing a
+      // tee'd stream to a new Response throws, which 1101'd `/` — the one route
+      // whose body already carries `data`).
+      let body: BodyInit | null = response.body;
+      if (response.headers.get("Content-Type")?.includes("application/json")) {
+        const text = await response.text();
+        body = text;
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && !("data" in parsed)) {
+            body = JSON.stringify({ ...parsed, data: DATA_FRESHNESS });
+          }
+        } catch {
+          // Unparseable body: pass it through verbatim; the headers still disclose.
+        }
+      }
+      response = new Response(body, { status: response.status, headers });
     }
 
     console.log(JSON.stringify({ method, path, params, status: response.status, ms: Date.now() - start }));
