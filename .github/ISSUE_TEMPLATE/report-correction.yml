@@ -1,0 +1,73 @@
+name: Report a correction
+description: Tell us about a wrong ID, a wrong merge, a wrong split or a missing entity
+title: "[Correction] "
+labels: ["correction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Corrections are how the register stays true, and every
+        one is worked through the same evidence rules as everything else.
+
+        Corrections are applied by superseding, never by deleting: when two records
+        turn out to be the same entity they are merged and the retired identifier
+        permanently forwards, so nothing that ever pointed at the register breaks.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of problem is it?
+      options:
+        - Wrong provider ID on an entity
+        - Two entities that are really the same (should be merged)
+        - One entity that is really two people or clubs (should be split)
+        - Wrong attribute (name, date of birth, nationality, role)
+        - Missing entity
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: reep_id
+    attributes:
+      label: Reep ID(s)
+      description: The affected ID, or both IDs if you are reporting a merge or split.
+      placeholder: "rp63a1f0c2e4b7d9, rp0f2c8a1b3d5e77"
+    validations:
+      required: false
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong?
+      description: What the register currently says, and what it should say instead.
+      placeholder: |
+        Entity rp63... carries Transfermarkt ID 568177, but that ID belongs to a
+        different player with the same name born two years earlier.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: |
+        What makes you confident? Links to provider pages, a date of birth, a squad
+        listing or a match appearance are all useful. Two independent sources that
+        agree is the standard the register itself works to, so anything approaching
+        that is very welcome — but report it even if you only have one.
+      placeholder: |
+        Transfermarkt profile: https://...
+        FBref profile: https://...
+        Both list DOB 1998-03-14; the register has 2000-03-14.
+    validations:
+      required: true
+
+  - type: input
+    id: release
+    attributes:
+      label: Which release did you see this in?
+      description: The release stamp from release.json, or the date you downloaded it.
+      placeholder: "20260720T235223Z"
+    validations:
+      required: false

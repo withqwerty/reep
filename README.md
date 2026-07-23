@@ -4,14 +4,44 @@
 
 The football entity register. Maps player, team, coach, competition, and season identities across Transfermarkt, FBref, UEFA, Sofascore, and 30+ data providers.
 
-> **Status:** this repository is the frozen v0 register and RapidAPI/D1 API surface.
-> It remains available for existing users during the migration bridge. New Reep v1
-> integrations should start from [reep.football/api](https://reep.football/api),
-> [reep.football/downloads](https://reep.football/downloads), and the
-> [RapidAPI migration guide](https://reep.football/api/migration). v0 `reep_...`
-> IDs are not interchangeable with Reep v1 IDs.
-
 Named after [Charles Reep](https://en.wikipedia.org/wiki/Charles_Reep) (1904--2002), an RAF wing commander who hand-recorded every action in over 2,200 football matches starting in the 1950s. He's considered the grandfather of football analytics -- decades before expected goals or tracking data, Reep was tallying passes, shots, and sequences with pen and paper, pioneering the idea that football could be understood through data.
+
+## Start here: the current register
+
+The living register is **Reep v1**, published at [reep.football](https://reep.football).
+It is open infrastructure: complete, dated snapshots of the provider-ID crosswalk —
+Reep IDs, provider namespaces and identifiers, redirects and confidence labels —
+free to download and use.
+
+| I want to... | Go to |
+|---|---|
+| Download the register (CSV + DuckDB) | [reep.football/downloads](https://reep.football/downloads) |
+| Look up or resolve a single entity | [reep.football/api](https://reep.football/api) |
+| See what's covered | [reep.football/coverage](https://reep.football/coverage) |
+| Understand how identities are decided | [reep.football/entity-resolution](https://reep.football/entity-resolution) |
+| Report a wrong ID, a bad merge or a missing entity | [open a correction issue](https://github.com/withqwerty/reep/issues/new?template=report-correction.yml) |
+| Contribute ID mappings | [open a data issue](https://github.com/withqwerty/reep/issues/new?template=contribute-data.yml) |
+| Support the upkeep | [reep.football/sponsorship](https://reep.football/sponsorship) |
+
+**Why isn't the v1 engine in this repository?** The register is open; the engine that
+builds and repairs it is not. Producing a trustworthy crosswalk repeatably is the work
+we do commercially, and it funds the public register. What is open is the output and the
+method: the snapshots, the evidence rules, the identity policy, and the measured
+precision and recall of each release. No part of the public register is held back to
+make sponsorship or consultancy more attractive — see the
+[independence policy](https://reep.football/sponsorship-independence).
+
+> **This repository is the frozen v0 register and RapidAPI/D1 API surface.**
+> It remains available for existing users during the migration bridge, and everything
+> below documents it. New integrations should start from the v1 surfaces above; see the
+> [RapidAPI migration guide](https://reep.football/api/migration). v0 `reep_...` IDs are
+> **not** interchangeable with Reep v1 IDs.
+
+---
+
+## v0 reference (frozen)
+
+Everything from here down describes the frozen v0 data files and API.
 
 ## What is this?
 
@@ -438,6 +468,22 @@ PRs to the Worker (`src/`) and documentation are welcome in this repo. CLI PRs b
 ### What this repo doesn't contain
 
 This repo publishes IDs, the API, and the published CSVs — not scraping logic or raw data dumps from providers. Matching and ingestion scripts are maintained in a separate private repo.
+
+## Support the register
+
+Keeping a football identity register true is continuous work: cutting and publishing
+releases, repairing wrong merges, adding competitions and sources, and measuring
+accuracy on every release. That upkeep is funded by sponsorship, and the record of it
+is public — releases published, corrections applied and measured precision and recall
+are all on [reep.football/sponsorship](https://reep.football/sponsorship).
+
+Sponsorship buys acknowledgement and nothing else. It never buys favourable identity
+decisions, suppressed corrections, exclusive fields or earlier access, and a data
+provider that sponsors the register is named publicly as a provider sponsor. The full
+terms are in the [independence policy](https://reep.football/sponsorship-independence).
+
+Reporting a correction is worth as much as money. If you spot a wrong ID or a bad
+merge, [open an issue](https://github.com/withqwerty/reep/issues/new?template=report-correction.yml).
 
 ## License
 
