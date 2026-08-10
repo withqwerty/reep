@@ -108,7 +108,7 @@ download surface.
 | `key_hugman` | [Barry Hugman's Footballers](https://www.barryhugmansfootballers.com/) ID | — |
 | `key_german_fa` | [DFB](https://www.dfb.de/) person ID | — |
 | `key_statmuse_pl` | [StatMuse](https://www.statmuse.com/) PL player ID | — |
-| `key_sofifa` | [SoFIFA](https://sofifa.com/) / EA FC player ID | — |
+| `key_fifa` | FIFA federation player ID ([Wikidata P1469](https://www.wikidata.org/wiki/Property:P1469)) | — |
 | `key_soccerdonna` | [Soccerdonna](https://www.soccerdonna.de/) player ID (women's football) | — |
 | `key_dongqiudi` | [Dongqiudi](https://www.dongqiudi.com/) player ID | — |
 | `key_understat` | [Understat](https://understat.com/) player ID | `1234` |
