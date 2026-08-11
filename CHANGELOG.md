@@ -9,6 +9,15 @@ All notable changes to the Reep Register API and data are documented here. Versi
   bridge and pointed new integrations to `reep.football/api`,
   `reep.football/downloads`, and the RapidAPI migration guide.
 - Clarified that v0 `reep_...` IDs are not interchangeable with Reep v1 IDs.
+- Disclosed that the **data files** are frozen too, not only the API: the last CSV
+  release was `2026.25` (21 June 2026) and D1 has taken no writes since
+  25 April 2026. Reported faults are fixed in the v1 register, not back-ported.
+- Corrected stale record counts in the README data table — `people.csv` (~488K →
+  444,707), `competitions.csv` (~336 → 212) and `seasons.csv` (~3.8K → 1,200) were
+  all overstated. Counts are now exact rather than approximate.
+- Removed remaining claims of ongoing updates: `GET /stats` "live counts", Wikidata
+  IDs updating "with each refresh", contributed IDs being served via the v0 API, and
+  Wikidata edits being picked up by "the next refresh".
 
 ## v2.7.0 - 2026-04-24
 

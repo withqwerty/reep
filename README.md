@@ -36,6 +36,10 @@ make sponsorship or consultancy more attractive — see the
 > below documents it. New integrations should start from the v1 surfaces above; see the
 > [RapidAPI migration guide](https://reep.football/api/migration). v0 `reep_...` IDs are
 > **not** interchangeable with Reep v1 IDs.
+>
+> **The data files are frozen too, not just the API.** The last CSV release was
+> `2026.25` (21 June 2026), and the API's database has taken no writes since
+> 25 April 2026. Neither receives further updates or corrections.
 
 ---
 
@@ -64,11 +68,11 @@ download surface.
 
 | File | Records | Description |
 |------|---------|-------------|
-| [`data/people.csv`](data/people.csv) | ~488K | Players and coaches with provider IDs and bio |
-| [`data/teams.csv`](data/teams.csv) | ~45K | Clubs with provider IDs and metadata |
-| [`data/competitions.csv`](data/competitions.csv) | ~336 | Leagues, cups, and tournaments with provider IDs |
-| [`data/seasons.csv`](data/seasons.csv) | ~3.8K | Season editions of competitions |
-| [`data/names.csv`](data/names.csv) | varies | Alternate names and aliases |
+| [`data/people.csv`](data/people.csv) | 444,707 | Players and coaches with provider IDs and bio |
+| [`data/teams.csv`](data/teams.csv) | 45,337 | Clubs with provider IDs and metadata |
+| [`data/competitions.csv`](data/competitions.csv) | 212 | Leagues, cups, and tournaments with provider IDs |
+| [`data/seasons.csv`](data/seasons.csv) | 1,200 | Season editions of competitions |
+| [`data/names.csv`](data/names.csv) | 27,591 | Alternate names and aliases |
 | [`data/meta.json`](data/meta.json) | — | Generation timestamp and counts |
 
 ### People schema
@@ -190,7 +194,7 @@ download surface.
 
 ## Coverage
 
-Not every entity has every ID. Coverage depends on what the Wikidata community has mapped plus independently verified mappings. Use `GET /stats` for live counts.
+Not every entity has every ID. Coverage depends on what the Wikidata community has mapped plus independently verified mappings. `GET /stats` returns the frozen v0 counts; they no longer change.
 
 | Provider | Source | Notes |
 |----------|--------|-------|
@@ -215,7 +219,7 @@ Not every entity has every ID. Coverage depends on what the Wikidata community h
 | SportMonks | Verified | Cross-reference matching |
 | Club Elo | Verified | Manual team mapping |
 
-**Wikidata** IDs are community-maintained and update automatically with each refresh. **Verified** IDs are matched independently using DOB, name, and cross-provider bridges, then validated before inclusion.
+**Wikidata** IDs are community-maintained; they updated automatically with each refresh while v0 was live, and are now fixed at the `2026.25` snapshot. **Verified** IDs were matched independently using DOB, name, and cross-provider bridges, then validated before inclusion.
 
 ## Usage
 
@@ -426,7 +430,9 @@ A new Wikidata property for the new format has been proposed but not yet approve
 
 ## Updates
 
-The register is refreshed periodically from Wikidata, plus monthly reconciliation against the full Wikidata dump to catch drift (deleted entities, lost occupations, missed IDs). Each refresh picks up new entities, updated IDs, and corrections made by the Wikidata community. Custom provider mappings persist across all refreshes. The `data/meta.json` file records when the current CSVs were generated.
+**The v0 register is no longer refreshed.** The last data release was `2026.25`, generated on 21 June 2026, and the D1 database behind the API has taken no writes since 25 April 2026. No further refreshes are planned, and reported faults are **not** back-ported here — they are fixed in [the v1 register](https://reep.football/downloads) instead. The `data/meta.json` file records when the current CSVs were generated.
+
+Historically, v0 was refreshed periodically from Wikidata, plus monthly reconciliation against the full Wikidata dump to catch drift (deleted entities, lost occupations, missed IDs). Each refresh picked up new entities, updated IDs, and corrections made by the Wikidata community, and custom provider mappings persisted across refreshes.
 
 ## Contributing
 
@@ -450,11 +456,11 @@ The more columns you include, the more accurately we can match to existing entit
 - [Open an issue](https://github.com/withqwerty/reep/issues/new) with your CSV attached or linked
 - Email getintouch@withqwerty.com if you prefer to contribute anonymously
 
-We validate and match all submissions before adding them. Your IDs go into our verified custom mappings and are served via the API alongside Wikidata data.
+We validate and match all submissions before adding them. Your IDs go into our verified custom mappings. Note that submissions now land in [the v1 register](https://reep.football/downloads) — the frozen v0 files and API here are not updated.
 
 ### Edit Wikidata directly
 
-If a player is missing a Transfermarkt ID or FBref ID, the ideal fix is to add it to their [Wikidata](https://www.wikidata.org/) page — the next refresh picks it up automatically.
+If a player is missing a Transfermarkt ID or FBref ID, the ideal fix is to add it to their [Wikidata](https://www.wikidata.org/) page — the next v1 refresh picks it up automatically. The frozen v0 files here will not pick it up.
 
 - [How to edit Wikidata](https://www.wikidata.org/wiki/Wikidata:Introduction)
 - [Add an external identifier](https://www.wikidata.org/wiki/Help:Statements#Adding_statements)
