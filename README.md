@@ -488,6 +488,21 @@ decisions, suppressed corrections, exclusive fields or earlier access, and a dat
 provider that sponsors the register is named publicly as a provider sponsor. The full
 terms are in the [independence policy](https://reep.football/sponsorship-independence).
 
+**If you use the register yourself**, the simplest way to keep it going is
+[GitHub Sponsors](https://github.com/sponsors/withqwerty) — recurring or one-off,
+from a few pounds a month.
+
+**If your organisation depends on it**, sponsorship runs by agreement, with an
+invoice, a named contact and your logo on the sponsors section of
+[reep.football/sponsorship](https://reep.football/sponsorship#sponsors). Support
+starts to make a real difference at around £500 a month, and a founding sponsor at
+£1,500–2,500 a month covers a substantial share of what it costs to keep the register
+published and repaired. Those are indications for sizing a budget, not a price list —
+get in touch at getintouch@withqwerty.com.
+
+Nobody sponsors the register yet, and the sponsors section says so. It will name every
+sponsor for as long as they support it.
+
 Reporting a correction is worth as much as money. If you spot a wrong ID or a bad
 merge, [open an issue](https://github.com/withqwerty/reep/issues/new?template=report-correction.yml).
 
